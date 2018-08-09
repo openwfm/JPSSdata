@@ -25,7 +25,7 @@ print MOD03granules.hits()
 MOD03granules = api.get(10)
 
 for granule in MOD03granules:
-    print granule
+    print json.dumps(granule, indent=4, separators=(',', ': '))
     #print granule["title"], granule["time_start"], granule["time_end"], granule["longitude"]
     #"polygons" gives long/lat data in pairs-first/last pair are the same
     # note - it appears that all granules are quadrilaterals
