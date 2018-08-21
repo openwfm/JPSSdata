@@ -20,6 +20,7 @@ MOD14granules = api.parameters(
 print MOD14granules.hits()
 MOD14granules = api.get(10)
 
+<<<<<<< HEAD
 #VNP03MODLL: bounding box = Colorado (gps coord sorted lat,lon; counterclockwise)
 VIIRSgranules = fire.parameters(
                         short_name="VNP03MODLL",
@@ -32,6 +33,11 @@ VIIRSgranules = fire.get(10)
 
 data = []
 for granule in MOD14granules:
+=======
+data = []
+for granule in MOD14granules:
+    # print json.dumps(granule, indent=4, separators=(',', ': '))
+>>>>>>> d9a67e8261a1ad3826454cbcc8c3d1d1ed2235ea
     url = granule['links'][0]['href']
     filename=os.path.basename(urlparse.urlsplit(url).path)
 
@@ -60,4 +66,11 @@ for granule in MOD14granules:
             print 'machine urs.earthdata.nasa.gov\nlogin yourusername\npassword yourpassword' 
             sys.exit(1)
     except Exception as e:
+<<<<<<< HEAD
         print 'download failed with error %s' % e 
+=======
+        print 'download failed with error %s' % e 
+
+       
+    
+>>>>>>> d9a67e8261a1ad3826454cbcc8c3d1d1ed2235ea
