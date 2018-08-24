@@ -48,9 +48,9 @@ def get_meta(area,time,num=0):
     #MYD03: MODIS Aqua geolocation data
     granules.MYD03=search_api("MYD03",area,time,num,"Aqua")
     #VNP14: VIIRS fire data, res 750m
-    granules.VNP14=search_api("VNP14",area,time,num)
+    #granules.VNP14=search_api("VNP14",area,time,num)
     #VNP03MODLL: VIIRS geolocation data, res 750m
-    granules.VNP03=search_api("VNP03MODLL",area,time,num)
+    #granules.VNP03=search_api("VNP03MODLL",area,time,num)
     #VNP14hi: VIIRS fire data, res 375m
     #granules.VNP14hi=search("VNP14IMGTDL_NRT",area,time,num)
     return granules
@@ -96,7 +96,7 @@ def read_viirs_files(files,field,key,data):
     data[field][key].lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
     data[field][key].lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
     ncf=Dataset(files[1],'r')
-    fire=np.array(ncf.variables['fire mask'][:])
+    data[field][key].fire=np.array(ncf.variables['fire mask'][:])
 
 def read_data(files,field,data):
     data[field]=Dict([])
@@ -147,8 +147,8 @@ def download(granules):
 def main():
     # Define settings
     area = [(-132.86966,66.281204),(-132.86966,44.002495),(-102.0868788,44.002495),(-102.0560592,66.281204),(-132.86966,66.281204)]
-    time = ("2012-09-08T00:00:00Z", "2012-09-10T00:00:00Z")
-    ngranules=2
+    time = ("2012-09-08T00:00:00Z", "2012-09-11T00:00:00Z")
+    ngranules = 2
 
     # Get data
     granules=get_meta(area,time,ngranules)
