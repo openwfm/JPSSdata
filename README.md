@@ -6,4 +6,4 @@
 - add download ability (completed)
 - download only certain leaves of the overall tree structure
 - reconcile data from M?D14 with geolocation data from M?D03
-- extend MODIS search to VIIRS.
+- extend MODIS search to VIIRS (completed)
