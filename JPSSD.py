@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 import numpy as np
 import json
 import requests
@@ -13,23 +15,42 @@ import scipy.io as sio
 import h5py
 from netCDF4 import Dataset
 
-def search_api(sname,area,time,num=0,platform=""):
+def search_api(sname,area,time,num=0,platform="",version=""):
     api = GranuleQuery()
-    if not platform:
-        search = api.parameters(
-                            short_name=sname,
-                            downloadable=True,
-                            polygon=area,
-                            temporal=time
-                            )
+    if not version:    
+        if not platform:
+            search = api.parameters(
+                                short_name=sname,
+                                downloadable=True,
+                                polygon=area,
+                                temporal=time
+                                )
+        else:
+            search = api.parameters(
+                                short_name=sname,
+                                platform=platform,
+                                downloadable=True,
+                                polygon=area,
+                                temporal=time
+                                )
     else:
-        search = api.parameters(
-                            short_name=sname,
-                            platform=platform,
-                            downloadable=True,
-                            polygon=area,
-                            temporal=time
-                            )
+        if not platform:
+            search = api.parameters(
+                                short_name=sname,
+                                downloadable=True,
+                                polygon=area,
+                                temporal=time,
+                                version=version
+                                )
+        else:
+            search = api.parameters(
+                                short_name=sname,
+                                platform=platform,
+                                downloadable=True,
+                                polygon=area,
+                                temporal=time,
+                                version=version
+                                )
     print "%s gets %s hits in this range" % (sname, search.hits())
     if num == 0:
         granules = api.get(search.hits())
@@ -42,11 +63,11 @@ def get_meta(area,time,num=0):
     #MOD14: MODIS Terra fire data
     granules.MOD14=search_api("MOD14",area,time,num,"Terra")
     #MOD03: MODIS Terra geolocation data
-    granules.MOD03=search_api("MOD03",area,time,num,"Terra")
+    granules.MOD03=search_api("MOD03",area,time,num,"Terra","6")
     #MYD14: MODIS Aqua fire data
     granules.MYD14=search_api("MYD14",area,time,num,"Aqua")
     #MYD03: MODIS Aqua geolocation data
-    granules.MYD03=search_api("MYD03",area,time,num,"Aqua")
+    granules.MYD03=search_api("MYD03",area,time,num,"Aqua","6")
     #VNP14: VIIRS fire data, res 750m
     granules.VNP14=search_api("VNP14",area,time,num)
     #VNP03MODLL: VIIRS geolocation data, res 750m
@@ -109,7 +130,6 @@ def read_data(files,field,data):
             read_modis_files(f,field,key,data)
         elif field=="VNP":
             read_viirs_files(f,field,key,data)
-        
 
 #data = []
 def download(granules):
@@ -147,7 +167,7 @@ def download(granules):
 def main():
     # Define settings
     area = [(-132.86966,66.281204),(-132.86966,44.002495),(-102.0868788,44.002495),(-102.0560592,66.281204),(-132.86966,66.281204)]
-    time = ("2012-09-08T00:00:00Z", "2012-09-11T00:00:00Z")
+    time = ("2012-09-11T00:00:00Z", "2012-09-12T00:00:00Z")
     ngranules = 2
 
     # Get data
@@ -158,7 +178,6 @@ def main():
 
     # Agrupate files
     files=agrupate_all(".")
-    print files
 
     # Generate data dictionary
     data=Dict([])
@@ -166,8 +185,8 @@ def main():
     read_data(files[1],"MYD",data)
     read_data(files[2],"VNP",data)
 
+    # Save the data dictionary into a matlab structure file out.mat
     sio.savemat('out.mat', mdict=data)
 
 if __name__ == "__main__":
     sys.exit(main())
-

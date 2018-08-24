@@ -18,8 +18,8 @@ for ii=1:length(prods)
         lon=granules.(prods{ii}).(dates{jj}).lon;
         lat=granules.(prods{ii}).(dates{jj}).lat;
         fire=granules.(prods{ii}).(dates{jj}).fire;
-        tit=strcat({'Plot of the '},{prods{ii}},{' granule in date '},{dates{jj}});
-        figure, h=pcolor(lon,lat,fire); title(tit); set(h,'EdgeColor','None'), cmfire
+        tit=strcat({'Plot of the '},prods{ii},{' granule in date '},dates{jj});
+        figure, h=pcolor(lon,lat,fire); title(tit,'Interpreter','none'); set(h,'EdgeColor','None'), cmfire
     end
 end
 
