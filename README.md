@@ -1,6 +1,15 @@
 # JPPSdata.py
+## Edit - Utilize JPPSD.py, followed by utilizing matlab functions for visualization
 
 *A tool for searching the cmr API [found here](https://cmr.earthdata.nasa.gov)*
+
+### Authors:
+Lauren Hearn,
+Jan Mandel,
+Angel Caus,
+James Haley
+
+*As a joint project supporting the [OpenWFM project](https://github.com/openwfm) with support from UC Denver.*
 
 ### To do:
 - add download ability (completed)
