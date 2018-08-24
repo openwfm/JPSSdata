@@ -48,9 +48,9 @@ def get_meta(area,time,num=0):
     #MYD03: MODIS Aqua geolocation data
     granules.MYD03=search_api("MYD03",area,time,num,"Aqua")
     #VNP14: VIIRS fire data, res 750m
-    #granules.VNP14=search_api("VNP14",area,time,num)
+    granules.VNP14=search_api("VNP14",area,time,num)
     #VNP03MODLL: VIIRS geolocation data, res 750m
-    #granules.VNP03=search_api("VNP03MODLL",area,time,num)
+    granules.VNP03=search_api("VNP03MODLL",area,time,num)
     #VNP14hi: VIIRS fire data, res 375m
     #granules.VNP14hi=search("VNP14IMGTDL_NRT",area,time,num)
     return granules
