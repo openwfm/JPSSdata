@@ -1,4 +1,5 @@
-#sample data into mesh - Sugarloaf
+# sample data into mesh - Sugarloaf
+# navigate to /share_home/jmandel/sugarloaf to access sample data
 import netCDF4 as nc
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
@@ -10,10 +11,11 @@ from scipy import interpolate
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
-d = nc.Dataset('dataset')
-fxlon = d.variables['FXLONG'][0,0:409,0:409] # boundary masking conditions previously calculated
-fxlat = d.variables['FXLAT'][0,0:409,0:409]
-data = d.variables['TIGN_G'][10,0:409,0:409]
+d = nc.Dataset('wrfout_d03_2018-09-03_15:00:00')
+fxlon = d.variables['FXLONG'][0,:,:] # boundary masking conditions previously calculated(0:409)
+fxlat = d.variables['FXLAT'][0,:,:]
+data = d.variables['TIGN_G'][10,:,:]
+mask = 
 d.close()
 
 surf = ax.plot_surface(fxlon,fxlat,data,cmap=cm.coolwarm)
