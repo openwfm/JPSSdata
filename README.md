@@ -16,3 +16,7 @@ James Haley
 - download only certain leaves of the overall tree structure
 - reconcile data from M?D14 with geolocation data from M?D03
 - extend MODIS search to VIIRS (completed)
+
+### Tools:
+- JPPSD.py gathers data from MODIS/VIIRS
+- sugarloaf.py plots sample data from sugarloaf fire into mesh and plot
