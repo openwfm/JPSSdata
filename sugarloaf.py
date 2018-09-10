@@ -12,8 +12,5 @@ fxlat = d.variables['FXLAT'][0,:,:]
 data = d.variables['TIGN_G'][0,:,:]
 d.close()
 
-#lon,lat = np.meshgrid(fxlon,fxlat,sparse=True)
-
-plt.plot(fxlon,fxlat)
-plt.plot(data)
+surf = plt.plot_surface(fxlon,fxlat,data)
 plt.show()
