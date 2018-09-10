@@ -19,4 +19,5 @@ James Haley
 
 ### Tools:
 - JPPSD.py gathers data from MODIS/VIIRS
+- out.mat reads data downloaded from JPPSD.py, with ability to plot granules
 - sugarloaf.py plots sample data from sugarloaf fire into mesh and plot
