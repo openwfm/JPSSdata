@@ -16,8 +16,10 @@ James Haley
 - download only certain leaves of the overall tree structure
 - reconcile data from M?D14 with geolocation data from M?D03
 - extend MODIS search to VIIRS (completed)
+- continue translating ncvarinfo to proper python grammar
 
 ### Tools:
 - JPPSD.py gathers data from MODIS/VIIRS
 - out.mat reads data downloaded from JPPSD.py, with ability to plot granules
-- sugarloaf.py plots sample data from sugarloaf fire into mesh and plot
+- sugarloaf.py plots sample data from Sugarloaf fire into mesh and plot
+- ncvarinfo.py is a python version of code originally found [here](https://github.com/openwfm/wrf-fire/blob/master/other/Matlab/netcdf/private/ncvarinfo.m). 
