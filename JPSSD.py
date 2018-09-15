@@ -120,12 +120,16 @@ def read_viirs_files(files,field,key,data):
     data[field][key].fire=np.array(ncf.variables['fire mask'][:])
 
 def read_data(files,field,data):
+    print "read_data files=%s field=%s data=%s" % ( files,field,data )
     data[field]=Dict([])
     for f in files:
+        print "read_data f=%s" % f
         m=f[0].split('/')
         mm=m[-1].split('.')
         key=mm[1]+'_'+mm[2]
         data[field][key]=Dict([])
+        print "data:"
+        print data
         if field=="MOD" or field=="MYD":
             read_modis_files(f,field,key,data)
         elif field=="VNP":
@@ -170,14 +174,31 @@ def main():
     time = ("2012-09-11T00:00:00Z", "2012-09-12T00:00:00Z")
     ngranules = 2
 
+    print "area:"
+    print area
+    print "time:"
+    print time
+    print "ngranules:"
+    print ngranules
+
     # Get data
     granules=get_meta(area,time,ngranules)
+    print "granules:"
+    print granules
+
+
     for k,g in granules.items():
         print 'Downloading %s files' % k
         download(g)
+        print "download g:"
+        print g
+
+    print "download complete"
 
     # Agrupate files
     files=agrupate_all(".")
+    print "agrupate all files:"
+    print files
 
     # Generate data dictionary
     data=Dict([])
