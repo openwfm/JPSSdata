@@ -76,7 +76,7 @@ def get_meta(area,time,num=0):
     #granules.VNP14hi=search("VNP14IMGTDL_NRT",area,time,num)
     return granules
 
-def agrupate(path,reg):
+def group_files(path,reg):
     files=[[k] for k in glob.glob(path+'/'+reg+'03*')]
     filesf=glob.glob(path+'/'+reg+'14*')
     if len(filesf)>0:
@@ -92,13 +92,13 @@ def agrupate(path,reg):
                             files[k].append(f) 
     return files
 
-def agrupate_all(path):
+def group_all(path):
     # MOD files
-    modf=agrupate(path,'MOD')
+    modf=group_files(path,'MOD')
     # MYD files
-    mydf=agrupate(path,'MYD')
+    mydf=group_files(path,'MYD')
     # VIIRS files
-    vif=agrupate(path,'VNP')
+    vif=group_files(path,'VNP')
     files=[modf,mydf,vif]
     return files
 
@@ -153,6 +153,7 @@ def download(granules):
         try:
             chunk_size = 1024*1024
             s = 0
+            print 'downloading %s as %s' % (url,filename)
             r = requests.get(url, stream=True)
             if r.status_code == 200:
                 content_size = int(r.headers['Content-Length'])
@@ -172,7 +173,7 @@ def download(granules):
             print 'download failed with error %s' % e 
 
 
-def main(bbox,time):
+def retrieve_af_granules(bbox,time):
     # Define settings
     lonmin,lonmax,latmin,latmax = bbox
     area = [(lonmin,latmax),(lonmin,latmin),(lonmax,latmin),(lonmax,latmax),(lonmin,latmax)]
@@ -198,9 +199,9 @@ def main(bbox,time):
 
     print "download complete"
 
-    # Agrupate files
-    files=agrupate_all(".")
-    print "agrupate all files:"
+    # group all files downloaded
+    files=group_all(".")
+    print "group all files:"
     print files
 
     # Generate data dictionary
@@ -215,4 +216,4 @@ def main(bbox,time):
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
     time = ("2012-09-11T00:00:00Z", "2012-09-12T00:00:00Z")
-    sys.exit(main(bbox,time))
+    sys.exit(retrieve_af_granules(bbox,time))
