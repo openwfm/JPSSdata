@@ -102,41 +102,56 @@ def group_all(path):
     files=[modf,mydf,vif]
     return files
 
-def read_modis_files(files,field,key,data):
+def read_modis_files(files):
     hdfg=SD(files[0],SDC.READ)
     hdff=SD(files[1],SDC.READ)
     lat_obj=hdfg.select('Latitude')
     lon_obj=hdfg.select('Longitude')    
     fire_mask_obj=hdff.select('fire mask')
-    data[field][key].lat=np.array(lat_obj.get())
-    data[field][key].lon=np.array(lon_obj.get())
-    data[field][key].fire=np.array(fire_mask_obj.get())
+    ret=Dict([])
+    ret.lat=np.array(lat_obj.get())
+    ret.lon=np.array(lon_obj.get())
+    ret.fire=np.array(fire_mask_obj.get())
+    return ret
 
-def read_viirs_files(files,field,key,data):
+def read_viirs_files(files):
     h5g=h5py.File(files[0],'r')
-    data[field][key].lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
-    data[field][key].lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
+    ret=Dict([])
+    ret.lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
+    ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
     ncf=Dataset(files[1],'r')
-    data[field][key].fire=np.array(ncf.variables['fire mask'][:])
+    ret.fire=np.array(ncf.variables['fire mask'][:])
+    return ret
 
-def read_data(files,field,data):
-    print "read_data files=%s field=%s data=%s" % ( files,field,data )
-    data[field]=Dict([])
+def read_data(files):
+    print "read_data files=%s" %  files
+    data=Dict([])
     for f in files:
         print "read_data f=%s" % f
         if len(f) != 2:
-            print 'need 2 files, have %s' % len(f)
-            return
+            print 'ERROR: need 2 files, have %s' % len(f)
+            continue 
+        prefix = f[0][2:5] 
+        print 'prefix %s' % prefix
+        if prefix != f[0][2:5]:
+            print 'ERROR: the prefix of both files must coincide'
+            continue 
         m=f[0].split('/')
         mm=m[-1].split('.')
         key=mm[1]+'_'+mm[2]
-        data[field][key]=Dict([])
-        print "data:"
-        print data
-        if field=="MOD" or field=="MYD":
-            read_modis_files(f,field,key,data)
-        elif field=="VNP":
-            read_viirs_files(f,field,key,data)
+        id = prefix + '_' + key
+        print "id"
+        print id 
+        if prefix=="MOD" or prefix=="MYD":
+            item=read_modis_files(f)
+        elif prefix=="VNP":
+            item=read_viirs_files(f)
+        else:
+            print 'ERROR: the prefix must be MOD, MYD, or VNP'
+            continue 
+        item.prefix = prefix
+        data.update({id:item})
+    return data
 
 #data = []
 def download(granules):
@@ -150,6 +165,9 @@ def download(granules):
 
         # download -  a minimal code without various error checking and corrective actions
         # see wrfxpy/src/ingest/downloader.py
+        if os.path.isfile(filename):
+            print 'file %s already downloaded' % filename
+            continue
         try:
             chunk_size = 1024*1024
             s = 0
@@ -173,7 +191,7 @@ def download(granules):
             print 'download failed with error %s' % e 
 
 
-def retrieve_af_granules(bbox,time):
+def retrieve_af_data(bbox,time):
     # Define settings
     lonmin,lonmax,latmin,latmax = bbox
     area = [(lonmin,latmax),(lonmin,latmin),(lonmax,latmin),(lonmax,latmax),(lonmin,latmax)]
@@ -188,8 +206,7 @@ def retrieve_af_granules(bbox,time):
 
     # Get data
     granules=get_meta(area,time,ngranules)
-    #print "granules:"
-
+    print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': ')) 
 
     for k,g in granules.items():
         print 'Downloading %s files' % k
@@ -206,9 +223,9 @@ def retrieve_af_granules(bbox,time):
 
     # Generate data dictionary
     data=Dict([])
-    read_data(files[0],"MOD",data)
-    read_data(files[1],"MYD",data)
-    read_data(files[2],"VNP",data)
+    data.update(read_data(files[0]))
+    data.update(read_data(files[1]))
+    data.update(read_data(files[2]))
 
     # Save the data dictionary into a matlab structure file out.mat
     sio.savemat('out.mat', mdict=data)
@@ -216,4 +233,4 @@ def retrieve_af_granules(bbox,time):
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
     time = ("2012-09-11T00:00:00Z", "2012-09-12T00:00:00Z")
-    sys.exit(retrieve_af_granules(bbox,time))
+    sys.exit(retrieve_af_data(bbox,time))
