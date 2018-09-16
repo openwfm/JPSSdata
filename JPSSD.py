@@ -124,6 +124,9 @@ def read_data(files,field,data):
     data[field]=Dict([])
     for f in files:
         print "read_data f=%s" % f
+        if len(f) != 2:
+            print 'need 2 files, have %s' % len(f)
+            return
         m=f[0].split('/')
         mm=m[-1].split('.')
         key=mm[1]+'_'+mm[2]
