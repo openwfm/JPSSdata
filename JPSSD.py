@@ -141,6 +141,7 @@ def read_data(files,field,data):
 #data = []
 def download(granules):
     for granule in granules:
+        print json.dumps(granule,indent=4, separators=(',', ': ')) 
         url = granule['links'][0]['href']
         filename=os.path.basename(urlparse.urlsplit(url).path)
         # to store as object in memory (maybe not completely downloaded until accessed?)
@@ -186,8 +187,7 @@ def main(bbox,time):
 
     # Get data
     granules=get_meta(area,time,ngranules)
-    print "granules:"
-    print granules
+    #print "granules:"
 
 
     for k,g in granules.items():
