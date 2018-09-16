@@ -171,13 +171,13 @@ def download(granules):
             print 'download failed with error %s' % e 
 
 
-def main():
+def main(bbox,time):
     # Define settings
-    area = [(-132.86966,66.281204),(-132.86966,44.002495),(-102.0868788,44.002495),(-102.0560592,66.281204),(-132.86966,66.281204)]
-    time = ("2012-09-11T00:00:00Z", "2012-09-12T00:00:00Z")
+    lonmin,lonmax,latmin,latmax = bbox
+    area = [(lonmin,latmax),(lonmin,latmin),(lonmax,latmin),(lonmax,latmax),(lonmin,latmax)]
     ngranules = 2
 
-    print "area:"
+    print "area"
     print area
     print "time:"
     print time
@@ -193,8 +193,8 @@ def main():
     for k,g in granules.items():
         print 'Downloading %s files' % k
         download(g)
-        print "download g:"
-        print g
+        #print "download g:"
+        #print g
 
     print "download complete"
 
@@ -213,4 +213,6 @@ def main():
     sio.savemat('out.mat', mdict=data)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    bbox=[-132.86966,-102.0868788,44.002495,66.281204]
+    time = ("2012-09-11T00:00:00Z", "2012-09-12T00:00:00Z")
+    sys.exit(main(bbox,time))
