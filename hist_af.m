@@ -1,6 +1,6 @@
 function pixels=hist_af(af)
 for i=1:10
-    h(i)=sum(af(:)==i-1);
+    count(i)=sum(af(:)==i-1);
 end
 pixels.unknown= count(1)+count(2)+count(3)+count(7);
 pixels.water  = count(4);
