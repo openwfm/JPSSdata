@@ -131,9 +131,11 @@ def read_data(files,file_metadata):
         if len(f) != 2:
             print 'ERROR: need 2 files, have %s' % len(f)
             continue 
-        prefix = f[0][2:5] 
+        f0=os.path.basename(f[0])
+        f1=os.path.basename(f[1])
+        prefix = f0[:3] 
         print 'prefix %s' % prefix
-        if prefix != f[0][2:5]:
+        if prefix != f1[:3]:
             print 'ERROR: the prefix of both files must coincide'
             continue 
         m=f[0].split('/')
@@ -150,8 +152,6 @@ def read_data(files,file_metadata):
             print 'ERROR: the prefix must be MOD, MYD, or VNP'
             continue 
         # connect the file back to metadata
-        f0=os.path.basename(f[0])
-        f1=os.path.basename(f[1])
         item.time_start_geo=file_metadata[f0]["time_start"]
         item.time_start_fire=file_metadata[f1]["time_start"]
         item.time_end_geo=file_metadata[f0]["time_end"]
