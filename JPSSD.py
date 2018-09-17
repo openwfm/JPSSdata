@@ -15,6 +15,16 @@ import scipy.io as sio
 import h5py
 from netCDF4 import Dataset
 
+# Function to search the different products in the API
+# Inputs:
+#       sname       short name 
+#       area        polygon with the search area
+#       time        time boundaries (init_time,final_time)
+#       num         number of granules to process (if 0: all the granules)
+#       platform    string with the platform
+#       version     string with the version
+# Outputs: 
+#       granules    a GranuleQuery object with the search
 def search_api(sname,area,time,num=0,platform="",version=""):
     api = GranuleQuery()
     if not version:    
@@ -58,6 +68,7 @@ def search_api(sname,area,time,num=0,platform="",version=""):
         granules = api.get(num)
     return granules
 
+# Function to get the wanted meta data from the API
 def get_meta(area,time,num=0):
     granules=Dict({});
     #MOD14: MODIS Terra fire data
@@ -76,6 +87,7 @@ def get_meta(area,time,num=0):
     #granules.VNP14hi=search("VNP14IMGTDL_NRT",area,time,num)
     return granules
 
+# Function to combine the geolocation product (03) with the fire product (14)
 def group_files(path,reg):
     files=[[k] for k in glob.glob(path+'/'+reg+'03*')]
     filesf=glob.glob(path+'/'+reg+'14*')
@@ -92,6 +104,7 @@ def group_files(path,reg):
                             files[k].append(f) 
     return files
 
+# Function to collect all the agrupations from all the different products
 def group_all(path):
     # MOD files
     modf=group_files(path,'MOD')
@@ -102,6 +115,7 @@ def group_all(path):
     files=[modf,mydf,vif]
     return files
 
+# Function to read the agrupated 03 and 14 MODIS (MOD and MYD) satellite data
 def read_modis_files(files):
     hdfg=SD(files[0],SDC.READ)
     hdff=SD(files[1],SDC.READ)
@@ -114,6 +128,7 @@ def read_modis_files(files):
     ret.fire=np.array(fire_mask_obj.get())
     return ret
 
+# Function to read the agrupated 03 and 14 VIIRS satellite data
 def read_viirs_files(files):
     h5g=h5py.File(files[0],'r')
     ret=Dict([])
@@ -212,7 +227,7 @@ def retrieve_af_data(bbox,time):
     # Define settings
     lonmin,lonmax,latmin,latmax = bbox
     area = [(lonmin,latmax),(lonmin,latmin),(lonmax,latmin),(lonmax,latmax),(lonmin,latmax)]
-    ngranules = 2
+    ngranules = 0
 
     print "area"
     print area
