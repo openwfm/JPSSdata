@@ -11,16 +11,13 @@ function plot_granules(granules)
 % Angel Farguell (angel.farguell@gmail.com), 2018-08-24
 %-------------------------------------------------------------------------
 
-prods=fields(granules);
-for ii=1:length(prods)
-    dates=fields(granules.(prods{ii}));
-    for jj=1:length(dates)
-        lon=granules.(prods{ii}).(dates{jj}).lon;
-        lat=granules.(prods{ii}).(dates{jj}).lat;
-        fire=granules.(prods{ii}).(dates{jj}).fire;
-        tit=strcat({'Plot of the '},prods{ii},{' granule in date '},dates{jj});
-        figure, h=pcolor(lon,lat,fire); title(tit,'Interpreter','none'); set(h,'EdgeColor','None'), cmfire
-    end
+granul=fields(granules);
+for ii=1:length(granul)
+    lon=granules.(granul{ii}).lon;
+    lat=granules.(granul{ii}).lat;
+    fire=granules.(granul{ii}).fire;
+    tit=strcat({'Plot of the '},granul{ii},{' granule.'});
+    figure, h=pcolor(lon,lat,fire); title(tit,'Interpreter','none'); set(h,'EdgeColor','None'), cmfire, drawnow
 end
 
 end
