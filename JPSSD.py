@@ -15,14 +15,14 @@ import scipy.io as sio
 import h5py
 from netCDF4 import Dataset
 
-def search_api(sname,bbox,time,num=0,platform="",version=""):
+def search_api(sname,bbox,time,maxg=50,platform="",version=""):
     """ 
     API search of the different satellite granules
         :param:
             sname       short name 
             bbox        polygon with the search bounding box
             time        time interval (init_time,final_time)
-            num         number of granules to process (if 0: all the granules)
+            maxg        max number of granules to process
             platform    string with the platform
             version     string with the version
         :returns:
@@ -66,20 +66,23 @@ def search_api(sname,bbox,time,num=0,platform="",version=""):
                                 temporal=time,
                                 version=version
                                 )
-    print "%s gets %s hits in this range" % (sname, search.hits())
-    if num == 0:
-        granules = api.get(search.hits())
+    sh=search.hits()
+    print "%s gets %s hits in this range" % (sname,sh)
+    if sh>maxg:
+        print "The number of hits %s is larger than the limit %s." % (sh,maxg)
+        print "Use a reduced bounding box or a reduced time interval."
+        granules = []
     else:
-        granules = api.get(num)
+        granules = api.get(sh)
     return granules
 
-def get_meta(bbox,time,num=0):
+def get_meta(bbox,time,maxg=50):
     """ 
     Get all the meta data from the API for all the necessary products
         :param:
             bbox        polygon with the search bounding box
             time        time interval (init_time,final_time)
-            num         number of granules to process (if 0: all the granules)
+            maxg        max number of granules to process
         :returns:
             granules    dictionary with the metadata of all the products
 
@@ -88,19 +91,19 @@ def get_meta(bbox,time,num=0):
     """
     granules=Dict({});
     #MOD14: MODIS Terra fire data
-    granules.MOD14=search_api("MOD14",bbox,time,num,"Terra")
+    granules.MOD14=search_api("MOD14",bbox,time,maxg,"Terra")
     #MOD03: MODIS Terra geolocation data
-    granules.MOD03=search_api("MOD03",bbox,time,num,"Terra","6")
+    granules.MOD03=search_api("MOD03",bbox,time,maxg,"Terra","6")
     #MYD14: MODIS Aqua fire data
-    granules.MYD14=search_api("MYD14",bbox,time,num,"Aqua")
+    granules.MYD14=search_api("MYD14",bbox,time,maxg,"Aqua")
     #MYD03: MODIS Aqua geolocation data
-    granules.MYD03=search_api("MYD03",bbox,time,num,"Aqua","6")
+    granules.MYD03=search_api("MYD03",bbox,time,maxg,"Aqua","6")
     #VNP14: VIIRS fire data, res 750m
-    granules.VNP14=search_api("VNP14",bbox,time,num)
+    granules.VNP14=search_api("VNP14",bbox,time,maxg)
     #VNP03MODLL: VIIRS geolocation data, res 750m
-    granules.VNP03=search_api("VNP03MODLL",bbox,time,num)
+    granules.VNP03=search_api("VNP03MODLL",bbox,time,maxg)
     #VNP14hi: VIIRS fire data, res 375m
-    #granules.VNP14hi=search("VNP14IMGTDL_NRT",bbox,time,num)
+    #granules.VNP14hi=search("VNP14IMGTDL_NRT",bbox,time,maxg)
     return granules
 
 def group_files(path,reg):
@@ -230,11 +233,12 @@ def read_data(files,file_metadata):
         else:
             print 'ERROR: the prefix must be MOD, MYD, or VNP'
             continue 
-        # connect the file back to metadata
-        item.time_start_geo=file_metadata[f0]["time_start"]
-        item.time_start_fire=file_metadata[f1]["time_start"]
-        item.time_end_geo=file_metadata[f0]["time_end"]
-        item.time_end_fire=file_metadata[f1]["time_end"]
+        if (f0 in file_metadata.keys()) and (f1 in file_metadata.keys()):
+            # connect the file back to metadata
+            item.time_start_geo=file_metadata[f0]["time_start"]
+            item.time_start_fire=file_metadata[f1]["time_start"]
+            item.time_end_geo=file_metadata[f0]["time_end"]
+            item.time_end_fire=file_metadata[f1]["time_end"]
         item.file_geo=f0
         item.file_fire=f1
         item.prefix = prefix
@@ -248,10 +252,13 @@ def download(granules):
             granules        list of products with a list of pairs with geolocation (03) and fire (14) file names in the path  
         :returns: 
             file_metadata   dictionary with file names as key and granules metadata as values
+    
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
     file_metadata = {} 
     for granule in granules:
-        print json.dumps(granule,indent=4, separators=(',', ': ')) 
+        #print json.dumps(granule,indent=4, separators=(',', ': ')) 
         url = granule['links'][0]['href']
         filename=os.path.basename(urlparse.urlsplit(url).path)
         file_metadata[filename]=granule
@@ -304,18 +311,18 @@ def retrieve_af_data(bbox,time):
     # Define settings
     lonmin,lonmax,latmin,latmax = bbox
     bbox = [(lonmin,latmax),(lonmin,latmin),(lonmax,latmin),(lonmax,latmax),(lonmin,latmax)]
-    ngranules = 0
+    maxg = 100
 
     print "bbox"
     print bbox
     print "time:"
     print time
-    print "ngranules:"
-    print ngranules
+    print "maxg:"
+    print maxg
 
     # Get data
-    granules=get_meta(bbox,time,ngranules)
-    print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': ')) 
+    granules=get_meta(bbox,time,maxg)
+    #print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': ')) 
 
     file_metadata = {}
     for k,g in granules.items():
@@ -328,8 +335,8 @@ def retrieve_af_data(bbox,time):
 
     # Group all files downloaded
     files=group_all(".")
-    print "group all files:"
-    print files
+    #print "group all files:"
+    #print files
 
     # Generate data dictionary
     data=Dict([])
