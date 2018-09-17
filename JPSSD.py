@@ -15,20 +15,21 @@ import scipy.io as sio
 import h5py
 from netCDF4 import Dataset
 
-def search_api(sname,area,time,num=0,platform="",version=""):
-    """ search_api: API search of the different satellite granules
-        Inputs:
+def search_api(sname,bbox,time,num=0,platform="",version=""):
+    """ 
+    API search of the different satellite granules
+        :param:
             sname       short name 
-            area        polygon with the search area
+            bbox        polygon with the search bounding box
             time        time interval (init_time,final_time)
             num         number of granules to process (if 0: all the granules)
             platform    string with the platform
             version     string with the version
-        Outputs: 
-            granules    a dictionary with the metadata of the search
+        :returns:
+            granules    dictionary with the metadata of the search
 
-        Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
-        Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     api = GranuleQuery()
     if not version:    
@@ -36,7 +37,7 @@ def search_api(sname,area,time,num=0,platform="",version=""):
             search = api.parameters(
                                 short_name=sname,
                                 downloadable=True,
-                                polygon=area,
+                                polygon=bbox,
                                 temporal=time
                                 )
         else:
@@ -44,7 +45,7 @@ def search_api(sname,area,time,num=0,platform="",version=""):
                                 short_name=sname,
                                 platform=platform,
                                 downloadable=True,
-                                polygon=area,
+                                polygon=bbox,
                                 temporal=time
                                 )
     else:
@@ -52,7 +53,7 @@ def search_api(sname,area,time,num=0,platform="",version=""):
             search = api.parameters(
                                 short_name=sname,
                                 downloadable=True,
-                                polygon=area,
+                                polygon=bbox,
                                 temporal=time,
                                 version=version
                                 )
@@ -61,7 +62,7 @@ def search_api(sname,area,time,num=0,platform="",version=""):
                                 short_name=sname,
                                 platform=platform,
                                 downloadable=True,
-                                polygon=area,
+                                polygon=bbox,
                                 temporal=time,
                                 version=version
                                 )
@@ -72,45 +73,47 @@ def search_api(sname,area,time,num=0,platform="",version=""):
         granules = api.get(num)
     return granules
 
-def get_meta(area,time,num=0):
-    """ get_meta: Get all the meta data from the API in all the necessary products
-        Inputs:
-            area        polygon with the search area
+def get_meta(bbox,time,num=0):
+    """ 
+    Get all the meta data from the API for all the necessary products
+        :param:
+            bbox        polygon with the search bounding box
             time        time interval (init_time,final_time)
             num         number of granules to process (if 0: all the granules)
-        Outputs: 
-            granules    a dictionary with the metadata of all the products
+        :returns:
+            granules    dictionary with the metadata of all the products
 
-        Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
-        Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     granules=Dict({});
     #MOD14: MODIS Terra fire data
-    granules.MOD14=search_api("MOD14",area,time,num,"Terra")
+    granules.MOD14=search_api("MOD14",bbox,time,num,"Terra")
     #MOD03: MODIS Terra geolocation data
-    granules.MOD03=search_api("MOD03",area,time,num,"Terra","6")
+    granules.MOD03=search_api("MOD03",bbox,time,num,"Terra","6")
     #MYD14: MODIS Aqua fire data
-    granules.MYD14=search_api("MYD14",area,time,num,"Aqua")
+    granules.MYD14=search_api("MYD14",bbox,time,num,"Aqua")
     #MYD03: MODIS Aqua geolocation data
-    granules.MYD03=search_api("MYD03",area,time,num,"Aqua","6")
+    granules.MYD03=search_api("MYD03",bbox,time,num,"Aqua","6")
     #VNP14: VIIRS fire data, res 750m
-    granules.VNP14=search_api("VNP14",area,time,num)
+    granules.VNP14=search_api("VNP14",bbox,time,num)
     #VNP03MODLL: VIIRS geolocation data, res 750m
-    granules.VNP03=search_api("VNP03MODLL",area,time,num)
+    granules.VNP03=search_api("VNP03MODLL",bbox,time,num)
     #VNP14hi: VIIRS fire data, res 375m
-    #granules.VNP14hi=search("VNP14IMGTDL_NRT",area,time,num)
+    #granules.VNP14hi=search("VNP14IMGTDL_NRT",bbox,time,num)
     return granules
 
 def group_files(path,reg):
-    """ group_files: 
-        Inputs:
-            path
-            reg
-        Outputs: 
-            files
+    """ 
+    Agrupate the geolocation (03) and fire (14) files of a specific product in a path
+        :param:
+            path    path to the geolocation (03) and fire (14) files
+            reg     string with the first 3 characters specifying the product (MOD, MYD or VNP)
+        :returns: 
+            files   list of pairs with geolocation (03) and fire (14) file names in the path of the specific product
 
-        Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
-        Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     files=[[k] for k in glob.glob(path+'/'+reg+'03*')]
     filesf=glob.glob(path+'/'+reg+'14*')
@@ -127,21 +130,16 @@ def group_files(path,reg):
                             files[k].append(f) 
     return files
 
-# Function to collect all the agrupations from all the different products
-# Inputs:
-#       path
-# Outputs:
-#       files
 def group_all(path):
-    """ group_all: Combine all the geolocation files (03) and fire files (14) in a path
-        Inputs:
-            path
-            reg
-        Outputs: 
-            files
+    """ 
+    Combine all the geolocation (03) and fire (14) files in a path
+        :param:
+            path    path to the geolocation (03) and fire (14) files
+        :returns: 
+            files   list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
 
-        Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
-        Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     # MOD files
     modf=group_files(path,'MOD')
@@ -152,12 +150,17 @@ def group_all(path):
     files=[modf,mydf,vif]
     return files
 
-# Function to read the agrupated 03 and 14 MODIS (MOD and MYD) satellite data
-# Inputs:
-#       files
-# Outputs:
-#       ret
 def read_modis_files(files):
+    """ 
+    Read the geolocation (03) and fire (14) files for MODIS products (MOD or MYD)
+        :param:
+            files   pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
+        :returns:
+            ret     dictionary with Latitude, Longitude and fire mask arrays read
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    """
     hdfg=SD(files[0],SDC.READ)
     hdff=SD(files[1],SDC.READ)
     lat_obj=hdfg.select('Latitude')
@@ -169,12 +172,17 @@ def read_modis_files(files):
     ret.fire=np.array(fire_mask_obj.get())
     return ret
 
-# Function to read the agrupated 03 and 14 VIIRS satellite data
-# Inputs:
-#       files
-# Outputs:
-#       ret
 def read_viirs_files(files):
+    """ 
+    Read the geolocation (03) and fire (14) files for VIIRS products (VNP)
+        :param:
+            files   pair with geolocation (03) and fire (14) file names for VIIRS products (VNP)
+        :returns:
+            ret     dictionary with Latitude, Longitude and fire mask arrays read
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    """
     h5g=h5py.File(files[0],'r')
     ret=Dict([])
     ret.lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
@@ -183,13 +191,18 @@ def read_viirs_files(files):
     ret.fire=np.array(ncf.variables['fire mask'][:])
     return ret
 
-# Funtion to read the agrupated 03 and 14 VIIRS satellite data
-# Inputs:
-#       files
-#       file_metadata
-# Outputs:
-#       data
 def read_data(files,file_metadata):
+    """ 
+    Read all the geolocation (03) and fire (14) files
+        :param:
+            files           list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
+            file_metadata   dictionary with file names as key and granules metadata as values
+        :returns:
+            data            dictionary with Latitude, Longitude and fire mask arrays read
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
+    """
     print "read_data files=%s" %  files
     data=Dict([])
     for f in files:
@@ -228,16 +241,13 @@ def read_data(files,file_metadata):
         data.update({id:item})
     return data
 
-# Function to download the granules specified
-# Inputs:
-#       granules
-# Outputs:
-#       file_metada
 def download(granules):
     """
     Download files as listed in the granules metadata
-    :param: granules 
-    "returns: dictionary with file names as key and granules metadata as values
+        :param: 
+            granules        list of products with a list of pairs with geolocation (03) and fire (14) file names in the path  
+        :returns: 
+            file_metadata   dictionary with file names as key and granules metadata as values
     """
     file_metadata = {} 
     for granule in granules:
@@ -277,30 +287,36 @@ def download(granules):
         except Exception as e:
             print 'download failed with error %s' % e 
     return file_metadata
-
-# Function to retrieve the data in a bounding box coordinates and time interval
-# Inputs:
-#       bbox
-#       time
-# Outputs:
-#       
+     
 def retrieve_af_data(bbox,time):
+    """
+    Retrieve the data in a bounding box coordinates and time interval and save it in a Matlab structure inside the out.mat Matlab file
+        :param: 
+            bbox    polygon with the search bounding box
+            time    time interval (init_time,final_time)      
+        :returns: 
+            out.mat Matlab file with all the data in a Matlab structure
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
+    """
+
     # Define settings
     lonmin,lonmax,latmin,latmax = bbox
-    area = [(lonmin,latmax),(lonmin,latmin),(lonmax,latmin),(lonmax,latmax),(lonmin,latmax)]
+    bbox = [(lonmin,latmax),(lonmin,latmin),(lonmax,latmin),(lonmax,latmax),(lonmin,latmax)]
     ngranules = 0
 
-    print "area"
-    print area
+    print "bbox"
+    print bbox
     print "time:"
     print time
     print "ngranules:"
     print ngranules
 
     # Get data
-    granules=get_meta(area,time,ngranules)
+    granules=get_meta(bbox,time,ngranules)
     print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': ')) 
-
+    sys.exit()
     file_metadata = {}
     for k,g in granules.items():
         print 'Downloading %s files' % k
@@ -310,7 +326,7 @@ def retrieve_af_data(bbox,time):
 
     print "download complete"
 
-    # group all files downloaded
+    # Group all files downloaded
     files=group_all(".")
     print "group all files:"
     print files
