@@ -316,7 +316,7 @@ def retrieve_af_data(bbox,time):
     # Get data
     granules=get_meta(bbox,time,ngranules)
     print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': ')) 
-    sys.exit()
+
     file_metadata = {}
     for k,g in granules.items():
         print 'Downloading %s files' % k
