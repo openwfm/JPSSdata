@@ -123,7 +123,7 @@ def read_viirs_files(files):
     ret.fire=np.array(ncf.variables['fire mask'][:])
     return ret
 
-def read_data(files):
+def read_data(files,file_metadata):
     print "read_data files=%s" %  files
     data=Dict([])
     for f in files:
@@ -149,16 +149,33 @@ def read_data(files):
         else:
             print 'ERROR: the prefix must be MOD, MYD, or VNP'
             continue 
+        # connect the file back to metadata
+        f0=os.path.basename(f[0])
+        f1=os.path.basename(f[1])
+        item.time_start_geo=file_metadata[f0]["time_start"]
+        item.time_start_fire=file_metadata[f1]["time_start"]
+        item.time_end_geo=file_metadata[f0]["time_end"]
+        item.time_end_fire=file_metadata[f1]["time_end"]
+        item.file_geo=f0
+        item.file_fire=f1
         item.prefix = prefix
         data.update({id:item})
     return data
 
 #data = []
 def download(granules):
+    """
+    Download files as listed in the granules metadata
+    :param: granules 
+    "returns: dictionary with file names as key and granules metadata as values
+    """
+    file_metadata = {} 
     for granule in granules:
         print json.dumps(granule,indent=4, separators=(',', ': ')) 
         url = granule['links'][0]['href']
         filename=os.path.basename(urlparse.urlsplit(url).path)
+        file_metadata[filename]=granule
+
         # to store as object in memory (maybe not completely downloaded until accessed?)
         # with requests.Session() as s:
         #    data.append(s.get(url))
@@ -189,7 +206,7 @@ def download(granules):
                 sys.exit(1)
         except Exception as e:
             print 'download failed with error %s' % e 
-
+    return file_metadata
 
 def retrieve_af_data(bbox,time):
     # Define settings
@@ -208,9 +225,10 @@ def retrieve_af_data(bbox,time):
     granules=get_meta(area,time,ngranules)
     print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': ')) 
 
+    file_metadata = {}
     for k,g in granules.items():
         print 'Downloading %s files' % k
-        download(g)
+        file_metadata.update(download(g))
         #print "download g:"
         #print g
 
@@ -223,9 +241,11 @@ def retrieve_af_data(bbox,time):
 
     # Generate data dictionary
     data=Dict([])
-    data.update(read_data(files[0]))
-    data.update(read_data(files[1]))
-    data.update(read_data(files[2]))
+    data.update(read_data(files[0],file_metadata))
+    data.update(read_data(files[1],file_metadata))
+    data.update(read_data(files[2],file_metadata))
+
+    print data
 
     # Save the data dictionary into a matlab structure file out.mat
     sio.savemat('out.mat', mdict=data)
@@ -233,4 +253,4 @@ def retrieve_af_data(bbox,time):
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
     time = ("2012-09-11T00:00:00Z", "2012-09-12T00:00:00Z")
-    sys.exit(retrieve_af_data(bbox,time))
+    retrieve_af_data(bbox,time)
