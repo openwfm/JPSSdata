@@ -15,17 +15,21 @@ import scipy.io as sio
 import h5py
 from netCDF4 import Dataset
 
-# Function to search the different products in the API
-# Inputs:
-#       sname       short name 
-#       area        polygon with the search area
-#       time        time boundaries (init_time,final_time)
-#       num         number of granules to process (if 0: all the granules)
-#       platform    string with the platform
-#       version     string with the version
-# Outputs: 
-#       granules    a GranuleQuery object with the search
 def search_api(sname,area,time,num=0,platform="",version=""):
+    """ search_api: API search of the different satellite granules
+        Inputs:
+            sname       short name 
+            area        polygon with the search area
+            time        time interval (init_time,final_time)
+            num         number of granules to process (if 0: all the granules)
+            platform    string with the platform
+            version     string with the version
+        Outputs: 
+            granules    a dictionary with the metadata of the search
+
+        Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+        Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    """
     api = GranuleQuery()
     if not version:    
         if not platform:
@@ -68,8 +72,18 @@ def search_api(sname,area,time,num=0,platform="",version=""):
         granules = api.get(num)
     return granules
 
-# Function to get the wanted meta data from the API
 def get_meta(area,time,num=0):
+    """ get_meta: Get all the meta data from the API in all the necessary products
+        Inputs:
+            area        polygon with the search area
+            time        time interval (init_time,final_time)
+            num         number of granules to process (if 0: all the granules)
+        Outputs: 
+            granules    a dictionary with the metadata of all the products
+
+        Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+        Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    """
     granules=Dict({});
     #MOD14: MODIS Terra fire data
     granules.MOD14=search_api("MOD14",area,time,num,"Terra")
@@ -87,8 +101,17 @@ def get_meta(area,time,num=0):
     #granules.VNP14hi=search("VNP14IMGTDL_NRT",area,time,num)
     return granules
 
-# Function to combine the geolocation product (03) with the fire product (14)
 def group_files(path,reg):
+    """ group_files: 
+        Inputs:
+            path
+            reg
+        Outputs: 
+            files
+
+        Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+        Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    """
     files=[[k] for k in glob.glob(path+'/'+reg+'03*')]
     filesf=glob.glob(path+'/'+reg+'14*')
     if len(filesf)>0:
@@ -105,7 +128,21 @@ def group_files(path,reg):
     return files
 
 # Function to collect all the agrupations from all the different products
+# Inputs:
+#       path
+# Outputs:
+#       files
 def group_all(path):
+    """ group_all: Combine all the geolocation files (03) and fire files (14) in a path
+        Inputs:
+            path
+            reg
+        Outputs: 
+            files
+
+        Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+        Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    """
     # MOD files
     modf=group_files(path,'MOD')
     # MYD files
@@ -116,6 +153,10 @@ def group_all(path):
     return files
 
 # Function to read the agrupated 03 and 14 MODIS (MOD and MYD) satellite data
+# Inputs:
+#       files
+# Outputs:
+#       ret
 def read_modis_files(files):
     hdfg=SD(files[0],SDC.READ)
     hdff=SD(files[1],SDC.READ)
@@ -129,6 +170,10 @@ def read_modis_files(files):
     return ret
 
 # Function to read the agrupated 03 and 14 VIIRS satellite data
+# Inputs:
+#       files
+# Outputs:
+#       ret
 def read_viirs_files(files):
     h5g=h5py.File(files[0],'r')
     ret=Dict([])
@@ -138,6 +183,12 @@ def read_viirs_files(files):
     ret.fire=np.array(ncf.variables['fire mask'][:])
     return ret
 
+# Funtion to read the agrupated 03 and 14 VIIRS satellite data
+# Inputs:
+#       files
+#       file_metadata
+# Outputs:
+#       data
 def read_data(files,file_metadata):
     print "read_data files=%s" %  files
     data=Dict([])
@@ -177,7 +228,11 @@ def read_data(files,file_metadata):
         data.update({id:item})
     return data
 
-#data = []
+# Function to download the granules specified
+# Inputs:
+#       granules
+# Outputs:
+#       file_metada
 def download(granules):
     """
     Download files as listed in the granules metadata
@@ -223,6 +278,12 @@ def download(granules):
             print 'download failed with error %s' % e 
     return file_metadata
 
+# Function to retrieve the data in a bounding box coordinates and time interval
+# Inputs:
+#       bbox
+#       time
+# Outputs:
+#       
 def retrieve_af_data(bbox,time):
     # Define settings
     lonmin,lonmax,latmin,latmax = bbox
