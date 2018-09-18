@@ -1,7 +1,11 @@
 import numpy as np 
 from time import time
+from datetime import datetime
 
 global t_init 
+
+def sort_dates(data):
+	return sorted(data.items(),key=lambda x: datetime.strptime(x[1]['time_start_geo'][0:18],'%Y-%m-%dT%H:%M:%S'))
 
 def nearest_index(lon,lat,lons,lats,bounds):
 	if (lon>bounds[0]) and (lon<bounds[1]) and (lat>bounds[2]) and (lat<bounds[3]):

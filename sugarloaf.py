@@ -36,6 +36,6 @@ time = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
 
 data=retrieve_af_data(bbox,time)
 
-print data
-
-
+# Sort dictionary by time_start_geo in an ordered array of dictionaries
+sdata=sort_dates(data)
+print sdata
