@@ -8,6 +8,7 @@ from matplotlib import cm
 plt.switch_backend('agg')
 from scipy import interpolate
 from JPSSD import retrieve_af_data
+import pickle
 
 fig = plt.figure()
 ax = fig.gca(projection='3d')
@@ -34,5 +35,6 @@ print 'time (ESMF) %s' % time_esmf
 time = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
 
 data=retrieve_af_data(bbox,time)
-print data
-np.save('data.npy',data) 
+f = open("data.pkl","wb")
+pickle.dump(data,f)
+f.close()

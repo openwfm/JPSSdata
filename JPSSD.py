@@ -89,7 +89,7 @@ def get_meta(bbox,time,maxg=50):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
-    granules=Dict({});
+    granules=Dict([]);
     #MOD14: MODIS Terra fire data
     granules.MOD14=search_api("MOD14",bbox,time,maxg,"Terra")
     #MOD03: MODIS Terra geolocation data
@@ -340,7 +340,7 @@ def retrieve_af_data(bbox,time):
     #print files
 
     # Generate data dictionary
-    data={}
+    data=Dict({})
     data.update(read_data(files[0],file_metadata))
     data.update(read_data(files[1],file_metadata))
     data.update(read_data(files[2],file_metadata))
