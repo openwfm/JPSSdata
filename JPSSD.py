@@ -340,7 +340,7 @@ def retrieve_af_data(bbox,time):
     #print files
 
     # Generate data dictionary
-    data=Dict([])
+    data={}
     data.update(read_data(files[0],file_metadata))
     data.update(read_data(files[1],file_metadata))
     data.update(read_data(files[2],file_metadata))
