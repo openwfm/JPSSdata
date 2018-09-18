@@ -345,12 +345,12 @@ def retrieve_af_data(bbox,time):
     data.update(read_data(files[1],file_metadata))
     data.update(read_data(files[2],file_metadata))
 
-    print data
-
-    # Save the data dictionary into a matlab structure file out.mat
-    sio.savemat('out.mat', mdict=data)
+    return data
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
     time = ("2012-09-11T00:00:00Z", "2012-09-12T00:00:00Z")
-    retrieve_af_data(bbox,time)
+    data=retrieve_af_data(bbox,time)
+    # Save the data dictionary into a matlab structure file out.mat
+    sio.savemat('out.mat', mdict=data)
+
