@@ -14,8 +14,7 @@ ax = fig.gca(projection='3d')
 d = nc.Dataset('wrfout_d03_2018-09-03_15:00:00')
 fxlon = d.variables['FXLONG'][0,:,:] # boundary masking conditions previously calculated(0:409)
 fxlat = d.variables['FXLAT'][0,:,:]
-data = d.variables['TIGN_G'][10,:,:]
-mask = 
+data = d.variables['TIGN_G'][0,:,:]
 d.close()
 
 surf = ax.plot_surface(fxlon,fxlat,data,cmap=cm.coolwarm)
