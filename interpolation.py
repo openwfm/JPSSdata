@@ -5,7 +5,7 @@ from datetime import datetime
 global t_init 
 
 def sort_dates(data):
-	return sorted(data.items(),key=lambda x: x[1]['time_num'])
+	return sorted(data.values(),key=lambda x: x['time_num'])
 
 def nearest_index(lon,lat,lons,lats,bounds):
 	if (lon>bounds[0]) and (lon<bounds[1]) and (lat>bounds[2]) and (lat<bounds[3]):
