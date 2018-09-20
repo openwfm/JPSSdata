@@ -14,6 +14,8 @@ from utils import *
 import scipy.io as sio
 import h5py
 from netCDF4 import Dataset
+from datetime import datetime
+import time
 
 def search_api(sname,bbox,time,maxg=50,platform="",version=""):
     """ 
@@ -235,10 +237,13 @@ def read_data(files,file_metadata):
             continue 
         if (f0 in file_metadata.keys()) and (f1 in file_metadata.keys()):
             # connect the file back to metadata
-            item.time_start_geo=file_metadata[f0]["time_start"]
-            item.time_start_fire=file_metadata[f1]["time_start"]
-            item.time_end_geo=file_metadata[f0]["time_end"]
-            item.time_end_fire=file_metadata[f1]["time_end"]
+            item.time_start_geo_iso=file_metadata[f0]["time_start"]
+            item.time_datetime=datetime.strptime(item["time_start_geo_iso"][0:18],'%Y-%m-%dT%H:%M:%S')
+            # seconds since January 1, 1970
+            item.time_num=time.mktime(item["time_datetime"].timetuple())
+            item.time_start_fire_iso=file_metadata[f1]["time_start"]
+            item.time_end_geo_iso=file_metadata[f0]["time_end"]
+            item.time_end_fire_iso=file_metadata[f1]["time_end"]
         item.file_geo=f0
         item.file_fire=f1
         item.prefix = prefix

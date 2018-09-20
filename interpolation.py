@@ -13,7 +13,7 @@ def nearest_index(lon,lat,lons,lats,bounds):
 		ii,jj = np.unravel_index(dist.argmin(),dist.shape)
 		return (ii,jj)
 	else:
-		return 1
+		return none
 
 if __name__ == "__main__":
 	t_init = time()
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 	latm=np.zeros(lat.shape)
 	for ll in range(0,len(lon)):
 		inds=nearest_index(lon[ll],lat[ll],lons,lats,bounds)
-		if inds==1:
+		if inds is none:
 			lonm[ll]=np.nan;
 			latm[ll]=np.nan;
 		else:
