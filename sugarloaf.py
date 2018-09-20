@@ -1,6 +1,6 @@
 # sample data into mesh - Sugarloaf
 # navigate to /share_home/jmandel/sugarloaf to access sample data
-from time import time
+import time
 import netCDF4 as nc
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
@@ -48,9 +48,9 @@ print tt==stt
 # Grid interpolation
 slon=sdata[10][1]['lon'] # example of granule
 slat=sdata[10][1]['lat']
-t_init = time()
+t_init = time.time()
 (rlon,rlat)=nearest_scipy(slon,slat,fxlon,fxlat)
-t_final = time()
+t_final = time.time()
 print 'Elapsed time: %ss.' % str(t_final-t_init)
 print rlon
 print rlat
