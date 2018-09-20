@@ -28,8 +28,8 @@ bbox = [fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
 print 'min max longitude latitude %s'  % bbox
 print 'time (ESMF) %s' % time_esmf
 
-# surf = ax.plot_surface(fxlon,fxlat,tign_g,cmap=cm.coolwarm)
-# plt.show()
+surf = ax.plot_surface(fxlon,fxlat,tign_g,cmap=cm.coolwarm)
+plt.show()
 
 # cannot get starting time from wrfout
 time = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
@@ -38,4 +38,15 @@ data=retrieve_af_data(bbox,time)
 
 # Sort dictionary by time_start_geo in an ordered array of dictionaries
 sdata=sort_dates(data)
-print sdata
+tt=[ dd[1]['time_num'] for dd in sdata ]
+print 'Sorted?'
+stt=sorted(tt)
+print tt==stt
+
+# Grid interpolation
+slon=sdata[10][1]['lon'] # example of granule
+slat=sdata[10][1]['lat']
+(rlon,rlat)=nearest_scipy(slon,slat,fxlon,fxlat)
+print rlon
+print rlat
+
