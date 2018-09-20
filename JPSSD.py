@@ -246,8 +246,8 @@ def read_data(files,file_metadata):
             item.time_end_fire_iso=file_metadata[f1]["time_end"]
         item.file_geo=f0
         item.file_fire=f1
-        item.prefix = prefix
-        item.name = key
+        item.prefix=prefix
+        item.name=key
         data.update({id:item})
     return data
 
