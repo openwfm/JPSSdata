@@ -1,5 +1,6 @@
 # sample data into mesh - Sugarloaf
 # navigate to /share_home/jmandel/sugarloaf to access sample data
+from time import time
 import netCDF4 as nc
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
@@ -9,8 +10,10 @@ from scipy import interpolate
 from JPSSD import retrieve_af_data
 from interpolation import *
 
-fig = plt.figure()
-ax = fig.gca(projection='3d')
+global t_init 
+
+#fig = plt.figure()
+#ax = fig.gca(projection='3d')
 
 d = nc.Dataset('wrfout_d03_2018-09-03_15:00:00')
 m,n = d.variables['XLONG'][0,:,:].shape
@@ -27,8 +30,8 @@ bbox = [fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
 print 'min max longitude latitude %s'  % bbox
 print 'time (ESMF) %s' % time_esmf
 
-surf = ax.plot_surface(fxlon,fxlat,tign_g,cmap=cm.coolwarm)
-plt.show()
+#surf = ax.plot_surface(fxlon,fxlat,tign_g,cmap=cm.coolwarm)
+#plt.show()
 
 # cannot get starting time from wrfout
 time = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
@@ -45,7 +48,9 @@ print tt==stt
 # Grid interpolation
 slon=sdata[10][1]['lon'] # example of granule
 slat=sdata[10][1]['lat']
+t_init = time()
 (rlon,rlat)=nearest_scipy(slon,slat,fxlon,fxlat)
+t_final = time()
+print 'Elapsed time: %ss.' % str(t_final-t_init)
 print rlon
 print rlat
-
