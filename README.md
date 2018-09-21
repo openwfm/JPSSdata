@@ -1,6 +1,9 @@
 # JPPSdata
 ## Edit - Utilize JPPSD.py, followed by utilizing matlab functions for visualization
 
+https://github.com/openwfm/JPSSdata
+mirror: http://repo.or.cz/git-browser/by-commit.html?r=JPSSData.git
+
 
 ### Authors:
 Lauren Hearn,
