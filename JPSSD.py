@@ -156,15 +156,14 @@ def group_all(path):
 def read_modis_files(files):
     """ 
     Read the geolocation (03) and fire (14) files for MODIS products (MOD or MYD)
-        :param:
-            files   pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
-        :returns:
-            ret     dictionary with Latitude, Longitude and fire mask arrays read
-
+        :param: files  pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
+        :returns: ret  dictionary with Latitude, Longitude and fire mask arrays read
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
+    print 'reading ' + files[0]
     hdfg=SD(files[0],SDC.READ)
+    print 'reading ' + files[1]
     hdff=SD(files[1],SDC.READ)
     lat_obj=hdfg.select('Latitude')
     lon_obj=hdfg.select('Longitude')    

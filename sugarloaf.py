@@ -12,7 +12,9 @@ from interpolation import *
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
-d = nc.Dataset('wrfout_d03_2018-09-03_15:00:00')
+file='wrfout_d03_2018-09-03_15:00:00'
+print 'opening ' + file
+d = nc.Dataset(file)
 m,n = d.variables['XLONG'][0,:,:].shape
 fm,fn = d.variables['FXLONG'][0,:,:].shape
 fm=fm-fm/(m+1)    # dimensions corrected for extra strip
@@ -27,8 +29,8 @@ bbox = [fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
 print 'min max longitude latitude %s'  % bbox
 print 'time (ESMF) %s' % time_esmf
 
-surf = ax.plot_surface(fxlon,fxlat,tign_g,cmap=cm.coolwarm)
-plt.show()
+#surf = ax.plot_surface(fxlon,fxlat,tign_g,cmap=cm.coolwarm)
+#plt.show()
 
 # cannot get starting time from wrfout
 time = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
