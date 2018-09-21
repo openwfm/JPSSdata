@@ -7,9 +7,11 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from scipy import interpolate
-from JPSSD import retrieve_af_data
+from JPSSD import retrieve_af_data, read_fire_mesh
 from interpolation import *
+import saveload as sl
 
+<<<<<<< HEAD
 global t_init 
 
 #fig = plt.figure()
@@ -32,19 +34,18 @@ print 'time (ESMF) %s' % time_esmf
 
 #surf = ax.plot_surface(fxlon,fxlat,tign_g,cmap=cm.coolwarm)
 #plt.show()
+=======
+fxlon,fxlat,bbox,time_esmf=read_fire_mesh('wrfout_d03_2018-09-03_15:00:00')
+>>>>>>> 6fd3fa83409170f182d874bca166376ab19347fb
 
 # cannot get starting time from wrfout
 time = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
 
 data=retrieve_af_data(bbox,time)
 
-# Sort dictionary by time_start_geo in an ordered array of dictionaries
-sdata=sort_dates(data)
-tt=[ dd[1]['time_num'] for dd in sdata ]
-print 'Sorted?'
-stt=sorted(tt)
-print tt==stt
+print 'saving data'
 
+<<<<<<< HEAD
 # Grid interpolation
 slon=sdata[10][1]['lon'] # example of granule
 slat=sdata[10][1]['lat']
@@ -54,3 +55,8 @@ t_final = time.time()
 print 'Elapsed time: %ss.' % str(t_final-t_init)
 print rlon
 print rlat
+=======
+sl.save((data,fxlon,fxlat),'data')
+
+print 'run setup next'
+>>>>>>> 6fd3fa83409170f182d874bca166376ab19347fb

@@ -6,6 +6,7 @@ import os
 import sys
 import re
 import glob
+import netCDF4 as nc
 from cmr import CollectionQuery, GranuleQuery
 from pyhdf.SD import SD, SDC
 from utils import *
@@ -156,15 +157,14 @@ def group_all(path):
 def read_modis_files(files):
     """ 
     Read the geolocation (03) and fire (14) files for MODIS products (MOD or MYD)
-        :param:
-            files   pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
-        :returns:
-            ret     dictionary with Latitude, Longitude and fire mask arrays read
-
+        :param: files  pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
+        :returns: ret  dictionary with Latitude, Longitude and fire mask arrays read
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
+    print 'reading ' + files[0]
     hdfg=SD(files[0],SDC.READ)
+    print 'reading ' + files[1]
     hdff=SD(files[1],SDC.READ)
     lat_obj=hdfg.select('Latitude')
     lon_obj=hdfg.select('Longitude')    
@@ -197,9 +197,8 @@ def read_viirs_files(files):
 def read_data(files,file_metadata):
     """ 
     Read all the geolocation (03) and fire (14) files
-        :param:
-            files           list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
-            file_metadata   dictionary with file names as key and granules metadata as values
+        :param files:           list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
+        :param file_metadata:   dictionary with file names as key and granules metadata as values
         :returns:
             data            dictionary with Latitude, Longitude and fire mask arrays read
 
@@ -242,11 +241,15 @@ def read_data(files,file_metadata):
             item.time_start_fire_iso=file_metadata[f1]["time_start"]
             item.time_end_geo_iso=file_metadata[f0]["time_end"]
             item.time_end_fire_iso=file_metadata[f1]["time_end"]
-        item.file_geo=f0
-        item.file_fire=f1
-        item.prefix=prefix
-        item.name=key
-        data.update({id:item})
+            item.file_geo=f0
+            item.file_fire=f1
+            item.prefix=prefix
+            item.name=key
+            data.update({id:item})
+        else:
+            print 'WARNING: extra file not found in file_metadata'
+            continue
+
     return data
 
 def download(granules):
@@ -349,6 +352,36 @@ def retrieve_af_data(bbox,time):
     data.update(read_data(files[2],file_metadata))
 
     return data
+
+def read_fire_mesh(filename):
+    print 'opening ' + filename
+    d = nc.Dataset(filename)
+    m,n = d.variables['XLONG'][0,:,:].shape
+    fm,fn = d.variables['FXLONG'][0,:,:].shape
+    fm=fm-fm/(m+1)    # dimensions corrected for extra strip
+    fn=fn-fn/(n+1)
+    fxlon = d.variables['FXLONG'][0,:fm,:fn] #  masking  extra strip
+    fxlat = d.variables['FXLAT'][0,:fm,:fn]
+    tign_g = d.variables['TIGN_G'][0,:fm,:fn]
+    time_esmf = ''.join(d.variables['Times'][:][0])  # date string as YYYY-MM-DD_hh:mm:ss
+    d.close()
+    bbox = [fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
+    print 'min max longitude latitude %s'  % bbox
+    print 'time (ESMF) %s' % time_esmf
+
+    plot = False
+    if plot:
+        from mpl_toolkits.mplot3d import Axes3D
+        import matplotlib.pyplot as plt
+        from matplotlib import cm
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        surf = ax.plot_surface(fxlon,fxlat,tign_g,cmap=cm.coolwarm)
+        plt.show()
+    
+    return fxlon,fxlat,bbox,time_esmf
+
+
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
