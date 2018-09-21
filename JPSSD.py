@@ -219,10 +219,12 @@ def read_data(files,file_metadata):
     data=Dict([])
     for f in files:
         print "read_data f=%s" % f
-        if len(f) != 2:
-            print 'WARNING: need 2 files, have %s, ignoring' % len(f)
+        if len(f) > 2:
             nf=[ int(ff.split(".")[-2]) for ff in f[1:] ]
             f=[f[0],f[nf.index(max(nf))+1]]
+        else:
+            print 'WARNING: need more than 2 files, have %s, ignoring' % len(f)
+            continue
         f0=os.path.basename(f[0])
         f1=os.path.basename(f[1])
         prefix = f0[:3] 
@@ -364,6 +366,18 @@ def retrieve_af_data(bbox,time):
     return data
 
 def read_fire_mesh(filename):
+    """
+    Read necessary variables in the fire mesh of the wrfout file filename
+        :param: 
+            filename    wrfout file    
+        :returns: 
+            fxlon,fxlat:    lon and lat coordinates in the fire mesh
+            bbox:           bounding box
+            time_esmf:      simulation times in ESMF format
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
+    """
     print 'opening ' + filename
     d = nc.Dataset(filename)
     m,n = d.variables['XLONG'][0,:,:].shape
@@ -381,17 +395,28 @@ def read_fire_mesh(filename):
 
     plot = False
     if plot:
-        from mpl_toolkits.mplot3d import Axes3D
-        import matplotlib.pyplot as plt
-        from matplotlib import cm
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        surf = ax.plot_surface(fxlon,fxlat,tign_g,cmap=cm.coolwarm)
-        plt.show()
+        plot_3D(fxlon,fxlat,tign_g)
     
     return fxlon,fxlat,bbox,time_esmf
 
+def plot_3D(xx,yy,zz):
+    """
+    Plot surface of (xx,yy,zz) data
+        :param: 
+            xx,yy   x and y arrays
+            zz      values at the (x,y) points
+        :returns: A plot show of the 3D data
 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com) 2018-09-21
+    """
+    from mpl_toolkits.mplot3d import Axes3D
+    import matplotlib.pyplot as plt
+    from matplotlib import cm
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    surf = ax.plot_surface(xx,yy,zz,cmap=cm.coolwarm)
+    plt.show()
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]

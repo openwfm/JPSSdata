@@ -53,7 +53,6 @@ gfire[fi]
 U[ff[fi]]=ti
 print 'Update the mask'
 ii=neighbor_indices(ff[fi],fxlon.shape) # Could use a larger d
-print ii
 T[ii]=ti
 print 'Rest of points'
 # Find the jj where ti<T
