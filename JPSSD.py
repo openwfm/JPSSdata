@@ -241,11 +241,15 @@ def read_data(files,file_metadata):
             item.time_start_fire_iso=file_metadata[f1]["time_start"]
             item.time_end_geo_iso=file_metadata[f0]["time_end"]
             item.time_end_fire_iso=file_metadata[f1]["time_end"]
-        item.file_geo=f0
-        item.file_fire=f1
-        item.prefix=prefix
-        item.name=key
-        data.update({id:item})
+            item.file_geo=f0
+            item.file_fire=f1
+            item.prefix=prefix
+            item.name=key
+            data.update({id:item})
+        else:
+            print 'WARNING: extra file not found in file_metadata'
+            continue
+
     return data
 
 def download(granules):
