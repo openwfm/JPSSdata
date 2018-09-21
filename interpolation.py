@@ -6,10 +6,31 @@ from scipy import spatial
 global t_init 
 
 def sort_dates(data):
-        # Sort dictionary by time_num into an array of tuples (key, dictionary of values)
+	""" 
+    Sorting a dictionary depending on the time number in seconds from January 1, 1970
+        :param:
+            data 		dictionary of granules where each granule has a time_num key
+        :returns: An array of dictionaries ordered by time_num key (seconds from January 1, 1970)
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-20
+    """
 	return sorted(data.iteritems(), key=lambda x: x[1]['time_num'])
 
 def nearest_euclidean(lon,lat,lons,lats,bounds):
+	""" 
+    Returns the longitude and latitude arrays interpolated using Euclidean distance
+        :param:
+            lon 		2D array of longitudes to look the nearest neighbours
+            lat 		2D array of latitudes to look the nearest neighbours
+            lons		2D array of longitudes interpolating to
+            lats		2D array of latitudes interpolating to
+            bounds		array of 4 bounding boundaries where to interpolate: [minlon maxlon minlat maxlat]
+        :returns: A tuple with a 2D array of longitudes and 2D array of latitudes interpolated from (lon,lat) to (lons,lats)
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-20
+    """
 	vlon=np.reshape(lon,np.prod(lon.shape))
 	vlat=np.reshape(lat,np.prod(lat.shape))
 	rlon=np.zeros(vlon.shape)
@@ -27,6 +48,19 @@ def nearest_euclidean(lon,lat,lons,lats,bounds):
 	
 
 def nearest_scipy(lon,lat,lons,lats,dub=np.inf):
+	""" 
+    Returns the coordinates interpolated from (lon,lat) to (lons,lats) and the value of the indices where NaN values
+        :param:
+            lon 		2D array of longitudes to look the nearest neighbours
+            lat 		2D array of latitudes to look the nearest neighbours
+            lons		2D array of longitudes interpolating to
+            lats		2D array of latitudes interpolating to
+            dub			optional: distance upper bound to look for the nearest neighbours
+        :returns: A tuple with a 2D array of coordinates interpolated from (lon,lat) to (lons,lats) and the value of the indices where NaN values
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-20
+    """
 	vlon=np.reshape(lon,np.prod(lon.shape))
 	vlat=np.reshape(lat,np.prod(lat.shape))
 	vlonlat=np.column_stack((vlon,vlat))
@@ -34,19 +68,27 @@ def nearest_scipy(lon,lat,lons,lats,dub=np.inf):
 	vlats=np.reshape(lats,np.prod(lats.shape))
 	vlonlats=np.column_stack((vlons,vlats))
 	inds=spatial.cKDTree(vlonlats).query(vlonlat,distance_upper_bound=dub)[1]
-	ii=(inds!=vlons.shape[0])
-	ret=np.empty((vlon.shape[0],2))
-	ret[:]=np.nan
-	ret[ii]=vlonlats[inds[ii]]
-	rlon=[x[0] for x in ret]
-	rlat=[x[1] for x in ret]
-	return (np.reshape(rlon,lon.shape),np.reshape(rlat,lat.shape))
+	return (inds,vlons.shape[0])
 
+def distance_upper_bound(dx,dy):
+	""" 
+    Computes the distance upper bound
+        :param:
+            dx 		array of two elements with fire mesh grid resolutions
+            dy 		array of two elements with satellite grid resolutions
+        :returns: distance upper bound to look for the nearest neighbours
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-20
+    """
+	rx=np.sqrt(dx[0]**2+dx[1]**2)
+	ry=np.sqrt(dy[0]**2+dy[1]**2)
+	return max(rx,ry)
 
 if __name__ == "__main__":
 	t_init = time()
 	# Initialization of grids
-	N=500
+	N=100
 	(dx1,dx2)=(1,1)
 	(dy1,dy2)=(3,3)
 	x=np.arange(0,N,dx1)
@@ -74,13 +116,17 @@ if __name__ == "__main__":
 	print 'Elapsed time: %ss.' % str(t_final-t_init)
 
 	# Result by scipy.spatial.cKDTree function
-	rx=np.sqrt(dx1**2+dx2**2)
-	ry=np.sqrt(dy1**2+dy2**2)
-	dub=max(rx,ry)
-	(rlon,rlat)=nearest_scipy(lon,lat,lons,lats,dub)
-	rlon=np.reshape(rlon,np.prod(lon.shape))
-	rlat=np.reshape(rlat,np.prod(lat.shape))
-	vlonlatm2=np.column_stack((rlon,rlat))
+	dub=distance_upper_bound([dx1,dx2],[dy1,dy2])
+	(inds,K)=nearest_scipy(lon,lat,lons,lats,dub)
+	print inds
+	print K
+	ii=(inds!=K)
+	vlonlatm2=np.empty((np.prod(lon.shape),2))
+	vlonlatm2[:]=np.nan
+	vlons=np.reshape(lons,np.prod(lons.shape))
+	vlats=np.reshape(lats,np.prod(lats.shape))
+	vlonlats=np.column_stack((vlons,vlats))
+	vlonlatm2[ii]=vlonlats[inds[ii]]
 	print '>>cKDTree<<'
 	print vlonlatm2
 	t_ffinal = time()

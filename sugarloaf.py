@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from scipy import interpolate
 from JPSSD import retrieve_af_data, read_fire_mesh
-from interpolation import *
 import saveload as sl
 
 fxlon,fxlat,bbox,time_esmf=read_fire_mesh('wrfout_d03_2018-09-03_15:00:00')
