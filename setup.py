@@ -1,9 +1,12 @@
 import pdb
-# from sugarloaf import data
+import saveload as sl
+from interpolation import sort_dates,nearest_scipy
 
-# Sort dictionary by time_start_geo in an ordered array of dictionaries
+data,fxlon,fxlat=sl.load('data')
+
+# Sort dictionary by time_num into an array of dictionaries
 sdata=sort_dates(data)
-tt=[ dd[1]['time_num'] for dd in sdata ]
+tt=[ dd[1]['time_num'] for dd in sdata ]  # array of times
 print 'Sorted?'
 stt=sorted(tt)
 print tt==stt

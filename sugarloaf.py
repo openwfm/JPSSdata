@@ -8,6 +8,7 @@ from matplotlib import cm
 from scipy import interpolate
 from JPSSD import retrieve_af_data
 from interpolation import *
+import saveload as sl
 
 fig = plt.figure()
 ax = fig.gca(projection='3d')
@@ -37,8 +38,8 @@ time = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
 
 data=retrieve_af_data(bbox,time)
 
-print 'run setup next'
+print 'saving data'
 
-if __name__ == "__main__":
-    print 'you should import this like\nfrom sugarloaf import data'
-    sys.exit(1)
+sl.save((data,fxlon,fxlat),'data')
+
+print 'run setup next'
