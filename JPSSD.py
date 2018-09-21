@@ -204,33 +204,42 @@ def read_data(files,file_metadata):
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
+
+    VIIRS file names according to https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/vnp14_user_guide_v1.3.pdf
+    VNP14IMG.AYYYYDDD.HHMM.vvv.yyyydddhhmmss.nc
+    VNP14.AYYYYDDD.HHMM.vvv.yyyydddhhmmss.nc
+    Where:
+    YYYYDDD =	year and	Julian	day	(001-366) of	data	acquisition
+    HHMM =	hour	and	minute	of	data	acquisition	(approximate	beginning	time)
+    vvv =	version	number
+    yyyyddd =	year	and	Julian	day	of	data	processing
+    hhmmss =	hour,	minute,	and	second	of	data	processing
     """
     print "read_data files=%s" %  files
     data=Dict([])
     for f in files:
         print "read_data f=%s" % f
         if len(f) != 2:
-            print 'ERROR: need 2 files, have %s' % len(f)
+            print 'WARNING: need 2 files, have %s, ignoring' % len(f)
             continue 
         f0=os.path.basename(f[0])
         f1=os.path.basename(f[1])
         prefix = f0[:3] 
         print 'prefix %s' % prefix
         if prefix != f1[:3]:
-            print 'ERROR: the prefix of both files must coincide'
+            print 'ERROR: the prefix of %s %s must coincide' % (f0,f1)
             continue 
         m=f[0].split('/')
         mm=m[-1].split('.')
         key=mm[1]+'_'+mm[2]
         id = prefix + '_' + key
-        print "id"
-        print id 
+        print "id " + id
         if prefix=="MOD" or prefix=="MYD":
             item=read_modis_files(f)
         elif prefix=="VNP":
             item=read_viirs_files(f)
         else:
-            print 'ERROR: the prefix must be MOD, MYD, or VNP'
+            print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
             continue 
         if (f0 in file_metadata.keys()) and (f1 in file_metadata.keys()):
             # connect the file back to metadata
@@ -247,7 +256,7 @@ def read_data(files,file_metadata):
             item.name=key
             data.update({id:item})
         else:
-            print 'WARNING: extra file not found in file_metadata'
+            print 'WARNING: file %s or %s not found in downloaded metadata, ignoring both' % (f0, f1)
             continue
 
     return data
