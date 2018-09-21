@@ -221,7 +221,8 @@ def read_data(files,file_metadata):
         print "read_data f=%s" % f
         if len(f) != 2:
             print 'WARNING: need 2 files, have %s, ignoring' % len(f)
-            continue 
+            nf=[ int(ff.split(".")[-2]) for ff in f[1:] ]
+            f=[f[0],f[nf.index(max(nf))+1]]
         f0=os.path.basename(f[0])
         f1=os.path.basename(f[1])
         prefix = f0[:3] 

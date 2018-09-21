@@ -23,7 +23,8 @@ print tt==stt
 # Creating the resulting arrays
 U=np.empty(np.prod(fxlon.shape))
 U[:]=np.inf
-L=np.zeros(np.prod(fxlon.shape))
+L=np.empty(np.prod(fxlon.shape))
+L[:]=-np.inf
 T=np.empty(np.prod(fxlon.shape))
 T[:]=np.inf
 
