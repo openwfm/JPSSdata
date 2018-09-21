@@ -1,7 +1,7 @@
 import pdb
 import saveload as sl
 from interpolation import sort_dates,nearest_scipy
-from time import time
+import time
 
 global t_init
 
