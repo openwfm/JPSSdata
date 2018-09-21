@@ -37,17 +37,8 @@ time = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
 
 data=retrieve_af_data(bbox,time)
 
-# Sort dictionary by time_start_geo in an ordered array of dictionaries
-sdata=sort_dates(data)
-tt=[ dd[1]['time_num'] for dd in sdata ]
-print 'Sorted?'
-stt=sorted(tt)
-print tt==stt
+print 'run setup next'
 
-# Grid interpolation
-slon=sdata[10][1]['lon'] # example of granule
-slat=sdata[10][1]['lat']
-(rlon,rlat)=nearest_scipy(slon,slat,fxlon,fxlat)
-print rlon
-print rlat
-
+if __name__ == "__main__":
+    print 'you should import this like\nfrom sugarloaf import data'
+    sys.exit(1)
