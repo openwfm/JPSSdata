@@ -3,6 +3,7 @@ import saveload as sl
 from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices
 import time
 import numpy as np
+import sys
 
 print 'Loading data'
 data,fxlon,fxlat=sl.load('data')
@@ -37,6 +38,7 @@ for gran in range(0,len(sdata)):
 	ti=sdata[gran][1]['time_num']
 	fire=sdata[gran][1]['fire']
 	print 'Interpolation in fire grid'
+	sys.stdout.flush()
 	dy1=slon[0,1]-slon[0,0]
 	dy2=slat[1,0]-slat[0,0]
 	dub=distance_upper_bound([dx1,dx2],[dy1,dy2])
