@@ -196,9 +196,8 @@ def read_viirs_files(files):
 def read_data(files,file_metadata):
     """ 
     Read all the geolocation (03) and fire (14) files
-        :param:
-            files           list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
-            file_metadata   dictionary with file names as key and granules metadata as values
+        :param files:           list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
+        :param file_metadata:   dictionary with file names as key and granules metadata as values
         :returns:
             data            dictionary with Latitude, Longitude and fire mask arrays read
 

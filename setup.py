@@ -2,9 +2,10 @@ import pdb
 import saveload as sl
 from interpolation import sort_dates,nearest_scipy
 
+print 'loading data'
 data,fxlon,fxlat=sl.load('data')
 
-# Sort dictionary by time_num into an array of dictionaries
+# Sort dictionary by time_num into an array of tuples (key, dictionary of values) 
 sdata=sort_dates(data)
 tt=[ dd[1]['time_num'] for dd in sdata ]  # array of times
 print 'Sorted?'

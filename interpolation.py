@@ -6,6 +6,7 @@ from scipy import spatial
 global t_init 
 
 def sort_dates(data):
+        # Sort dictionary by time_num into an array of tuples (key, dictionary of values)
 	return sorted(data.iteritems(), key=lambda x: x[1]['time_num'])
 
 def nearest_euclidean(lon,lat,lons,lats,bounds):
