@@ -76,11 +76,25 @@ def nearest_scipy(lon,lat,lons,lats,dub=np.inf):
 	rlat=[x[1] for x in ret]
 	return (np.reshape(rlon,lon.shape),np.reshape(rlat,lat.shape))
 
+def distance_upper_bound(dx,dy):
+	""" 
+    Computes the distance upper bound
+        :param:
+            dx 		array of two elements with fire mesh grid resolutions
+            dy 		array of two elements with satellite grid resolutions
+        :returns: distance upper bound to look for the nearest neighbours
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-20
+    """
+	rx=np.sqrt(dx[0]**2+dx[1]**2)
+	ry=np.sqrt(dy[0]**2+dy[1]**2)
+	return max(rx,ry)
 
 if __name__ == "__main__":
 	t_init = time()
 	# Initialization of grids
-	N=200
+	N=100
 	(dx1,dx2)=(1,1)
 	(dy1,dy2)=(3,3)
 	x=np.arange(0,N,dx1)
@@ -108,9 +122,7 @@ if __name__ == "__main__":
 	print 'Elapsed time: %ss.' % str(t_final-t_init)
 
 	# Result by scipy.spatial.cKDTree function
-	rx=np.sqrt(dx1**2+dx2**2)
-	ry=np.sqrt(dy1**2+dy2**2)
-	dub=max(rx,ry)
+	dub=distance_upper_bound([dx1,dx2],[dy1,dy2])
 	(rlon,rlat)=nearest_scipy(lon,lat,lons,lats,dub)
 	rlon=np.reshape(rlon,np.prod(lon.shape))
 	rlat=np.reshape(rlat,np.prod(lat.shape))
