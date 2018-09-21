@@ -2,6 +2,7 @@ import numpy as np
 from time import time
 from datetime import datetime
 from scipy import spatial
+import itertools
 
 global t_init 
 
@@ -84,6 +85,26 @@ def distance_upper_bound(dx,dy):
 	rx=np.sqrt(dx[0]**2+dx[1]**2)
 	ry=np.sqrt(dy[0]**2+dy[1]**2)
 	return max(rx,ry)
+
+def neighbor_indices(indices,shape,d=2):
+	""" 
+    Computes all the neighbor indices from an indice list
+        :param:
+           	indices 	array of two elements with fire mesh grid resolutions
+            shape 		array of two elements with satellite grid resolutions
+            d 			optional: distance of the neighbours
+        :returns: Returns a numpy array with the indices and the neighbor indices
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-20
+    """
+	w=shape[0]
+	I=[[np.mod(ind,w),ind/w] for ind in indices]
+	N=[list(itertools.product(range(i[0]-d,i[0]+d+1),range(i[1]-d,i[1]+d+1))) for i in I]
+	NN=np.array([np.array(xx) for x in N for xx in x])
+	right=np.array([((nn>=0)*(nn<w)).all() for nn in NN])
+	ret=np.array([x[0]+w*x[1] for x in NN[right]])
+	return sorted(np.unique(ret[(ret>=0)*(ret<np.prod(shape))]))
 
 if __name__ == "__main__":
 	t_init = time()
