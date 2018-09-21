@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 import numpy as np 
 from time import time
 from datetime import datetime
@@ -48,7 +50,7 @@ def nearest_euclidean(lon,lat,lons,lats,bounds):
 	return (np.reshape(rlon,lon.shape),np.reshape(rlat,lat.shape))
 	
 
-def nearest_scipy(lon,lat,lons,lats,dub=np.inf):
+def nearest_scipy(lon,lat,lons,lats,bounds,dub=np.inf):
 	""" 
     Returns the coordinates interpolated from (lon,lat) to (lons,lats) and the value of the indices where NaN values
         :param:
@@ -65,11 +67,13 @@ def nearest_scipy(lon,lat,lons,lats,dub=np.inf):
 	vlon=np.reshape(lon,np.prod(lon.shape))
 	vlat=np.reshape(lat,np.prod(lat.shape))
 	vlonlat=np.column_stack((vlon,vlat))
+	M=(vlon>bounds[0])*(vlon<bounds[1])*(vlat>bounds[2])*(vlat<bounds[3])
+	vlonlat=vlonlat[M]
 	vlons=np.reshape(lons,np.prod(lons.shape))
 	vlats=np.reshape(lats,np.prod(lats.shape))
 	vlonlats=np.column_stack((vlons,vlats))
 	inds=spatial.cKDTree(vlonlats).query(vlonlat,distance_upper_bound=dub)[1]
-	return (inds,vlons.shape[0])
+	return (inds,M)
 
 def distance_upper_bound(dx,dy):
 	""" 
@@ -138,16 +142,13 @@ if __name__ == "__main__":
 
 	# Result by scipy.spatial.cKDTree function
 	dub=distance_upper_bound([dx1,dx2],[dy1,dy2])
-	(inds,K)=nearest_scipy(lon,lat,lons,lats,dub)
-	print inds
-	print K
-	ii=(inds!=K)
+	(inds,K)=nearest_scipy(lon,lat,lons,lats,bounds,dub)
 	vlonlatm2=np.empty((np.prod(lon.shape),2))
 	vlonlatm2[:]=np.nan
 	vlons=np.reshape(lons,np.prod(lons.shape))
 	vlats=np.reshape(lats,np.prod(lats.shape))
 	vlonlats=np.column_stack((vlons,vlats))
-	vlonlatm2[ii]=vlonlats[inds[ii]]
+	vlonlatm2[K]=vlonlats[inds]
 	print '>>cKDTree<<'
 	print vlonlatm2
 	t_ffinal = time()
