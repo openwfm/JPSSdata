@@ -35,5 +35,5 @@ University of Colorado Denver
 - ncvarinfo.py is a python version of code originally found [here](https://github.com/openwfm/wrf-fire/blob/master/other/Matlab/netcdf/private/ncvarinfo.m). 
 
 ### External links
-*Tools for searching the CMR API https://cmr.earthdata.nasa.gov
-*VIIRS Active Fires users guide https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/vnp14_user_guide_v1.3.pdf
+- Tools for searching the CMR API https://cmr.earthdata.nasa.gov
+- VIIRS Active Fires users guide https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/vnp14_user_guide_v1.3.pdf
