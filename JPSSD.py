@@ -219,12 +219,12 @@ def read_data(files,file_metadata):
     data=Dict([])
     for f in files:
         print "read_data f=%s" % f
-        if len(f) > 2:
+        lf = len(f)
+        if lf > 2:
             nf=[ int(ff.split(".")[-2]) for ff in f[1:] ]
             f=[f[0],f[nf.index(max(nf))+1]]
-        else:
-            print 'WARNING: need more than 2 files, have %s, ignoring' % len(f)
-            continue
+            # what if there are more 03 files??
+            print 'read_data got %s files using %s' % (lf,f)
         f0=os.path.basename(f[0])
         f1=os.path.basename(f[1])
         prefix = f0[:3] 
