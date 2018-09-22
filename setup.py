@@ -1,9 +1,12 @@
+import warnings
+warnings.filterwarnings("ignore")
 import pdb
 import saveload as sl
 from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices
 import time
 import numpy as np
 import sys
+from scipy import spatial
 
 print 'Loading data'
 data,fxlon,fxlat=sl.load('data')
@@ -12,7 +15,8 @@ dx1=fxlon[0,1]-fxlon[0,0]
 dx2=fxlat[1,0]-fxlat[0,0]
 vfxlon=np.reshape(fxlon,np.prod(fxlon.shape))
 vfxlat=np.reshape(fxlat,np.prod(fxlat.shape))
-vgrid=np.column_stack((vfxlon,vfxlat))
+vfgrid=np.column_stack((vfxlon,vfxlat))
+stree=spatial.cKDTree(vfgrid)
 
 # Sort dictionary by time_num into an array of tuples (key, dictionary of values) 
 print 'Sort the granules by dates'
@@ -22,13 +26,20 @@ print 'Sorted?'
 stt=sorted(tt)
 print tt==stt
 
+# Max and min time_num
+a=10
+maxt=sdata[-1][1]['time_num']
+mint=sdata[0][1]['time_num']
+MA=maxt+a*(maxt-mint)
+MI=mint-a*(maxt-mint)
+
 # Creating the resulting arrays
 U=np.empty(np.prod(fxlon.shape))
-U[:]=np.inf
+U[:]=MA
 L=np.empty(np.prod(fxlon.shape))
-L[:]=-np.inf
+L[:]=MI
 T=np.empty(np.prod(fxlon.shape))
-T[:]=np.inf
+T[:]=MA
 
 for gran in range(0,len(sdata)):
 #gran=100
@@ -43,7 +54,7 @@ for gran in range(0,len(sdata)):
 	dy2=slat[1,0]-slat[0,0]
 	dub=distance_upper_bound([dx1,dx2],[dy1,dy2])
 	t_init = time.time()
-	(inds,gg)=nearest_scipy(slon,slat,fxlon,fxlat,bounds,dub)
+	(inds,gg)=nearest_scipy(slon,slat,stree,bounds,dub)
 	t_final = time.time()
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	ff=np.array(inds) # Not NaN indices in the fire grid
