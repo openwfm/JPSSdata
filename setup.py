@@ -51,6 +51,7 @@ for gran in range(0,len(sdata)):
 	vfire=np.reshape(fire,np.prod(fire.shape))
 	gfire=vfire[gg]
 	fi=(gfire>5)*(gfire!=9)
+	print 'Any fire pixel?'
 	print fi.any()
 	if fi.any():
 		gfire[fi]
