@@ -1,4 +1,5 @@
 import warnings
+import scipy.io as sio
 warnings.filterwarnings("ignore")
 import pdb
 import saveload as sl
@@ -16,6 +17,7 @@ dx2=fxlat[1,0]-fxlat[0,0]
 vfxlon=np.reshape(fxlon,np.prod(fxlon.shape))
 vfxlat=np.reshape(fxlat,np.prod(fxlat.shape))
 vfgrid=np.column_stack((vfxlon,vfxlat))
+print 'Setting up interpolation'
 stree=spatial.cKDTree(vfgrid)
 
 # Sort dictionary by time_num into an array of tuples (key, dictionary of values) 
@@ -62,8 +64,7 @@ for gran in range(0,len(sdata)):
 	vfire=np.reshape(fire,np.prod(fire.shape))
 	gfire=vfire[gg]
 	fi=(gfire>5)*(gfire!=9)
-	print 'Any fire pixel?'
-	print fi.any()
+	print 'fire pixels: %s' % fi.sum()
 	if fi.any():
 		gfire[fi]
 		U[ff[fi]]=ti
@@ -76,12 +77,22 @@ for gran in range(0,len(sdata)):
 	jj=(ti<T[nofi])
 	L[nofi[jj]]=ti
 
+print "L<U: %s" % (L<U).sum()
+print "L=U: %s" % (L==U).sum()
+print "L>U: %s" % (L>U).sum()
+
+print 'Saving results'
 # Result
 U=np.reshape(U,fxlon.shape)
-print U
 L=np.reshape(L,fxlon.shape)
-print L
 T=np.reshape(T,fxlon.shape)
-print T
 
 sl.save((U,L,T),'result')
+
+result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat} 
+
+sio.savemat('result.mat', mdict=result)
+
+#print U
+#print L
+#print T
