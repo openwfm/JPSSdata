@@ -1,11 +1,5 @@
 # sample data into mesh - Sugarloaf
 # navigate to /share_home/jmandel/sugarloaf to access sample data
-import netCDF4 as nc
-import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-from matplotlib import cm
-from scipy import interpolate
 from JPSSD import retrieve_af_data, read_fire_mesh
 import saveload as sl
 
