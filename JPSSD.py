@@ -249,9 +249,7 @@ def read_data(files,file_metadata):
         if (f0 in file_metadata.keys()) and (f1 in file_metadata.keys()):
             # connect the file back to metadata
             item.time_start_geo_iso=file_metadata[f0]["time_start"]
-            item.time_datetime=datetime.strptime(item["time_start_geo_iso"][0:18],'%Y-%m-%dT%H:%M:%S')
-            # seconds since January 1, 1970
-            item.time_num=time.mktime(item["time_datetime"].timetuple())
+            item.time_num=time_iso2num(item.time_start_geo_iso)
             item.time_start_fire_iso=file_metadata[f1]["time_start"]
             item.time_end_geo_iso=file_metadata[f0]["time_end"]
             item.time_end_fire_iso=file_metadata[f1]["time_end"]
@@ -419,6 +417,11 @@ def plot_3D(xx,yy,zz):
     ax = fig.gca(projection='3d')
     surf = ax.plot_surface(xx,yy,zz,cmap=cm.coolwarm)
     plt.show()
+
+def time_iso2num(time_iso):
+    time_datetime=datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
+            # seconds since January 1, 1970
+    return time.mktime(time_datetime.timetuple())
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]

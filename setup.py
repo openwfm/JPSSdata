@@ -10,7 +10,7 @@ import sys
 from scipy import spatial
 
 print 'Loading data'
-data,fxlon,fxlat=sl.load('data')
+data,fxlon,fxlat,time_num=sl.load('data')
 bounds=[fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
 dx1=fxlon[0,1]-fxlon[0,0]
 dx2=fxlat[1,0]-fxlat[0,0]
@@ -29,19 +29,19 @@ stt=sorted(tt)
 print tt==stt
 
 # Max and min time_num
-a=10
+a=1
 maxt=sdata[-1][1]['time_num']
 mint=sdata[0][1]['time_num']
-MA=maxt+a*(maxt-mint)
-MI=mint-a*(maxt-mint)
+# time_scale_num = time_num
+time_scale_num = [mint-0.5*(maxt-mint),maxt+2*(maxt-mint)]
 
 # Creating the resulting arrays
 U=np.empty(np.prod(fxlon.shape))
-U[:]=MA
+U[:]=time_scale_num[1]
 L=np.empty(np.prod(fxlon.shape))
-L[:]=MI
+L[:]= time_scale_num[0]
 T=np.empty(np.prod(fxlon.shape))
-T[:]=MA
+T[:]= time_scale_num[1]
 
 for gran in range(0,len(sdata)):
 #gran=100
@@ -89,7 +89,8 @@ T=np.reshape(T,fxlon.shape)
 
 sl.save((U,L,T),'result')
 
-result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat} 
+result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
+          'time_num':time_num, 'time_scale_num' : time_scale_num}
 
 sio.savemat('result.mat', mdict=result)
 
