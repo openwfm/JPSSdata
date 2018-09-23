@@ -11,6 +11,16 @@ from scipy import spatial
 
 print 'Loading data'
 data,fxlon,fxlat,time_num=sl.load('data')
+
+maxsize=400
+
+print 'mesh shape %s %s' % fxlon.shape
+coarsening=np.int(1+np.max(fxlon.shape)/maxsize)
+print 'maximum size is %s, coarsening %s' % (maxsize, coarsening)
+fxlon = fxlon[0::coarsening,0::coarsening]
+fxlat = fxlat[0::coarsening,0::coarsening]
+print 'coarsened  %s %s' % fxlon.shape
+
 bounds=[fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
 dx1=fxlon[0,1]-fxlon[0,0]
 dx2=fxlat[1,0]-fxlat[0,0]
