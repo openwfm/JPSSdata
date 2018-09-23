@@ -56,11 +56,11 @@ T[:]= time_scale_num[1]
 for gran in range(0,len(sdata)):
 #gran=100
 	print 'Loading data of granule %d' % gran
-	slon=sdata[gran][1]['lon'] # example of granule
+	slon=sdata[gran][1]['lon'] 
 	slat=sdata[gran][1]['lat']
 	ti=sdata[gran][1]['time_num']
 	fire=sdata[gran][1]['fire']
-	print 'Interpolation in fire grid'
+	print 'Interpolation to fire grid'
 	sys.stdout.flush()
 	dy1=slon[0,1]-slon[0,0]
 	dy2=slat[1,0]-slat[0,0]
@@ -93,16 +93,22 @@ print "L>U: %s" % (L>U).sum()
 
 print 'Saving results'
 # Result
-U=np.reshape(U,fxlon.shape)
-L=np.reshape(L,fxlon.shape)
-T=np.reshape(T,fxlon.shape)
+U=np.reshape(U - time_scale_num[0],fxlon.shape)
+L=np.reshape(L - time_scale_num[0],fxlon.shape)
+T=np.reshape(T - time_scale_num[0],fxlon.shape)
 
+print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_scale_num[0]
 sl.save((U,L,T),'result')
 
 result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
           'time_num':time_num, 'time_scale_num' : time_scale_num}
 
 sio.savemat('result.mat', mdict=result)
+
+print 'to visualize, do in Matlab:'
+print 'load result.mat'
+print "mesh(fxlon,fxlat,U); title('U')"
+print "mesh(fxlon,fxlat,L); title('L')"
 
 #print U
 #print L
