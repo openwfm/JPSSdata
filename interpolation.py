@@ -91,20 +91,27 @@ def neighbor_indices(indices,shape,d=2):
 	""" 
     Computes all the neighbor indices from an indice list
         :param:
-           	indices 	array of two elements with fire mesh grid resolutions
-            shape 		array of two elements with satellite grid resolutions
+           	indices 	list of coordinates in a 1D array
+            shape 		array of two elements with satellite grid size
             d 			optional: distance of the neighbours
-        :returns: Returns a numpy array with the indices and the neighbor indices
+        :returns: Returns a numpy array with the indices and the neighbor indices in 1D array
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
+    # Width of the matrix
 	w=shape[0]
+	# 2D indices of the 1D indices
 	I=[[np.mod(ind,w),ind/w] for ind in indices]
+	# All the combinations (x,y) for all the neighbor points from x-d to x+d and y-d to y+d
 	N=[list(itertools.product(range(i[0]-d,i[0]+d+1),range(i[1]-d,i[1]+d+1))) for i in I]
+	# Combert into one unique numpy array with all the coordinates
 	NN=np.array([np.array(xx) for x in N for xx in x])
+	# Only take the coordinate points inside the 2D domain
 	right=np.array([((nn>=0)*(nn<w)).all() for nn in NN])
+	# Recompute the 1D indices of the 2D coordinates
 	ret=np.array([x[0]+w*x[1] for x in NN[right]])
+	# Sort them and take each indice once (again only taken the coordinate points inside the 1D array)
 	return sorted(np.unique(ret[(ret>=0)*(ret<np.prod(shape))]))
 
 if __name__ == "__main__":
@@ -158,4 +165,13 @@ if __name__ == "__main__":
 	# Comparison
 	print 'Same results?'
 	print (np.isclose(vlonlatm,vlonlatm2) | np.isnan(vlonlatm) | np.isnan(vlonlatm2)).all()
+
+	# Testing neighbor indices
+	shape=(15,10)
+	ind=[0,shape[0]/2+shape[1]/2*(shape[0]-1),np.prod(shape)-1]
+	ne=neighbor_indices(ind,shape,d=3)
+	print '1D indices:'
+	print ind
+	print '1D neighbours:'
+	print ne
 

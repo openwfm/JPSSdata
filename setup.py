@@ -39,9 +39,8 @@ stt=sorted(tt)
 print tt==stt
 
 # Max and min time_num
-a=1
-maxt=sdata[-1][1]['time_num']
-mint=sdata[0][1]['time_num']
+maxt=time_num[1]
+mint=time_num[0]
 # time_scale_num = time_num
 time_scale_num = [mint-0.5*(maxt-mint),maxt+2*(maxt-mint)]
 
@@ -54,8 +53,10 @@ T=np.empty(np.prod(fxlon.shape))
 T[:]= time_scale_num[1]
 
 # For granules in order increasing in time
-for gran in range(0,len(sdata)):
-	print 'Loading data of granule %d' % gran
+GG=len(sdata)
+for gran in range(0,GG):
+	t_init = time.time()
+	print 'Loading data of granule %d/%d' % (gran,GG)
 	# Load granule lon, lat, fire arrays and time number
 	slon=sdata[gran][1]['lon'] 
 	slat=sdata[gran][1]['lat']
@@ -70,30 +71,37 @@ for gran in range(0,len(sdata)):
 	# Interpolate all the granule coordinates in bounds in the wrfout fire mesh
 	# ff: The wrfout fire mesh indices where the pixels are interpolated to
 	# gg: Mask of the pixel coordinates in the granule which are inside the bounds
-	t_init = time.time()
 	(ff,gg)=nearest_scipy(slon,slat,stree,bounds,dub)
-	t_final = time.time()
-	print 'elapsed time: %ss.' % str(t_final-t_init)
 	print 'Computing fire points'
 	# 1D array of labels of fire detection product in the granule
 	vfire=np.reshape(fire,np.prod(fire.shape))
 	# 1D array of labels of fire detection product in the granule in the bounds
 	gfire=vfire[gg]
 	# Mask of pixels where there is fire detection
-	fi=(gfire>5)*(gfire!=9)
+	fi=(gfire>6)
 	print 'fire pixels: %s' % fi.sum()
 	# If some fire pixel detect
 	if fi.any():
-		print gfire[fi]
-		U[ff[fi]]=ti
-		print 'Update the mask'
-		ii=neighbor_indices(ff[fi],fxlon.shape) # Could use a larger d
-		T[ii]=ti
-	print 'Rest of points'
-	# Find the jj where ti<T
-	nofi=ff[~fi]
-	jj=(ti<T[nofi])
-	L[nofi[jj]]=ti
+		# Set U at the fire mesh node to the minimum of current U and the time of the granule
+		U[ff[fi]]=np.minimum(U[ff[fi]],ti)
+		print 'Update mask'
+		# Compute the neighbor indices
+		ii=neighbor_indices(ff[fi],fxlon.shape,d=8) # could use a larger d
+		# Set mask T near the fire mesh node
+		T[ii]=np.minimum(T[ii],ti)
+	print 'Computing the ground points'
+	# Mask of ground pixels (only category 5: land)
+	la=(gfire==5)
+	print 'land pixels: %s' % la.sum()
+	if la.any():
+		# Land coordinates
+		land=ff[la]
+		# Find the jj where ti<T (the mask T was not set at the fire node)
+		jj=(ti<T[land])
+		# Set L to the maximum of current L and the time of the granule
+		L[land[jj]]=np.maximum(L[land[jj]],ti)
+	t_final = time.time()
+	print 'Elapsed time: %ss.' % str(t_final-t_init)
 
 print "L<U: %s" % (L<U).sum()
 print "L=U: %s" % (L==U).sum()
@@ -117,7 +125,3 @@ print 'to visualize, do in Matlab:'
 print 'load result.mat'
 print "mesh(fxlon,fxlat,U); title('U')"
 print "mesh(fxlon,fxlat,L); title('L')"
-
-#print U
-#print L
-#print T
