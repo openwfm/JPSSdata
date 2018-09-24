@@ -76,19 +76,22 @@ for gran in range(0,len(sdata)):
 	# print 'elapsed time: %ss.' % str(t_final-t_init)
 	vfire=np.reshape(fire,np.prod(fire.shape)) ## flaten the fire detection array
 	gfire=vfire[gg]   # the part withing the fire mesh bounds
-        fi = gfire >= 8  # mask where fire detected - nominal or high confidence 
-        nofi = np.logical_or(gfire == 3, gfire == 5) # mask where no fire detected
+        fi = gfire >= 8  # where fire detected - nominal or high confidence 
+        nofi = np.logical_or(gfire == 3, gfire == 5) # where no fire detected
+        unkn = np.logical_not(np.logical_or(fi,nofi)) # where unknown
         print 'fire detected    %s' % fi.sum()
         print 'no fire detected %s' % nofi.sum()
-        print 'unknown          %s' % np.logical_not(np.logical_or(fi,nofi)).sum()
+        print 'unknown          %s' % unkn.sum()
 	if fi.any():   # at fire points
 	    U[ff[fi]]=ti   # set U to granule time where fire detected
-	    ii=neighbor_indices(ff[fi],fxlon.shape,d=20) 
+        if unkn.any() or fi.any():  # masking 
+	    ii=neighbor_indices(ff[np.logical_or(unkn,fi)],fxlon.shape,d=80) 
 	    T[ii]=ti       # update mask
         if nofi.any(): # set L at no-fire points and not masked
             jj =np.logical_and(nofi,ti<T[ff])
 	    L[ff[jj]]=ti
             print 'L set at %s points' % jj.sum()
+            
 
 print "L<U: %s" % (L<U).sum()
 print "L=U: %s" % (L==U).sum()
