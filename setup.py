@@ -1,6 +1,6 @@
 import warnings
-import scipy.io as sio
 warnings.filterwarnings("ignore")
+import scipy.io as sio
 import pdb
 import saveload as sl
 from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices
@@ -53,30 +53,38 @@ L[:]= time_scale_num[0]
 T=np.empty(np.prod(fxlon.shape))
 T[:]= time_scale_num[1]
 
+# For granules in order increasing in time
 for gran in range(0,len(sdata)):
-#gran=100
 	print 'Loading data of granule %d' % gran
+	# Load granule lon, lat, fire arrays and time number
 	slon=sdata[gran][1]['lon'] 
 	slat=sdata[gran][1]['lat']
 	ti=sdata[gran][1]['time_num']
 	fire=sdata[gran][1]['fire']
 	print 'Interpolation to fire grid'
 	sys.stdout.flush()
+	# Compute a distance upper bound
 	dy1=slon[0,1]-slon[0,0]
 	dy2=slat[1,0]-slat[0,0]
 	dub=distance_upper_bound([dx1,dx2],[dy1,dy2])
+	# Interpolate all the granule coordinates in bounds in the wrfout fire mesh
+	# ff: The wrfout fire mesh indices where the pixels are interpolated to
+	# gg: Mask of the pixel coordinates in the granule which are inside the bounds
 	t_init = time.time()
-	(inds,gg)=nearest_scipy(slon,slat,stree,bounds,dub)
+	(ff,gg)=nearest_scipy(slon,slat,stree,bounds,dub)
 	t_final = time.time()
 	print 'elapsed time: %ss.' % str(t_final-t_init)
-	ff=np.array(inds) # Not NaN indices in the fire grid
 	print 'Computing fire points'
+	# 1D array of labels of fire detection product in the granule
 	vfire=np.reshape(fire,np.prod(fire.shape))
+	# 1D array of labels of fire detection product in the granule in the bounds
 	gfire=vfire[gg]
+	# Mask of pixels where there is fire detection
 	fi=(gfire>5)*(gfire!=9)
 	print 'fire pixels: %s' % fi.sum()
+	# If some fire pixel detect
 	if fi.any():
-		gfire[fi]
+		print gfire[fi]
 		U[ff[fi]]=ti
 		print 'Update the mask'
 		ii=neighbor_indices(ff[fi],fxlon.shape) # Could use a larger d

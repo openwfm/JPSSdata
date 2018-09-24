@@ -69,7 +69,7 @@ def nearest_scipy(lon,lat,stree,bounds,dub=np.inf):
 	vlonlat=np.column_stack((vlon,vlat))
 	M=(vlon>bounds[0])*(vlon<bounds[1])*(vlat>bounds[2])*(vlat<bounds[3])
 	vlonlat=vlonlat[M]
-	inds=stree.query(vlonlat,distance_upper_bound=dub)[1]
+	inds=np.array(stree.query(vlonlat,distance_upper_bound=dub)[1])
 	return (inds,M)
 
 def distance_upper_bound(dx,dy):

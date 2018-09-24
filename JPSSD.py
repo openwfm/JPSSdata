@@ -419,8 +419,17 @@ def plot_3D(xx,yy,zz):
     plt.show()
 
 def time_iso2num(time_iso):
+    """
+    Transform an iso time string to a time integer number of seconds since January 1, 1970
+        :param: 
+            time_iso        string iso date
+        :returns: Integer number of seconds since January 1, 1970
+    
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
+    """
     time_datetime=datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
-            # seconds since January 1, 1970
+    # seconds since January 1, 1970
     return time.mktime(time_datetime.timetuple())
 
 if __name__ == "__main__":
