@@ -68,32 +68,27 @@ for gran in range(0,len(sdata)):
 	dy2=slat[1,0]-slat[0,0]
 	dub=distance_upper_bound([dx1,dx2],[dy1,dy2])
 	# Interpolate all the granule coordinates in bounds in the wrfout fire mesh
-	# ff: The wrfout fire mesh indices where the pixels are interpolated to
-	# gg: Mask of the pixel coordinates in the granule which are inside the bounds
-	t_init = time.time()
-	(ff,gg)=nearest_scipy(slon,slat,stree,bounds,dub)
-	t_final = time.time()
-	print 'elapsed time: %ss.' % str(t_final-t_init)
-	print 'Computing fire points'
-	# 1D array of labels of fire detection product in the granule
-	vfire=np.reshape(fire,np.prod(fire.shape))
-	# 1D array of labels of fire detection product in the granule in the bounds
-	gfire=vfire[gg]
-	# Mask of pixels where there is fire detection
-	fi=(gfire>5)*(gfire!=9)
-	print 'fire pixels: %s' % fi.sum()
-	# If some fire pixel detect
-	if fi.any():
-		print gfire[fi]
-		U[ff[fi]]=ti
-		print 'Update the mask'
-		ii=neighbor_indices(ff[fi],fxlon.shape) # Could use a larger d
-		T[ii]=ti
-	print 'Rest of points'
-	# Find the jj where ti<T
-	nofi=ff[~fi]
-	jj=(ti<T[nofi])
-	L[nofi[jj]]=ti
+	# gg: mask in the granule of g-points =  pixel coordinates  inside the fire mesh
+	# ff: the closed points in fire mesh indexed by g-points
+	# t_init = time.time()
+	(ff,gg)=nearest_scipy(slon,slat,stree,bounds,dub) ## indices to flattened granule array
+	#t_final = time.time()
+	# print 'elapsed time: %ss.' % str(t_final-t_init)
+	vfire=np.reshape(fire,np.prod(fire.shape)) ## flaten the fire detection array
+	gfire=vfire[gg]   # the part withing the fire mesh bounds
+        fi = gfire >= 8  # mask where fire detected - nominal or high confidence 
+        nofi = np.logical_or(gfire == 3, gfire == 5) # mask where no fire detected
+        print 'fire detected    %s' % fi.sum()
+        print 'no fire detected %s' % nofi.sum()
+        print 'unknown          %s' % np.logical_not(np.logical_or(fi,nofi)).sum()
+	if fi.any():   # at fire points
+	    U[ff[fi]]=ti   # set U to granule time where fire detected
+	    ii=neighbor_indices(ff[fi],fxlon.shape,d=2) 
+	    T[ii]=ti       # update mask
+        if nofi.any(): # set L at no-fire points and not masked
+            jj =np.logical_and(nofi,ti<T[ff])
+	    L[ff[jj]]=ti
+            print 'L set at %s points' % jj.sum()
 
 print "L<U: %s" % (L<U).sum()
 print "L=U: %s" % (L==U).sum()
