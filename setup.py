@@ -83,7 +83,7 @@ for gran in range(0,len(sdata)):
         print 'unknown          %s' % np.logical_not(np.logical_or(fi,nofi)).sum()
 	if fi.any():   # at fire points
 	    U[ff[fi]]=ti   # set U to granule time where fire detected
-	    ii=neighbor_indices(ff[fi],fxlon.shape,d=2) 
+	    ii=neighbor_indices(ff[fi],fxlon.shape,d=20) 
 	    T[ii]=ti       # update mask
         if nofi.any(): # set L at no-fire points and not masked
             jj =np.logical_and(nofi,ti<T[ff])
@@ -112,6 +112,7 @@ print 'to visualize, do in Matlab:'
 print 'load result.mat'
 print "mesh(fxlon,fxlat,U); title('U')"
 print "mesh(fxlon,fxlat,L); title('L')"
+print "in run in fire_interpolation jpss_mg.m"
 
 #print U
 #print L
