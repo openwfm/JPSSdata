@@ -99,20 +99,17 @@ def neighbor_indices(indices,shape,d=2):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
-    # Width of the matrix
+    # Width and Length of the 2D grid
 	w=shape[0]
+	l=shape[1]
 	# 2D indices of the 1D indices
 	I=[[np.mod(ind,w),ind/w] for ind in indices]
 	# All the combinations (x,y) for all the neighbor points from x-d to x+d and y-d to y+d
-	N=[list(itertools.product(range(i[0]-d,i[0]+d+1),range(i[1]-d,i[1]+d+1))) for i in I]
-	# Combert into one unique numpy array with all the coordinates
-	NN=np.array([np.array(xx) for x in N for xx in x])
-	# Only take the coordinate points inside the 2D domain
-	right=np.array([((nn>=0)*(nn<w)).all() for nn in NN])
-	# Recompute the 1D indices of the 2D coordinates
-	ret=np.array([x[0]+w*x[1] for x in NN[right]])
-	# Sort them and take each indice once (again only taken the coordinate points inside the 1D array)
-	return sorted(np.unique(ret[(ret>=0)*(ret<np.prod(shape))]))
+	N=np.concatenate([np.array(list(itertools.product(range(max(i[0]-d,0),min(i[0]+d+1,w)),range(max(i[1]-d,0),min(i[1]+d+1,l))))) for i in I])
+	# Recompute the 1D indices of the 2D coordinates inside the 2D domain
+	ret=np.array([x[0]+w*x[1] for x in N])
+	# Sort them and take each indice once
+	return sorted(np.unique(ret))
 
 if __name__ == "__main__":
 	t_init = time()

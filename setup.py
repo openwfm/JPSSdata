@@ -42,15 +42,15 @@ print tt==stt
 maxt=time_num[1]
 mint=time_num[0]
 # time_scale_num = time_num
-time_scale_num = [mint-0.5*(maxt-mint),maxt+2*(maxt-mint)]
+time_scale_num=[mint-0.5*(maxt-mint),maxt+2*(maxt-mint)]
 
 # Creating the resulting arrays
 U=np.empty(np.prod(fxlon.shape))
 U[:]=time_scale_num[1]
 L=np.empty(np.prod(fxlon.shape))
-L[:]= time_scale_num[0]
+L[:]=time_scale_num[0]
 T=np.empty(np.prod(fxlon.shape))
-T[:]= time_scale_num[1]
+T[:]=time_scale_num[1]
 
 # For granules in order increasing in time
 GG=len(sdata)
@@ -69,39 +69,28 @@ for gran in range(0,GG):
 	dy2=slat[1,0]-slat[0,0]
 	dub=distance_upper_bound([dx1,dx2],[dy1,dy2])
 	# Interpolate all the granule coordinates in bounds in the wrfout fire mesh
-	# ff: The wrfout fire mesh indices where the pixels are interpolated to
-	# gg: Mask of the pixel coordinates in the granule which are inside the bounds
-	(ff,gg)=nearest_scipy(slon,slat,stree,bounds,dub)
-	print 'Computing fire points'
-	# 1D array of labels of fire detection product in the granule
-	vfire=np.reshape(fire,np.prod(fire.shape))
-	# 1D array of labels of fire detection product in the granule in the bounds
-	gfire=vfire[gg]
-	# Mask of pixels where there is fire detection
-	fi=(gfire>6)
-	print 'fire pixels: %s' % fi.sum()
-	# If some fire pixel detect
-	if fi.any():
-		# Set U at the fire mesh node to the minimum of current U and the time of the granule
-		U[ff[fi]]=np.minimum(U[ff[fi]],ti)
-		print 'Update mask'
-		# Compute the neighbor indices
-		ii=neighbor_indices(ff[fi],fxlon.shape,d=8) # could use a larger d
-		# Set mask T near the fire mesh node
-		T[ii]=np.minimum(T[ii],ti)
-	print 'Computing the ground points'
-	# Mask of ground pixels (only category 5: land)
-	la=(gfire==5)
-	print 'land pixels: %s' % la.sum()
-	if la.any():
-		# Land coordinates
-		land=ff[la]
-		# Find the jj where ti<T (the mask T was not set at the fire node)
-		jj=(ti<T[land])
-		# Set L to the maximum of current L and the time of the granule
-		L[land[jj]]=np.maximum(L[land[jj]],ti)
+	# gg: mask in the granule of g-points = pixel coordinates inside the fire mesh
+	# ff: the closed points in fire mesh indexed by g-points
+	(ff,gg)=nearest_scipy(slon,slat,stree,bounds,dub) ## indices to flattened granule array
+	vfire=np.reshape(fire,np.prod(fire.shape)) ## flaten the fire detection array
+	gfire=vfire[gg]   # the part withing the fire mesh bounds
+	fi=gfire >= 8  # where fire detected - nominal or high confidence 
+	nofi=np.logical_or(gfire == 3, gfire == 5) # where no fire detected
+	unkn=np.logical_not(np.logical_or(fi,nofi)) # where unknown
+	print 'fire detected    %s' % fi.sum()
+	print 'no fire detected %s' % nofi.sum()
+	print 'unknown          %s' % unkn.sum()
+	if fi.any():   # at fire points
+		U[ff[fi]]=ti   # set U to granule time where fire detected
+	if unkn.any() or fi.any():  # masking 
+		ii=neighbor_indices(ff[np.logical_or(unkn,fi)],fxlon.shape,d=80) 
+		T[ii]=ti       # update mask
+	if nofi.any(): # set L at no-fire points and not masked
+		jj=np.logical_and(nofi,ti<T[ff])
+		L[ff[jj]]=ti
+		print 'L set at %s points' % jj.sum()
 	t_final = time.time()
-	print 'Elapsed time: %ss.' % str(t_final-t_init)
+	print 'elapsed time: %ss.' % str(t_final-t_init)
 
 print "L<U: %s" % (L<U).sum()
 print "L=U: %s" % (L==U).sum()
@@ -109,9 +98,9 @@ print "L>U: %s" % (L>U).sum()
 
 print 'Saving results'
 # Result
-U=np.reshape(U - time_scale_num[0],fxlon.shape)
-L=np.reshape(L - time_scale_num[0],fxlon.shape)
-T=np.reshape(T - time_scale_num[0],fxlon.shape)
+U=np.reshape(U-time_scale_num[0],fxlon.shape)
+L=np.reshape(L-time_scale_num[0],fxlon.shape)
+T=np.reshape(T-time_scale_num[0],fxlon.shape)
 
 print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_scale_num[0]
 sl.save((U,L,T),'result')
@@ -125,3 +114,4 @@ print 'to visualize, do in Matlab:'
 print 'load result.mat'
 print "mesh(fxlon,fxlat,U); title('U')"
 print "mesh(fxlon,fxlat,L); title('L')"
+print "in run in fire_interpolation jpss_mg.m"
