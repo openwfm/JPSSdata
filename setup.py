@@ -3,7 +3,7 @@ warnings.filterwarnings("ignore")
 import scipy.io as sio
 import pdb
 import saveload as sl
-from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices
+from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices_opt
 import time
 import numpy as np
 import sys
@@ -82,8 +82,7 @@ for gran in range(0,GG):
 	print 'unknown          %s' % unkn.sum()
 	if fi.any():   # at fire points
 		U[ff[fi]]=ti   # set U to granule time where fire detected
-	if unkn.any() or fi.any():  # masking 
-		ii=neighbor_indices(ff[np.logical_or(unkn,fi)],fxlon.shape,d=80) 
+		ii=neighbor_indices_opt(ff[fi],fxlon.shape,d=8) 
 		T[ii]=ti       # update mask
 	if nofi.any(): # set L at no-fire points and not masked
 		jj=np.logical_and(nofi,ti<T[ff])
@@ -95,6 +94,8 @@ for gran in range(0,GG):
 print "L<U: %s" % (L<U).sum()
 print "L=U: %s" % (L==U).sum()
 print "L>U: %s" % (L>U).sum()
+print "average U-L %s" % ((U-L).sum()/np.prod(U.shape))
+print np.histogram((U-L)/(24*3600))
 
 print 'Saving results'
 # Result

@@ -6,8 +6,6 @@ from datetime import datetime
 from scipy import spatial
 import itertools
 
-global t_init 
-
 def sort_dates(data):
 	""" 
     Sorting a dictionary depending on the time number in seconds from January 1, 1970
@@ -103,13 +101,46 @@ def neighbor_indices(indices,shape,d=2):
 	w=shape[0]
 	l=shape[1]
 	# 2D indices of the 1D indices
-	I=[[np.mod(ind,w),ind/w] for ind in indices]
+	I=[[ind/l,np.mod(ind,l)] for ind in indices]
 	# All the combinations (x,y) for all the neighbor points from x-d to x+d and y-d to y+d
 	N=np.concatenate([np.array(list(itertools.product(range(max(i[0]-d,0),min(i[0]+d+1,w)),range(max(i[1]-d,0),min(i[1]+d+1,l))))) for i in I])
 	# Recompute the 1D indices of the 2D coordinates inside the 2D domain
-	ret=np.array([x[0]+w*x[1] for x in N])
+	ret=np.array([x[1]+w*x[0] for x in N])
 	# Sort them and take each indice once
 	return sorted(np.unique(ret))
+
+def neighbor_indices_opt(indices,shape,d=2):
+	""" 
+    Computes all the neighbor indices from an indice list
+        :param:
+           	indices 	list of coordinates in a 1D array
+            shape 		array of two elements with satellite grid size
+            d 			optional: distance of the neighbours
+        :returns: Returns a numpy array with the indices and the neighbor indices in 1D array
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-20
+    """
+    # Width and Length of the 2D grid
+	w=shape[0]
+	l=shape[1]
+	# 2D indices of the 1D indices
+	I=np.unravel_index(indices,dims=shape)
+	# Indices of the neighbor
+	ii=[np.array(range(max(i-d,0),min(i+d+1,w))) for i in I[0]]
+	jj=[np.array(range(max(j-d,0),min(j+d+1,l))) for j in I[1]]
+	# Union between consecutive group of indices
+	Ni=[ np.unique(np.concatenate(ii[0:k])) for k in range(1,len(ii)) ]
+	Ni.insert(0,np.array([]))
+	Nj=[ np.unique(np.concatenate(jj[0:k])) for k in range(1,len(jj)) ]
+	Nj.insert(0,np.array([]))
+	# Compute combinations (x,y) for all the neighbor points from x-d to x+d and y-d to y+d avoiding some repetitions
+	N=[ np.array(list(set(list(itertools.product(np.setdiff1d(ii[k],Ni[k]),jj[k]))) | set(list(itertools.product(ii[k],np.setdiff1d(jj[k],Nj[k])))))) for k in range(0,len(ii)) ]
+	# Recompute the 1D indices of the 2D coordinates inside the 2D domain
+	ret=np.array([xx[1]+w*xx[0] for x in N for xx in x])
+	# Sort them and take each indice once
+	return sorted(np.unique(ret))
+
 
 if __name__ == "__main__":
 	t_init = time()
@@ -120,7 +151,7 @@ if __name__ == "__main__":
 	x=np.arange(0,N,dx1)
 	lons=np.repeat(x[np.newaxis,:],x.shape[0], axis=0)
 	x=np.arange(0,N,dx2)
-	lats=np.repeat(x[np.newaxis,:],x.shape[0], axis=0).transpose()
+	lats=np.repeat(x[np.newaxis,:],x.shape[0], axis=0).T
 	bounds=[lons.min(),lons.max(),lats.min(),lats.max()]
 	print 'bounds'
 	print bounds
@@ -166,9 +197,20 @@ if __name__ == "__main__":
 	# Testing neighbor indices
 	shape=(15,10)
 	ind=[0,shape[0]/2+shape[1]/2*(shape[0]-1),np.prod(shape)-1]
-	ne=neighbor_indices(ind,shape,d=3)
 	print '1D indices:'
 	print ind
+	t_init = time()
+	ne=neighbor_indices(ind,shape,d=2)
+	t_final = time()
 	print '1D neighbours:'
 	print ne
+	print 'elapsed time: %ss.' % str(t_final-t_init)
+	t_init = time()
+	nne=neighbor_indices_opt(ind,shape,d=2)
+	t_final = time()
+	print '1D neighbours new:'
+	print nne
+	print 'elapsed time: %ss.' % str(t_final-t_init)
+	print 'Difference'
+	print np.setdiff1d(ne,nne)
 
