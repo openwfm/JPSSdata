@@ -109,7 +109,7 @@ def neighbor_indices(indices,shape,d=2):
 	# Sort them and take each indice once
 	return sorted(np.unique(ret))
 
-def neighbor_indices_opt(indices,shape,d=2):
+def neighbor_indices_new(indices,shape,d=2):
 	""" 
     Computes all the neighbor indices from an indice list
         :param:
@@ -196,17 +196,17 @@ if __name__ == "__main__":
 
 	# Testing neighbor indices
 	shape=(15,10)
-	ind=[0,shape[0]/2+shape[1]/2*(shape[0]-1),np.prod(shape)-1]
+	ind=[0,2,23,shape[0]/2+shape[1]/2*(shape[0]-1),np.prod(shape)-1]
 	print '1D indices:'
 	print ind
 	t_init = time()
-	ne=neighbor_indices(ind,shape,d=2)
+	ne=neighbor_indices(ind,shape,d=8)
 	t_final = time()
-	print '1D neighbours:'
+	print '1D neighbours back:'
 	print ne
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	t_init = time()
-	nne=neighbor_indices_opt(ind,shape,d=2)
+	nne=neighbor_indices_new(ind,shape,d=8)
 	t_final = time()
 	print '1D neighbours new:'
 	print nne

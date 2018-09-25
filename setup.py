@@ -3,7 +3,7 @@ warnings.filterwarnings("ignore")
 import scipy.io as sio
 import pdb
 import saveload as sl
-from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices_opt
+from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices
 import time
 import numpy as np
 import sys
@@ -56,7 +56,7 @@ T[:]=time_scale_num[1]
 GG=len(sdata)
 for gran in range(0,GG):
 	t_init = time.time()
-	print 'Loading data of granule %d/%d' % (gran,GG)
+	print 'Loading data of granule %d/%d' % (gran,GG-1)
 	# Load granule lon, lat, fire arrays and time number
 	slon=sdata[gran][1]['lon'] 
 	slat=sdata[gran][1]['lat']
@@ -82,7 +82,10 @@ for gran in range(0,GG):
 	print 'unknown          %s' % unkn.sum()
 	if fi.any():   # at fire points
 		U[ff[fi]]=ti   # set U to granule time where fire detected
-		ii=neighbor_indices_opt(ff[fi],fxlon.shape,d=8) 
+		t_in = time.time()
+		ii=neighbor_indices(ff[fi],fxlon.shape,d=8) 
+		t_fi = time.time()
+		print 'elapsed time neighbor_indices: %ss.' % str(t_fi-t_in)
 		T[ii]=ti       # update mask
 	if nofi.any(): # set L at no-fire points and not masked
 		jj=np.logical_and(nofi,ti<T[ff])
@@ -111,8 +114,5 @@ result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat,
 
 sio.savemat('result.mat', mdict=result)
 
-print 'to visualize, do in Matlab:'
-print 'load result.mat'
-print "mesh(fxlon,fxlat,U); title('U')"
-print "mesh(fxlon,fxlat,L); title('L')"
-print "in run in fire_interpolation jpss_mg.m"
+print 'To visualize, run in Matlab the script plot_results.m'
+print 'Multigrid using in fire_interpolation the script jpss_mg.m'
