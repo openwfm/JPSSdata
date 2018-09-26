@@ -244,10 +244,10 @@ if __name__ == "__main__":
 	grid=np.array(list(itertools.product(np.array(range(0,shape[0])),np.array(range(0,shape[1])))))
 	tree=spatial.cKDTree(grid)
 	t_init = time()
-	kk=neighbor_indices_scipy(tree,ind,shape,d=8)
+	kk=neighbor_indices_ball(tree,ind,shape,d=8)
 	t_final = time()
 	nse=[x[0]+x[1]*shape[0] for x in grid[kk]]
-	print '1D neighbours scipy:'
+	print '1D neighbors scipy:'
 	#print nse
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	print 'Difference'
