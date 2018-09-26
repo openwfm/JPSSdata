@@ -5,6 +5,7 @@ from time import time
 from datetime import datetime
 from scipy import spatial
 import itertools
+from random import randint
 
 def sort_dates(data):
 	""" 
@@ -101,15 +102,15 @@ def neighbor_indices(indices,shape,d=2):
 	w=shape[0]
 	l=shape[1]
 	# 2D indices of the 1D indices
-	I=[[ind/l,np.mod(ind,l)] for ind in indices]
+	I=[[np.mod(ind,w),ind/w] for ind in indices]
 	# All the combinations (x,y) for all the neighbor points from x-d to x+d and y-d to y+d
 	N=np.concatenate([np.array(list(itertools.product(range(max(i[0]-d,0),min(i[0]+d+1,w)),range(max(i[1]-d,0),min(i[1]+d+1,l))))) for i in I])
 	# Recompute the 1D indices of the 2D coordinates inside the 2D domain
-	ret=np.array([x[1]+w*x[0] for x in N])
+	ret=np.array([x[0]+w*x[1] for x in N])
 	# Sort them and take each indice once
 	return sorted(np.unique(ret))
 
-def neighbor_indices_new(indices,shape,d=2):
+def neighbor_indices_opt(indices,shape,d=2):
 	""" 
     Computes all the neighbor indices from an indice list
         :param:
@@ -125,10 +126,11 @@ def neighbor_indices_new(indices,shape,d=2):
 	w=shape[0]
 	l=shape[1]
 	# 2D indices of the 1D indices
-	I=np.unravel_index(indices,dims=shape)
+	I=[[np.mod(ind,w),ind/w] for ind in indices]
+	#I=np.unravel_index(indices,dims=shape)
 	# Indices of the neighbor
-	ii=[np.array(range(max(i-d,0),min(i+d+1,w))) for i in I[0]]
-	jj=[np.array(range(max(j-d,0),min(j+d+1,l))) for j in I[1]]
+	ii=[np.array(range(max(i[0]-d,0),min(i[0]+d+1,w))) for i in I]
+	jj=[np.array(range(max(i[1]-d,0),min(i[1]+d+1,l))) for i in I]
 	# Union between consecutive group of indices
 	Ni=[ np.unique(np.concatenate(ii[0:k])) for k in range(1,len(ii)) ]
 	Ni.insert(0,np.array([]))
@@ -137,10 +139,27 @@ def neighbor_indices_new(indices,shape,d=2):
 	# Compute combinations (x,y) for all the neighbor points from x-d to x+d and y-d to y+d avoiding some repetitions
 	N=[ np.array(list(set(list(itertools.product(np.setdiff1d(ii[k],Ni[k]),jj[k]))) | set(list(itertools.product(ii[k],np.setdiff1d(jj[k],Nj[k])))))) for k in range(0,len(ii)) ]
 	# Recompute the 1D indices of the 2D coordinates inside the 2D domain
-	ret=np.array([xx[1]+w*xx[0] for x in N for xx in x])
+	ret=np.array([xx[0]+w*xx[1] for x in N for xx in x])
 	# Sort them and take each indice once
 	return sorted(np.unique(ret))
 
+def neighbor_indices_ball(tree,indices,shape,d=2):
+	""" 
+    Computes all the neighbor indices from an indice list
+        :param:
+           	indices 	list of coordinates in a 1D array
+            shape 		array of two elements with satellite grid size
+            d 			optional: distance of the neighbours
+        :returns: Returns a numpy array with the indices and the neighbor indices in 1D array
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-20
+    """
+	w=shape[0]
+	I=[[np.mod(ind,w),ind/w] for ind in indices]
+	radius=np.sqrt(2*d**2)
+	N=tree.query_ball_point(I,r=radius)
+	return sorted(np.unique(np.concatenate(N)))
 
 if __name__ == "__main__":
 	t_init = time()
@@ -177,6 +196,7 @@ if __name__ == "__main__":
 	vlons=np.reshape(lons,np.prod(lons.shape))
 	vlats=np.reshape(lats,np.prod(lats.shape))
 	vlonlats=np.column_stack((vlons,vlats))
+	print vlonlats
 	stree=spatial.cKDTree(vlonlats)
 	(inds,K)=nearest_scipy(lon,lat,stree,bounds,dub)
 	vlonlatm2=np.empty((np.prod(lon.shape),2))
@@ -195,22 +215,36 @@ if __name__ == "__main__":
 	print (np.isclose(vlonlatm,vlonlatm2) | np.isnan(vlonlatm) | np.isnan(vlonlatm2)).all()
 
 	# Testing neighbor indices
-	shape=(15,10)
-	ind=[0,2,23,shape[0]/2+shape[1]/2*(shape[0]-1),np.prod(shape)-1]
+	N=100
+	shape=(250,250)
+	ind=sorted(np.unique([randint(0,np.prod(shape)-1) for i in range(0,N)]))
+	#ind=[0,3,shape[0]/2+shape[1]/2*shape[0],np.prod(shape)-1]
 	print '1D indices:'
-	print ind
+	#print ind
+	#print len(ind)
 	t_init = time()
 	ne=neighbor_indices(ind,shape,d=8)
 	t_final = time()
-	print '1D neighbours back:'
-	print ne
+	print '1D neighbours:'
+	#print ne
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	t_init = time()
-	nne=neighbor_indices_new(ind,shape,d=8)
+	nne=neighbor_indices_opt(ind,shape,d=8)
 	t_final = time()
 	print '1D neighbours new:'
-	print nne
+	#print nne
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	print 'Difference'
 	print np.setdiff1d(ne,nne)
-
+	grid=np.array(list(itertools.product(np.array(range(0,shape[0])),np.array(range(0,shape[1])))))
+	tree=spatial.cKDTree(grid)
+	t_init = time()
+	kk=neighbor_indices_scipy(tree,ind,shape,d=8)
+	t_final = time()
+	nse=[x[0]+x[1]*shape[0] for x in grid[kk]]
+	print '1D neighbours scipy:'
+	#print nse
+	print 'elapsed time: %ss.' % str(t_final-t_init)
+	print 'Difference'
+	print np.setdiff1d(ne,nse)
+	print np.setdiff1d(nse,ne)

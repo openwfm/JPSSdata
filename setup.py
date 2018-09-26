@@ -3,11 +3,12 @@ warnings.filterwarnings("ignore")
 import scipy.io as sio
 import pdb
 import saveload as sl
-from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices
+from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices,neighbor_indices_ball
 import time
 import numpy as np
 import sys
 from scipy import spatial
+import itertools
 
 print 'Loading data'
 data,fxlon,fxlat,time_num=sl.load('data')
@@ -29,6 +30,8 @@ vfxlat=np.reshape(fxlat,np.prod(fxlat.shape))
 vfgrid=np.column_stack((vfxlon,vfxlat))
 print 'Setting up interpolation'
 stree=spatial.cKDTree(vfgrid)
+vfind=np.array(list(itertools.product(np.array(range(0,fxlon.shape[0])),np.array(range(0,fxlon.shape[1])))))
+itree=spatial.cKDTree(vfind)
 
 # Sort dictionary by time_num into an array of tuples (key, dictionary of values) 
 print 'Sort the granules by dates'
@@ -56,7 +59,7 @@ T[:]=time_scale_num[1]
 GG=len(sdata)
 for gran in range(0,GG):
 	t_init = time.time()
-	print 'Loading data of granule %d/%d' % (gran,GG-1)
+	print 'Loading data of granule %d/%d' % (gran+1,GG)
 	# Load granule lon, lat, fire arrays and time number
 	slon=sdata[gran][1]['lon'] 
 	slat=sdata[gran][1]['lat']
@@ -82,10 +85,8 @@ for gran in range(0,GG):
 	print 'unknown          %s' % unkn.sum()
 	if fi.any():   # at fire points
 		U[ff[fi]]=ti   # set U to granule time where fire detected
-		t_in = time.time()
-		ii=neighbor_indices(ff[fi],fxlon.shape,d=8) 
-		t_fi = time.time()
-		print 'elapsed time neighbor_indices: %ss.' % str(t_fi-t_in)
+		kk=neighbor_indices_ball(itree,ff[fi],fxlon.shape,d=8) 
+		ii=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
 		T[ii]=ti       # update mask
 	if nofi.any(): # set L at no-fire points and not masked
 		jj=np.logical_and(nofi,ti<T[ff])
@@ -110,7 +111,7 @@ print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_sc
 sl.save((U,L,T),'result')
 
 result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
-          'time_num':time_num, 'time_scale_num' : time_scale_num}
+          'time_num':time_num, 'time_scale_num' : time_scale_num, 'time_num_granules' : tt}
 
 sio.savemat('result.mat', mdict=result)
 
