@@ -149,7 +149,7 @@ def neighbor_indices_ball(tree,indices,shape,d=2):
         :param:
            	indices 	list of coordinates in a 1D array
             shape 		array of two elements with satellite grid size
-            d 			optional: distance of the neighbours
+            d 			optional: distance of the neighbours computed as: sqrt(2*d**2)
         :returns: Returns a numpy array with the indices and the neighbor indices in 1D array
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
