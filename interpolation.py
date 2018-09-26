@@ -145,20 +145,25 @@ def neighbor_indices_opt(indices,shape,d=2):
 
 def neighbor_indices_ball(tree,indices,shape,d=2):
 	""" 
-    Computes all the neighbor indices from an indice list
+    Computes all the neighbor indices from an indice list in a grid of indices defined through a cKDTree
         :param:
            	indices 	list of coordinates in a 1D array
             shape 		array of two elements with satellite grid size
             d 			optional: distance of the neighbours computed as: sqrt(2*d**2)
-        :returns: Returns a numpy array with the indices and the neighbor indices in 1D array
+        :returns: Returns a numpy array with the indices and the neighbor indices in 1D array respect to the grid used in the tree
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
+    # Width of the 2D grid
 	w=shape[0]
+	# 2D indices of the 1D indices
 	I=[[np.mod(ind,w),ind/w] for ind in indices]
+	# Radius to look for
 	radius=np.sqrt(2*d**2)
+	# Request all the neighbors in a radius "radius"
 	N=tree.query_ball_point(I,r=radius)
+	# Return an unique and sorted array of 1D indices (indices pointing to the grid used for the tree)
 	return sorted(np.unique(np.concatenate(N)))
 
 if __name__ == "__main__":
@@ -225,7 +230,7 @@ if __name__ == "__main__":
 	t_init = time()
 	ne=neighbor_indices(ind,shape,d=8)
 	t_final = time()
-	print '1D neighbours:'
+	print '1D neighbors:'
 	#print ne
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	t_init = time()
