@@ -3,7 +3,7 @@ warnings.filterwarnings("ignore")
 import scipy.io as sio
 import pdb
 import saveload as sl
-from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices,neighbor_indices_ball
+from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices_ball
 import time
 import numpy as np
 import sys
