@@ -127,7 +127,6 @@ def neighbor_indices_opt(indices,shape,d=2):
 	l=shape[1]
 	# 2D indices of the 1D indices
 	I=[[np.mod(ind,w),ind/w] for ind in indices]
-	#I=np.unravel_index(indices,dims=shape)
 	# Indices of the neighbor
 	ii=[np.array(range(max(i[0]-d,0),min(i[0]+d+1,w))) for i in I]
 	jj=[np.array(range(max(i[1]-d,0),min(i[1]+d+1,l))) for i in I]
@@ -224,23 +223,19 @@ if __name__ == "__main__":
 	shape=(250,250)
 	ind=sorted(np.unique([randint(0,np.prod(shape)-1) for i in range(0,N)]))
 	#ind=[0,3,shape[0]/2+shape[1]/2*shape[0],np.prod(shape)-1]
-	print '1D indices:'
-	#print ind
-	#print len(ind)
 	t_init = time()
 	ne=neighbor_indices(ind,shape,d=8)
 	t_final = time()
 	print '1D neighbors:'
-	#print ne
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	t_init = time()
 	nne=neighbor_indices_opt(ind,shape,d=8)
 	t_final = time()
 	print '1D neighbours new:'
-	#print nne
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	print 'Difference'
 	print np.setdiff1d(ne,nne)
+	print np.setdiff1d(nne,ne)
 	grid=np.array(list(itertools.product(np.array(range(0,shape[0])),np.array(range(0,shape[1])))))
 	tree=spatial.cKDTree(grid)
 	t_init = time()
@@ -248,7 +243,6 @@ if __name__ == "__main__":
 	t_final = time()
 	nse=[x[0]+x[1]*shape[0] for x in grid[kk]]
 	print '1D neighbors scipy:'
-	#print nse
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	print 'Difference'
 	print np.setdiff1d(ne,nse)
