@@ -19,16 +19,18 @@ from datetime import datetime
 import time
 
 def search_api(sname,bbox,time,maxg=50,platform="",version=""):
-    """ 
-    API search of the different satellite granules
-        :param:
-            sname       short name 
-            bbox        polygon with the search bounding box
-            time        time interval (init_time,final_time)
-            maxg        max number of granules to process
-            platform    string with the platform
-            version     string with the version
-        :returns:
+    """API search of the different satellite granules
+
+
+    Args:
+        sname (str): short name 
+        bbox        polygon with the search bounding box
+        time        time interval (init_time,final_time)
+        maxg        max number of granules to process
+        platform    string with the platform
+        version     string with the version
+     
+    Returns:
             granules    dictionary with the metadata of the search
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 

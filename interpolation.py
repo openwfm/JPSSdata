@@ -246,4 +246,4 @@ if __name__ == "__main__":
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	print 'Difference'
 	print np.setdiff1d(ne,nse)
-	print np.setdiff1d(nse,ne)
+	print np.setdiff1d(nse,ne) 
