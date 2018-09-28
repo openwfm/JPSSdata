@@ -166,9 +166,7 @@ def read_modis_files(files):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
-    print 'reading ' + files[0]
     hdfg=SD(files.geo,SDC.READ)
-    print 'reading ' + files[1]
     hdff=SD(files.fire,SDC.READ)
     lat_obj=hdfg.select('Latitude')
     lon_obj=hdfg.select('Longitude')    
