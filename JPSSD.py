@@ -123,7 +123,7 @@ def group_files(path,reg):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
-    files=[[k] for k in glob.glob(path+'/'+reg+'03*')]
+    files=[Dict({'geo':k}) for k in glob.glob(path+'/'+reg+'03*')]
     filesf=glob.glob(path+'/'+reg+'14*')
     if len(filesf)>0:
         for f in filesf:
@@ -132,10 +132,10 @@ def group_files(path,reg):
                 m=mf[-1].split('.')
                 if m is not None:
                     for k,g in enumerate(files):
-                        mmf=re.split("/",g[0])
+                        mmf=re.split("/",g.geo)
                         mm=mmf[-1].split('.')
                         if mm[0][1]==m[0][1] and mm[1]+'.'+mm[2]==m[1]+'.'+m[2]:
-                            files[k].append(f) 
+                            files[k].fire=f 
     return files
 
 def group_all(path):
@@ -167,9 +167,9 @@ def read_modis_files(files):
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     print 'reading ' + files[0]
-    hdfg=SD(files[0],SDC.READ)
+    hdfg=SD(files.geo,SDC.READ)
     print 'reading ' + files[1]
-    hdff=SD(files[1],SDC.READ)
+    hdff=SD(files.fire,SDC.READ)
     lat_obj=hdfg.select('Latitude')
     lon_obj=hdfg.select('Longitude')    
     fire_mask_obj=hdff.select('fire mask')
@@ -190,11 +190,11 @@ def read_viirs_files(files):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
-    h5g=h5py.File(files[0],'r')
+    h5g=h5py.File(files.geo,'r')
     ret=Dict([])
     ret.lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
     ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
-    ncf=Dataset(files[1],'r')
+    ncf=Dataset(files.fire,'r')
     ret.fire=np.array(ncf.variables['fire mask'][:])
     return ret
 
@@ -224,27 +224,27 @@ def read_data(files,file_metadata):
     for f in files:
         print "read_data f=%s" % f
         lf = len(f)
-        if lf > 2:
-            nf=[ int(ff.split(".")[-2]) for ff in f[1:] ]
-            f=[f[0],f[nf.index(max(nf))+1]]
-            # what if there are more 03 files??
-            print 'read_data got %s files using %s' % (lf,f)
-        f0=os.path.basename(f[0])
-        f1=os.path.basename(f[1])
+        if lf != 2:
+            print 'ERROR: read_data got %s files using %s' % (lf,f)
+            continue
+        f0=os.path.basename(f.geo)
+        f1=os.path.basename(f.fire)
         prefix = f0[:3] 
         print 'prefix %s' % prefix
         if prefix != f1[:3]:
             print 'ERROR: the prefix of %s %s must coincide' % (f0,f1)
             continue 
-        m=f[0].split('/')
+        m=f.geo.split('/')
         mm=m[-1].split('.')
         key=mm[1]+'_'+mm[2]
         id = prefix + '_' + key
         print "id " + id
         if prefix=="MOD" or prefix=="MYD":
             item=read_modis_files(f)
+            item.instrument="MODIS"
         elif prefix=="VNP":
             item=read_viirs_files(f)
+            item.instrument="VIIRS"
         else:
             print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
             continue 
