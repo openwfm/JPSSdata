@@ -29,4 +29,7 @@ cn = matplotlib.pyplot.contour(z)
 
 contours = get_contour_verts(cn)
 
-print contours
+print 'contours are collections of line, each line consisting of poins with x and y coordinates'
+
+for c in contours:
+    print c
