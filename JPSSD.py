@@ -170,11 +170,20 @@ def read_modis_files(files):
     hdff=SD(files.fire,SDC.READ)
     lat_obj=hdfg.select('Latitude')
     lon_obj=hdfg.select('Longitude')    
-    fire_mask_obj=hdff.select('fire mask')
+    fire_obj=hdff.select('fire mask')
+    lat_fire_obj=hdff.select('FP_latitude')
+    lon_fire_obj=hdff.select('FP_longitude')
+    conf_fire_obj=hdff.select('FP_confidence')
+    frp_fire_obj=hdff.select('FP_power')
     ret=Dict([])
-    ret.lat=np.array(lat_obj.get())
-    ret.lon=np.array(lon_obj.get())
-    ret.fire=np.array(fire_mask_obj.get())
+    ret.lat=lat_obj.get()
+    ret.lon=lon_obj.get()
+    ret.fire=fire_obj.get()
+    ret.lat_fire=lat_fire_obj.get()
+    ret.lon_fire=lon_fire_obj.get()
+    ret.sat_fire=hdff.Satellite
+    ret.conf_fire=conf_fire_obj.get()
+    ret.frp_fire=frp_fire_obj.get()
     return ret
 
 def read_viirs_files(files):
@@ -194,6 +203,11 @@ def read_viirs_files(files):
     ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
     ncf=Dataset(files.fire,'r')
     ret.fire=np.array(ncf.variables['fire mask'][:])
+    ret.lat_fire=np.array(ncf.variables['FP_latitude'][:])
+    ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])
+    ret.sat_fire=ncf.Satellite
+    ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])
+    ret.frp_fire=np.array(ncf.variables['FP_power'][:])
     return ret
 
 def read_data(files,file_metadata):
@@ -250,6 +264,9 @@ def read_data(files,file_metadata):
             # connect the file back to metadata
             item.time_start_geo_iso=file_metadata[f0]["time_start"]
             item.time_num=time_iso2num(item.time_start_geo_iso)
+            dt=datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
+            item.acq_date=str(dt.month)+'/'+str(dt.day)+'/'+str(dt.year)
+            item.acq_time=str(dt.hour)+str(dt.minute)
             item.time_start_fire_iso=file_metadata[f1]["time_start"]
             item.time_end_geo_iso=file_metadata[f0]["time_end"]
             item.time_end_fire_iso=file_metadata[f1]["time_end"]
