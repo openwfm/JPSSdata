@@ -17,6 +17,7 @@ import h5py
 from netCDF4 import Dataset
 from datetime import datetime
 import time
+import pandas as pd
 
 def search_api(sname,bbox,time,maxg=50,platform="",version=""):
     """API search of the different satellite granules
@@ -205,7 +206,7 @@ def read_viirs_files(files):
     ret.fire=np.array(ncf.variables['fire mask'][:])
     ret.lat_fire=np.array(ncf.variables['FP_latitude'][:])
     ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])
-    ret.sat_fire=ncf.Satellite
+    ret.sat_fire=ncf.SatelliteInstrument
     ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])
     ret.frp_fire=np.array(ncf.variables['FP_power'][:])
     return ret
@@ -417,7 +418,25 @@ def read_fire_mesh(filename):
     return fxlon,fxlat,bbox,time_esmf
 
 def write_csv(data):
-    print 'Nothing yet.'
+    """ 
+    Write fire detections from data dictionary to a CSV file
+        :param:
+            data    dictionary with Latitude, Longitude and fire mask arrays and metadata information
+        :returns: write a fire_detections.csv file
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    """
+    d={'latitude': np.concatenate([data[d]['lat_fire'] for d in list(data)]), 
+    'longitude': np.concatenate([data[d]['lon_fire'] for d in list(data)]), 
+    'acq_date': np.concatenate([[data[d]['acq_date']]*len(data[d]['lat_fire']) for d in list(data)]), 
+    'acq_time': np.concatenate([[data[d]['acq_time']]*len(data[d]['lat_fire']) for d in list(data)]), 
+    'satellite': np.concatenate([[data[d]['sat_fire']]*len(data[d]['lat_fire']) for d in list(data)]), 
+    'instrument': np.concatenate([[data[d]['instrument']]*len(data[d]['lat_fire']) for d in list(data)]), 
+    'confidence': np.concatenate([data[d]['conf_fire'] for d in list(data)]), 
+    'frp': np.concatenate([data[d]['frp_fire'] for d in list(data)]) }
+    df=pd.DataFrame(data=d)
+    df.to_csv('fire_detections.csv', encoding='utf-8', index=False)
 
 def plot_3D(xx,yy,zz):
     """
