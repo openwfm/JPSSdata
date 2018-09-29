@@ -416,6 +416,9 @@ def read_fire_mesh(filename):
     
     return fxlon,fxlat,bbox,time_esmf
 
+def write_csv(data):
+    print 'Nothing yet.'
+
 def plot_3D(xx,yy,zz):
     """
     Plot surface of (xx,yy,zz) data
