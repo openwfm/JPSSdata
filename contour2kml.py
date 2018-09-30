@@ -3,25 +3,17 @@ import json, sys, math
 def contour2kml(data,kml_path):
    with open(kml_path,'w') as kml:
        kml.write("""<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
-<Document>
-	<name>%s</name>""" % data['name'])
-#                 for c in countours:
-# 	<Style id="falseColor9">
-#		<BalloonStyle>
-#			<text><![CDATA[<table border="0">
-#  <tr><td><b>Head</b></td><td>Text</td></tr>
-#  </table>]]></text>
-#		</BalloonStyle>
-#		<LineStyle>
-#			<color>ff081388</color>
-#			<width>2.5</width>
-#		</LineStyle>
-#		<PolyStyle>
-#			<color>66000086</color>
-#			<colorMode>random</colorMode>
-#		</PolyStyle>
-#	</Style>
+       <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+       <Document><name>%s</name>""" % data['name'])
+       # write all styles first
+       print data
+       for idx, c in enumerate(data['contours']):
+           print 'countour %s' % idx
+           print c 
+           kml.write("""<Style id="ContourStyle%s"<BalloonStyle<text>%s</text></BalloonStyle>
+           <LineStyle><color>%s</color><width>%s</width></LineStyle></Style>""" % (idx,
+           c['text'],c['line_color'],c.get('line_width',3)))
+           
 #	<Folder>
 #		<name>Las_Conchas_Perimeters</name>
 #		<open>1</open>
@@ -154,9 +146,17 @@ def contour2kml(data,kml_path):
 #	</Folder>
 #</Document>
 #</kml>
-if __name__ == '__main__':
-   print 'Running a self-test case'
-   data={'name':'Las_Conchas_Perimeters.kmz'}
-   contour2kml(data,'selftest.kml')
 
-    
+if __name__ == '__main__':
+    print 'Running a self-test case'
+    data={
+         'name':'Las_Conchas_Perimeters.kmz',
+         'contours': [
+             {'text':'2011-06-28T23:43:00-06:00',
+              'line_color':'ff081388',
+              'line_width':'2.5',
+              'time_degin':'2011-06-28T23:43:00-06:00',
+              'coordinates':[]}
+              ]
+          }
+    contour2kml(data,'selftest.kml')

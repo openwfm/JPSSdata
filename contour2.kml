@@ -4,9 +4,7 @@
 	<name>Las_Conchas_Perimeters.kmz</name>
 	<Style id="falseColor9">
 		<BalloonStyle>
-			<text><![CDATA[<table border="0">
-  <tr><td><b>Head</b></td><td>Text</td></tr>
-  </table>]]></text>
+			<text>HI THERE</text>
 		</BalloonStyle>
 		<LineStyle>
 			<color>ff081388</color>
