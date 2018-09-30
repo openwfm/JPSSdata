@@ -11,10 +11,10 @@ def contour2kml(data,kml_path):
            print 'countour %s' % idx
            print c 
            kml.write("""<Style id="ContourStyle%s"<BalloonStyle<text>%s</text></BalloonStyle>
-           <LineStyle><color>%s</color><width>%s</width></LineStyle></Style>""" % (idx,
+           <LineStyle><color>%s</color><width>%s</width></LineStyle></Style>\n""" % (idx,
            c['text'],c['line_color'],c.get('line_width',3)))
            
-#	<Folder>
+       write.kml("<Folder>\")
 #		<name>Las_Conchas_Perimeters</name>
 #		<open>1</open>
 #		<Folder id="layer 0">
