@@ -23,8 +23,6 @@ fxlat = fxlat[0::coarsening,0::coarsening]
 print 'coarsened  %s %s' % fxlon.shape
 
 bounds=[fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
-dx1=fxlon[0,1]-fxlon[0,0]
-dx2=fxlat[1,0]-fxlat[0,0]
 vfxlon=np.reshape(fxlon,np.prod(fxlon.shape))
 vfxlat=np.reshape(fxlat,np.prod(fxlat.shape))
 vfgrid=np.column_stack((vfxlon,vfxlat))
@@ -32,6 +30,7 @@ print 'Setting up interpolation'
 stree=spatial.cKDTree(vfgrid)
 vfind=np.array(list(itertools.product(np.array(range(0,fxlon.shape[0])),np.array(range(0,fxlon.shape[1])))))
 itree=spatial.cKDTree(vfind)
+M=len(vfgrid)
 
 # Sort dictionary by time_num into an array of tuples (key, dictionary of values) 
 print 'Sort the granules by dates'
@@ -67,14 +66,10 @@ for gran in range(0,GG):
 	fire=sdata[gran][1]['fire']
 	print 'Interpolation to fire grid'
 	sys.stdout.flush()
-	# Compute a distance upper bound
-	dy1=slon[0,1]-slon[0,0]
-	dy2=slat[1,0]-slat[0,0]
-	dub=distance_upper_bound([dx1,dx2],[dy1,dy2])
 	# Interpolate all the granule coordinates in bounds in the wrfout fire mesh
 	# gg: mask in the granule of g-points = pixel coordinates inside the fire mesh
 	# ff: the closed points in fire mesh indexed by g-points
-	(ff,gg)=nearest_scipy(slon,slat,stree,bounds,dub) ## indices to flattened granule array
+	(ff,gg)=nearest_scipy(slon,slat,stree,bounds) ## indices to flattened granule array
 	vfire=np.reshape(fire,np.prod(fire.shape)) ## flaten the fire detection array
 	gfire=vfire[gg]   # the part withing the fire mesh bounds
 	fi=gfire >= 8  # where fire detected - nominal or high confidence 
