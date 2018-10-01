@@ -266,7 +266,7 @@ def read_data(files,file_metadata):
             item.time_start_geo_iso=file_metadata[f0]["time_start"]
             item.time_num=time_iso2num(item.time_start_geo_iso)
             dt=datetime.strptime(item.time_start_geo_iso[0:18],'%Y-%m-%dT%H:%M:%S')
-            item.acq_date='%02d-%02d-%02d' % (dt.month,dt.day,dt.year)
+            item.acq_date='%02d-%02d-%02d' % (dt.year,dt.month,dt.day)
             item.acq_time='%02d%02d' % (dt.hour,dt.minute)
             item.time_start_fire_iso=file_metadata[f1]["time_start"]
             item.time_end_geo_iso=file_metadata[f0]["time_end"]
