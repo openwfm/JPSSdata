@@ -11,7 +11,7 @@ time_iso = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
 data=retrieve_af_data(bbox,time_iso)
 
 print 'writting CSV detections'
-write_csv(data)
+write_csv(data,bbox)
 
 print 'saving data'
 
