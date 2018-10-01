@@ -6,12 +6,12 @@ import saveload as sl
 fxlon,fxlat,bbox,time_esmf=read_fire_mesh('wrfout_d04_2011-06-26_12:00:00')
 
 # cannot get starting time from wrfout
-time_iso = ("2011-06-26T12:00:00Z", "2011-06-29T00:00:00Z") # tuple, not array
+time_iso = ("2011-06-25T00:00:00Z", "2011-07-04T00:00:00Z") # tuple, not array
 
 data=retrieve_af_data(bbox,time_iso)
 
 print 'writting CSV detections'
-write_csv(data)
+write_csv(data,bbox)
 
 print 'saving data'
 
