@@ -7,7 +7,6 @@ def contour2kml(data,kml_path):
        kml.write("""<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">\n""")
        kml.write("""<Document><name>%s</name>\n""" % name)
        # write all styles first
-       print data
        for idx, c in enumerate(data['contours']):
            kml.write("""<Style id="ColorStyle%s">""" % idx)
            if 'text' in c and c['text'] is not None:
@@ -51,7 +50,7 @@ def contour2kml(data,kml_path):
 								<coordinates>""")
                for segment in polygon:
                    kml.write("\n%s,%s,0" % tuple(segment))
-                   kml.write("""
+               kml.write("""
                                                                 </coordinates>
                                                         </LinearRing>
                                                 </outerBoundaryIs>
@@ -82,10 +81,37 @@ if __name__ == '__main__':
                   'colorMode':'random'
               },
               'time_begin':'2011-06-28T23:43:00-06:00',
-              'polygons':[[
-                 [-106.4,35.0],
-                 [-106.4,35.9],
-                 [-106.0,35.9],
+              'polygons':[
+                  [
+                      [-106.4,35.0],
+                      [-106.4,35.9],
+                      [-106.0,35.9],
+                      [-106.0,35.0],
+                      [-106.4,35.0]
+                  ],[
+                      [-105.4,35.0],
+                      [-105.4,35.9],
+                      [-105.0,35.9],
+                      [-105.4,35.0]
+                  ]
+              ]
+              },
+             {'text':'2011-06-29T23:43:00-06:00',
+              'LineStyle':{
+                  'color':'ff051100',
+                  'width':'2.5',
+               },
+              'PolyStyle':{
+                  'color':'66000086',
+                  'colorMode':'random'
+               },
+              'time_begin':'2011-06-29T23:43:00-06:00',
+              'polygons':[
+                [
+                 [-106.3,35.0],
+                 [-106.3,35.99],
+                 [-106.0,35.99],
+                 [-106.0,35.0],
                  [-106.4,35.0]
                 ],[
                  [-105.4,35.0],
@@ -94,7 +120,9 @@ if __name__ == '__main__':
                  [-105.4,35.0]
                 ]
               ]
-              },
+             },
           ]
     }
+    print ('data: ' + json.dumps(data,indent=4, separators=(',', ': ')))
     contour2kml(data,'selftest.kml')
+    print 'open file selftest.kml in Google Earth'
