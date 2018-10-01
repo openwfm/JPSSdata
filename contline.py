@@ -16,11 +16,7 @@ def get_contour_verts(cn):
         paths = []
         # for each separate section of the contour line
         for pp in cc.get_paths():
-            xy = []
-            # for each segment of that section
-            for vv in pp.iter_segments():
-                xy.append(vv[0])
-            paths.append(np.vstack(xy))
+            paths.append(pp.vertices)
         contours.append(paths)
 
     return contours
@@ -36,7 +32,7 @@ if __name__ == "__main__":
     yy=y[np.ix_(xind,yind)]
     zz=mgout['a']
           
-    cn=plt.contour(xx,yy,zz) 
+    cn=plt.contour(xx,yy,zz,100) 
     tscale=mgout['tscale'][0]
     time_scale_num=mgout['time_scale_num'][0]
     time_num=np.array(cn.levels)*tscale+time_scale_num[0]
@@ -44,6 +40,12 @@ if __name__ == "__main__":
     contours=get_contour_verts(cn)
 
     print 'contours are collections of line, each line consisting of poins with x and y coordinates'
+    for c in contours:
+        for cc in c:
+            xx=[x[0] for x in cc]
+            yy=[y[1] for y in cc]
+            plt.scatter(xx,yy)
+    plt.show()
 
     conts=[Dict({'text':time_iso[k],
         'LineStyle':{ 
@@ -63,5 +65,5 @@ if __name__ == "__main__":
 
     contour2kml(data,'perimeters.kml')
 
+    plt.show()
 
-        
