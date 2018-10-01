@@ -436,7 +436,7 @@ def write_csv(data,bounds):
     'confidence': np.concatenate([data[d]['conf_fire'] for d in list(data)]), 
     'frp': np.concatenate([data[d]['frp_fire'] for d in list(data)]) }
     df=pd.DataFrame(data=d)
-    df=df[(df['longitude']>bounds[0]) & (df['longitude']<bounds[1]) & (df['latitude']>bounds[3]) & (df['latitude']<bounds[4])]
+    df=df[(df['longitude']>bounds[0]) & (df['longitude']<bounds[1]) & (df['latitude']>bounds[2]) & (df['latitude']<bounds[3])]
     df.to_csv('fire_detections.csv', encoding='utf-8', index=False)
 
 def plot_3D(xx,yy,zz):
