@@ -30,9 +30,9 @@ if __name__ == "__main__":
     xx=x[np.ix_(xind,yind)]
     y=np.array(result['fxlat'])
     yy=y[np.ix_(xind,yind)]
-    zz=mgout['a']
+    zz=np.transpose(mgout['a'])
           
-    cn=plt.contour(xx,yy,zz,100) 
+    cn=plt.contour(xx,yy,zz,20) 
     tscale=mgout['tscale'][0]
     time_scale_num=mgout['time_scale_num'][0]
     time_num=np.array(cn.levels)*tscale+time_scale_num[0]
