@@ -417,7 +417,7 @@ def read_fire_mesh(filename):
     
     return fxlon,fxlat,bbox,time_esmf
 
-def write_csv(data):
+def write_csv(data,bounds):
     """ 
     Write fire detections from data dictionary to a CSV file
         :param:
@@ -436,6 +436,7 @@ def write_csv(data):
     'confidence': np.concatenate([data[d]['conf_fire'] for d in list(data)]), 
     'frp': np.concatenate([data[d]['frp_fire'] for d in list(data)]) }
     df=pd.DataFrame(data=d)
+    df=df[(df['longitude']>bounds[0]) & (df['longitude']<bounds[1]) & (df['latitude']>bounds[3]) & (df['latitude']<bounds[4])]
     df.to_csv('fire_detections.csv', encoding='utf-8', index=False)
 
 def plot_3D(xx,yy,zz):

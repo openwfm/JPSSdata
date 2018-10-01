@@ -30,7 +30,6 @@ print 'Setting up interpolation'
 stree=spatial.cKDTree(vfgrid)
 vfind=np.array(list(itertools.product(np.array(range(0,fxlon.shape[0])),np.array(range(0,fxlon.shape[1])))))
 itree=spatial.cKDTree(vfind)
-M=len(vfgrid)
 
 # Sort dictionary by time_num into an array of tuples (key, dictionary of values) 
 print 'Sort the granules by dates'
