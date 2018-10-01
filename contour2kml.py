@@ -30,24 +30,24 @@ def contour2kml(data,kml_path):
        folder_name = data.get('folder_name',name)
        kml.write("""
             <Folder><name>%s</name>
-		<open>1</open>""" % folder_name)
+                <open>1</open>""" % folder_name)
        for idx, c in enumerate(data['contours']):
            time_begin = c['time_begin']
            kml.write("""
-		<Folder id="layer 0">
-			<name>%s</name>
-			<Placemark>
+                <Folder id="layer 0">
+                        <name>%s</name>
+                        <Placemark>
                                 <TimeSpan><begin>%s</begin></TimeSpan>
-				<name>%s</name>
-				<styleUrl>ColorStyle%s</styleUrl>
-				<MultiGeometry>""" % (
+                                <name>%s</name>
+                                <styleUrl>ColorStyle%s</styleUrl>
+                                <MultiGeometry>""" % (
                time_begin, time_begin, time_begin,idx))
            for polygon in c['polygons']: 
                kml.write("""
-					<Polygon>
-						<outerBoundaryIs>
-							<LinearRing>
-								<coordinates>""")
+                                        <Polygon>
+                                                <outerBoundaryIs>
+                                                        <LinearRing>
+                                                                <coordinates>""")
                for segment in polygon:
                    kml.write("\n%s,%s,0" % tuple(segment))
                kml.write("""
@@ -56,9 +56,9 @@ def contour2kml(data,kml_path):
                                                 </outerBoundaryIs>
                                         </Polygon>""")
            kml.write("""
-				</MultiGeometry>
-			</Placemark>
-		</Folder>""")
+                                </MultiGeometry>
+                        </Placemark>
+                </Folder>""")
        kml.write("""
        </Folder>
 </Document>
