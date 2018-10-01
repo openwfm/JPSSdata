@@ -484,7 +484,7 @@ def time_num2iso(time_num):
     """
     dt=datetime.fromtimestamp(time_num)
     # seconds since January 1, 1970
-    return str(dt.year)+'-'+str(dt.month)+'-'+str(dt.day)+'T'+str(dt.hour)+':'+str(dt.minute)+':'+str(dt.second)+'-00:00'
+    return '%02d-%02d-%02dT%02d:%02d:%02d-06:00' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]

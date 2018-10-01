@@ -22,7 +22,7 @@ def get_contour_verts(cn):
     return contours
 
 if __name__ == "__main__":
-    result=loadmat('sugarloaf/result.mat')
+    result=loadmat('result.mat')
     mgout=loadmat('mgout.mat')
     xind=mgout['sm'][0]-1
     yind=mgout['sn'][0]-1
