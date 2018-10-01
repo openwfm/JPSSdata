@@ -471,6 +471,20 @@ def time_iso2num(time_iso):
     # seconds since January 1, 1970
     return time.mktime(time_datetime.timetuple())
 
+def time_num2iso(time_num):
+    """
+    Transform a time integer number of seconds since January 1, 1970 to an iso time string
+        :param: 
+            time_num       Integer number of seconds since January 1, 1970
+        :returns: String iso date
+    
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com) 2018-10-01
+    """
+    dt=datetime.fromtimestamp(time_num)
+    # seconds since January 1, 1970
+    return str(dt.year)+'-'+str(dt.month)+'-'+str(dt.day)+'T'+str(dt.hour)+':'+str(dt.minute)+':'+str(dt.second)+'-00:00'
+
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
     time = ("2012-09-11T00:00:00Z", "2012-09-12T00:00:00Z")

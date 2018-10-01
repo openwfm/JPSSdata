@@ -80,7 +80,7 @@ for gran in range(0,GG):
 	print 'unknown          %s' % unkn.sum()
 	if fi.any():   # at fire points
 		U[ff[fi]]=ti   # set U to granule time where fire detected
-		kk=neighbor_indices_ball(itree,ff[fi],fxlon.shape,d=2) 
+		kk=neighbor_indices_ball(itree,ff[fi],fxlon.shape) 
 		ii=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
 		T[ii]=ti       # update mask
 	if nofi.any(): # set L at no-fire points and not masked
