@@ -17,9 +17,7 @@ def get_contour_verts(cn):
         # for each separate section of the contour line
         for pp in cc.get_paths():
             # read all the vertices
-            vv=pp.vertices
-            # add the first element to the end to close the cycle
-            paths.append(np.append(vv,vv[0]))
+            paths.append(pp.vertices)
         contours.append(paths)
 
     return contours
@@ -48,7 +46,7 @@ if __name__ == "__main__":
     # Generating the coordinates for the contours
     contours=get_contour_verts(cn)
 
-    print 'contours are collections of line, each line consisting of poins with x and y coordinates'
+    #print 'contours are collections of line, each line consisting of poins with x and y coordinates'
     '''
     for c in contours:
         for cc in c:
