@@ -50,9 +50,10 @@ if __name__ == "__main__":
     # Number of periods of 6 hours we need to compute rounded
     d=dtf-dti
     hours=d.total_seconds()/3600
-    M=int(np.round((hours+1)/6))
+    contour_dt_hours = 24
+    M=int(np.round((hours+1)/contour_dt_hours ))
     # Datetimes where we are going to compute the levels
-    dts=[dti+datetime.timedelta(hours=k*6) for k in range(1,M)]
+    dts=[dti+datetime.timedelta(hours=k*contour_dt_hours) for k in range(1,M)]
     levels=[time.mktime(t.timetuple()) for t in dts]
     # Computing the contours
     cn=plt.contour(xx,yy,zz,levels=levels) 
