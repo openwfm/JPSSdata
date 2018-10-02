@@ -2,7 +2,7 @@
 from JPSSD import retrieve_af_data, read_fire_mesh, time_iso2num, write_csv
 from interpolation import sort_dates
 import saveload as sl
-import datetime
+import datetime as dt
 import sys
 
 if len(sys.argv) != 4:
@@ -20,9 +20,9 @@ if len(sys.argv) != 4:
 
 fxlon,fxlat,bbox,time_esmf=read_fire_mesh(sys.argv[1])
 
-dti=datetime.strptime(sys.argv[2],'%Y%m%d%H%M%S')
+dti=dt.datetime.strptime(sys.argv[2],'%Y%m%d%H%M%S')
 time_start_iso='%d-%02d-%02dT%02d:%02d:%02d-06:00' % (dti.year,dti.month,dti.day,dti.hour,dti.minute,dti.second)
-dtf=dti+timedelta(days=int(sys.argv[3]))
+dtf=dti+dt.timedelta(days=int(sys.argv[3]))
 time_final_iso='%d-%02d-%02dT%02d:%02d:%02d-06:00' % (dtf.year,dtf.month,dtf.day,dtf.hour,dtf.minute,dtf.second)
 
 # cannot get starting time from wrfout
