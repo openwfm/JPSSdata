@@ -2,7 +2,7 @@
 ### Usage:
 1) Run case.py as:
 
-$ python case.py wrfout start_time days
+	$ python case.py wrfout start_time days
 
 Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a text file called 'data'. It creates as well a csv file with all the detections called 'fire_detections.csv'. The input variales are:
 
@@ -18,13 +18,13 @@ Generates the fire mesh, downloads all the granules in between the dates and int
 
 2) The fire detections can be visualized using the 'fire_detections.csv' file. Link this file into wrfxpy repository in https://github.com/openwfm/wrfxpy and run the csv2kmz.sh script as:
 
-./csv2kmz.sh fire_detections.csv fire_detections.kmz
+	./csv2kmz.sh fire_detections.csv fire_detections.kmz
 
 Generates a KMZ file with the square detections in order to be visualized in Google Earth application as a movie of fire detections.
 
 3) Run setup.py as:
 
-$ python setup.py
+	$ python setup.py
 
 Processes all the granules and creates the upper and lower bounds for the fire arrival time. It saves everything in a text file called 'result' and in a Matlab file called 'result.mat'.
 
@@ -32,17 +32,17 @@ Processes all the granules and creates the upper and lower bounds for the fire a
 
 5) Link the Matlab file 'result.mat' into the private fire_interpolation repository in:
 
-ssh://repo.openwfm.org/home/git/fire_interpolation
+	ssh://repo.openwfm.org/home/git/fire_interpolation
 
 6) Run in Matlab the script jpss_mg.m as:
 
->> jpss_mg
+	>> jpss_mg
 
 Generates the fire arrival time in a 2D array called 'a' using the Multigrid technique and saves everything in a Matlab file called 'mgout.mat'. It shows in different figures the different levels and how they are changing all the time.
 
 7) Link back the Matlab file 'mgout.mat' into the JPSSData repository and run contline.py as:
 
-$ python contline.py
+	$ python contline.py
 
 Generates a contour line representation of the results in a KML file called 'perimeters.kml'. It can be opened in Google Earth application as well with step 2) and it generates a movie of the interpolation with the fire detections.
 
