@@ -4,7 +4,7 @@
 
 	$ python case.py wrfout start_time days
 
-Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a text file called 'data'. It creates as well a csv file with all the detections called 'fire_detections.csv'. The input variales are:
+	Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a text file called 'data'. It creates as well a csv file with all the detections called 'fire_detections.csv'. The input variales are:
 
 	- wrfout:  string, link to the wrfout file of WRF-SFIRE simulation.	
 	- start_time - string, YYYYMMDDHHMMSS where:
@@ -20,13 +20,13 @@ Generates the fire mesh, downloads all the granules in between the dates and int
 
 	./csv2kmz.sh fire_detections.csv fire_detections.kmz
 
-Generates a KMZ file with the square detections in order to be visualized in Google Earth application as a movie of fire detections.
+	Generates a KMZ file with the square detections in order to be visualized in Google Earth application as a movie of fire detections.
 
 3) Run setup.py as:
 
 	$ python setup.py
 
-Processes all the granules and creates the upper and lower bounds for the fire arrival time. It saves everything in a text file called 'result' and in a Matlab file called 'result.mat'.
+	Processes all the granules and creates the upper and lower bounds for the fire arrival time. It saves everything in a text file called 'result' and in a Matlab file called 'result.mat'.
 
 4) The Matlab file result.mat can be used to run the Multigrid method which are going to define a fire arrival time curve in between the upper and lower bounds as a rigid plate deformed by forces. In order to do that, the next steps are necessary.
 
@@ -36,15 +36,15 @@ Processes all the granules and creates the upper and lower bounds for the fire a
 
 6) Run in Matlab the script jpss_mg.m as:
 
-	>> jpss_mg
+	\>\> jpss_mg
 
-Generates the fire arrival time in a 2D array called 'a' using the Multigrid technique and saves everything in a Matlab file called 'mgout.mat'. It shows in different figures the different levels and how they are changing all the time.
+	Generates the fire arrival time in a 2D array called 'a' using the Multigrid technique and saves everything in a Matlab file called 'mgout.mat'. It shows in different figures the different levels and how they are changing all the time.
 
 7) Link back the Matlab file 'mgout.mat' into the JPSSData repository and run contline.py as:
 
 	$ python contline.py
 
-Generates a contour line representation of the results in a KML file called 'perimeters.kml'. It can be opened in Google Earth application as well with step 2) and it generates a movie of the interpolation with the fire detections.
+	Generates a contour line representation of the results in a KML file called 'perimeters.kml'. It can be opened in Google Earth application as well with step 2) and it generates a movie of the interpolation with the fire detections.
 
 https://github.com/openwfm/JPSSdata
 mirror: http://repo.or.cz/git-browser/by-commit.html?r=JPSSData.git
