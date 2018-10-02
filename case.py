@@ -5,7 +5,7 @@ import saveload as sl
 import datetime
 import sys
 
-if len(sys.argv) != 3:
+if len(sys.argv) != 4:
 	print 'Error: python %s wrfout start_time days' % sys.argv[0]
 	print '	* wrfout - string, wrfout file of WRF-SFIRE simulation'
 	print '	* start_time - string, YYYYMMDDHHMMSS where: '
