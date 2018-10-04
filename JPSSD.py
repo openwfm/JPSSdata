@@ -219,11 +219,14 @@ def read_viirs_files(files):
     ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])
     ret.brig_fire=np.array(ncf.variables['FP_T13'][:])
     sf=np.array(ncf.variables['FP_sample'][:])
+    print 'sample: ', sf
     # Satellite information
     N=3200 # Number of columns (maxim number of sample)
     h=828. # Altitude of the satellite in km
     p=0.75 # Nadir pixel resolution in km
     ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
+    print 'scan: ', ret.scan_fire
+    print 'track: ', ret.track_fire
     ret.sat_fire=ncf.SatelliteInstrument
     ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])
     ret.t31_fire=np.array(ncf.variables['FP_T15'][:])
