@@ -174,7 +174,10 @@ def read_modis_files(files):
     fire_obj=hdff.select('fire mask')
     lat_fire_obj=hdff.select('FP_latitude')
     lon_fire_obj=hdff.select('FP_longitude')
+    brig_fire_obj=hdff.select('FP_T21')
+    sample_fire_obj=hdff.select('FP_sample')
     conf_fire_obj=hdff.select('FP_confidence')
+    t31_fire_obj=hdff.select('FP_T31')
     frp_fire_obj=hdff.select('FP_power')
     ret=Dict([])
     ret.lat=lat_obj.get()
@@ -182,9 +185,17 @@ def read_modis_files(files):
     ret.fire=fire_obj.get()
     ret.lat_fire=lat_fire_obj.get()
     ret.lon_fire=lon_fire_obj.get()
+    ret.brig_fire=brig_fire_obj.get()
     ret.sat_fire=hdff.Satellite
     ret.conf_fire=conf_fire_obj.get()
+    ret.t31_fire=t31_fire_obj.get()
     ret.frp_fire=frp_fire_obj.get()
+    sf=sample_fire_obj.get()
+    # Satellite information
+    N=1354 # Number of columns (maxim number of sample)
+    h=705. # Altitude of the satellite in km
+    p=1. # Nadir pixel resolution in km
+    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
     return ret
 
 def read_viirs_files(files):
@@ -206,8 +217,16 @@ def read_viirs_files(files):
     ret.fire=np.array(ncf.variables['fire mask'][:])
     ret.lat_fire=np.array(ncf.variables['FP_latitude'][:])
     ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])
+    ret.brig_fire=np.array(ncf.variables['FP_T13'][:])
+    sf=np.array(ncf.variables['FP_sample'][:])
+    # Satellite information
+    N=1354 # Number of columns (maxim number of sample)
+    h=705. # Altitude of the satellite in km
+    p=1. # Nadir pixel resolution in km
+    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
     ret.sat_fire=ncf.SatelliteInstrument
     ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])
+    ret.t31_fire=np.array(ncf.variables['FP_T15'][:])
     ret.frp_fire=np.array(ncf.variables['FP_power'][:])
     return ret
 
@@ -429,11 +448,15 @@ def write_csv(data,bounds):
     """
     d={'latitude': np.concatenate([data[d]['lat_fire'] for d in list(data)]), 
     'longitude': np.concatenate([data[d]['lon_fire'] for d in list(data)]), 
+    'brightness': np.concatenate([data[d]['brig_fire'] for d in list(data)]),
+    'scan': np.concatenate([data[d]['scan_fire'] for d in list(data)]),
+    'track': np.concatenate([data[d]['track_fire'] for d in list(data)]),
     'acq_date': np.concatenate([[data[d]['acq_date']]*len(data[d]['lat_fire']) for d in list(data)]), 
     'acq_time': np.concatenate([[data[d]['acq_time']]*len(data[d]['lat_fire']) for d in list(data)]), 
     'satellite': np.concatenate([[data[d]['sat_fire']]*len(data[d]['lat_fire']) for d in list(data)]), 
     'instrument': np.concatenate([[data[d]['instrument']]*len(data[d]['lat_fire']) for d in list(data)]), 
     'confidence': np.concatenate([data[d]['conf_fire'] for d in list(data)]), 
+    'bright_t31': np.concatenate([data[d]['t31_fire'] for d in list(data)]),
     'frp': np.concatenate([data[d]['frp_fire'] for d in list(data)]) }
     df=pd.DataFrame(data=d)
     df=df[(df['longitude']>bounds[0]) & (df['longitude']<bounds[1]) & (df['latitude']>bounds[2]) & (df['latitude']<bounds[3])]
@@ -485,6 +508,29 @@ def time_num2iso(time_num):
     dt=datetime.fromtimestamp(time_num)
     # seconds since January 1, 1970
     return '%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
+
+def pixel_dim(sample,N,h,p):
+    """
+    Computes pixel dimensions (along-scan and track pixel sizes)
+        :param: 
+            sample      Array of integers with the column number (sample variable in files)
+            N           Scalar, total number of pixels in each row of the image swath
+            h           Scalar, altitude of the satellite in km
+            p           Scalar, pixel nadir resolution in km 
+        :returns: 
+            scan        Along-scan pixel size in km
+            track       Along-track pixel size in km
+                 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com) 2018-10-01
+    """
+    Re=6378.137 # approximation of the radius of the Earth in km
+    s=p/h
+    r=Re+h
+    theta=-0.5*N*s+0.5*s+(sample-1)*s
+    scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
+    track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
+    return (scan,track)
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]

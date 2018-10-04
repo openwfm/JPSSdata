@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # Transpose of the solution is needed to match the coordinates, scaled and shift back
     tscale=mgout['tscale'][0]
     time_scale_num=mgout['time_scale_num'][0]
-    zz=mgout['a']*tscale+time_scale_num[0]
+    zz=np.transpose(mgout['a'])*tscale+time_scale_num[0]
     
     # Granules numeric times
     time_num_granules=result['time_num_granules'][0]
