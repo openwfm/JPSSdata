@@ -104,7 +104,7 @@ T=np.reshape(T-time_scale_num[0],fxlon.shape)
 print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_scale_num[0]
 sl.save((U,L,T),'result')
 
-result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
+result = {'U':U, 'L':L, 'T':T, 'fxlon': np.transpose(fxlon), 'fxlat': np.transpose(fxlat), 
           'time_num':time_num, 'time_scale_num' : time_scale_num, 'time_num_granules' : tt}
 
 sio.savemat('result.mat', mdict=result)
