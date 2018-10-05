@@ -195,7 +195,8 @@ def read_modis_files(files):
     N=1354 # Number of columns (maxim number of sample)
     h=705. # Altitude of the satellite in km
     p=1. # Nadir pixel resolution in km
-    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
+    s=np.arctan(p/h) # rad/sample, constant so it is computed with trigonometry
+    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,s)
     return ret
 
 def read_viirs_files(files):
@@ -223,8 +224,9 @@ def read_viirs_files(files):
     # Satellite information
     N=3200 # Number of columns (maxim number of sample)
     h=828. # Altitude of the satellite in km
-    p=0.75 # Nadir pixel resolution in km
-    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
+    p=0.75 # Nadir pixel resolution in km (not used at the end)
+    s=0.017785/360*2*np.pi # rad/sample variable, it is an approximation
+    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,s)
     print 'scan: ', ret.scan_fire
     print 'track: ', ret.track_fire
     ret.sat_fire=ncf.SatelliteInstrument
@@ -512,7 +514,7 @@ def time_num2iso(time_num):
     # seconds since January 1, 1970
     return '%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
 
-def pixel_dim(sample,N,h,p):
+def pixel_dim(sample,N,h,s):
     """
     Computes pixel dimensions (along-scan and track pixel sizes)
         :param: 
@@ -528,7 +530,6 @@ def pixel_dim(sample,N,h,p):
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
     """
     Re=6378.137 # approximation of the radius of the Earth in km
-    s=p/h
     r=Re+h
     theta=-0.5*N*s+0.5*s+(sample-1)*s
     scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
