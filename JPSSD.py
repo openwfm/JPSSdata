@@ -164,6 +164,7 @@ def read_modis_files(files):
     Read the geolocation (03) and fire (14) files for MODIS products (MOD or MYD)
         :param: files  pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
         :returns: ret  dictionary with Latitude, Longitude and fire mask arrays read
+    
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
@@ -195,8 +196,7 @@ def read_modis_files(files):
     N=1354 # Number of columns (maxim number of sample)
     h=705. # Altitude of the satellite in km
     p=1. # Nadir pixel resolution in km
-    s=np.arctan(p/h) # rad/sample, constant so it is computed with trigonometry
-    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,s)
+    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
     return ret
 
 def read_viirs_files(files):
@@ -220,15 +220,11 @@ def read_viirs_files(files):
     ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])
     ret.brig_fire=np.array(ncf.variables['FP_T13'][:])
     sf=np.array(ncf.variables['FP_sample'][:])
-    print 'sample: ', sf
     # Satellite information
     N=3200 # Number of columns (maxim number of sample)
     h=828. # Altitude of the satellite in km
-    p=0.75 # Nadir pixel resolution in km (not used at the end)
-    s=0.017785/360*2*np.pi # rad/sample variable, it is an approximation
-    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,s)
-    print 'scan: ', ret.scan_fire
-    print 'track: ', ret.track_fire
+    p=(0.75+0.75/2+0.75/3)/3 # Nadir pixel resolution in km (mean in 3 different sections)
+    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
     ret.sat_fire=ncf.SatelliteInstrument
     ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])
     ret.t31_fire=np.array(ncf.variables['FP_T15'][:])
@@ -514,7 +510,7 @@ def time_num2iso(time_num):
     # seconds since January 1, 1970
     return '%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
 
-def pixel_dim(sample,N,h,s):
+def pixel_dim(sample,N,h,p):
     """
     Computes pixel dimensions (along-scan and track pixel sizes)
         :param: 
@@ -530,8 +526,9 @@ def pixel_dim(sample,N,h,s):
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
     """
     Re=6378.137 # approximation of the radius of the Earth in km
+    s=np.arctan(p/h) # trigonometry (deg/sample)
     r=Re+h
-    theta=-0.5*N*s+0.5*s+(sample-1)*s
+    theta=s*(sample-0.5*(N+1))
     scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
     track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
     return (scan,track)
