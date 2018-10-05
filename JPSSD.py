@@ -14,24 +14,20 @@ from pyhdf.SD import SD, SDC
 from utils import *
 import scipy.io as sio
 import h5py
-from netCDF4 import Dataset
 from datetime import datetime
 import time
 import pandas as pd
 
 def search_api(sname,bbox,time,maxg=50,platform="",version=""):
     """API search of the different satellite granules
-
-
-    Args:
-        sname (str): short name 
-        bbox        polygon with the search bounding box
-        time        time interval (init_time,final_time)
-        maxg        max number of granules to process
-        platform    string with the platform
-        version     string with the version
-     
-    Returns:
+        :param:
+            sname       short name 
+            bbox        polygon with the search bounding box
+            time        time interval (init_time,final_time)
+            maxg        max number of granules to process
+            platform    string with the platform
+            version     string with the version
+        :returns:
             granules    dictionary with the metadata of the search
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
@@ -214,7 +210,7 @@ def read_viirs_files(files):
     ret=Dict([])
     ret.lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
     ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
-    ncf=Dataset(files.fire,'r')
+    ncf=nc.Dataset(files.fire,'r')
     ret.fire=np.array(ncf.variables['fire mask'][:])
     ret.lat_fire=np.array(ncf.variables['FP_latitude'][:])
     ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])

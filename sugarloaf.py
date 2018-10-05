@@ -1,7 +1,6 @@
 # sample data into mesh - Sugarloaf
 # navigate to /share_home/jmandel/sugarloaf to access sample data
 from JPSSD import retrieve_af_data, read_fire_mesh, time_iso2num, write_csv
-from interpolation import sort_dates
 import saveload as sl
 
 fxlon,fxlat,bbox,time_esmf=read_fire_mesh('wrfout_d03_2018-09-03_15:00:00')
