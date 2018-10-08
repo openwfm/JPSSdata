@@ -167,7 +167,6 @@ def read_modis_files(files):
 
     hdfg=SD(files.geo,SDC.READ)
     hdff=SD(files.fire,SDC.READ)
-
     lat_obj=hdfg.select('Latitude')
     lon_obj=hdfg.select('Longitude')    
     fire_obj=hdff.select('fire mask')
@@ -178,54 +177,53 @@ def read_modis_files(files):
     conf_fire_obj=hdff.select('FP_confidence')
     t31_fire_obj=hdff.select('FP_T31')
     frp_fire_obj=hdff.select('FP_power')
-
     ret=Dict([])
     ret.lat=lat_obj.get()
     ret.lon=lon_obj.get()
     ret.fire=fire_obj.get()
-
-    ff=ret.fire>=8
-    FF=ff.sum()
     nf=np.logical_or(ret.fire == 3, ret.fire == 5)
-
     try:
         ret.lat_fire=lat_fire_obj.get()
     except:
-        ret.lat_fire=ret.lat[ff]
-
+        ret.lat_fire=np.array([])
     try:
         ret.lon_fire=lon_fire_obj.get()
     except:
-        ret.lon_fire=ret.lon[ff]
-
+        ret.lon_fire=np.array([])
     try:   
         ret.brig_fire=brig_fire_obj.get()
     except:
         ret.brig_fire=np.array([np.nan]*FF)
-
-    ret.sat_fire=hdff.Satellite
-    
+    ret.sat_fire=hdff.Satellite 
     try:
         ret.conf_fire=conf_fire_obj.get()
     except:
-        ret.conf_fire=np.array([np.nan]*FF)
-
+        ret.conf_fire=np.array([])
     try:
         ret.t31_fire=t31_fire_obj.get()
     except:
-        ret.t31_fire=np.array([np.nan]*FF)
-
+        ret.t31_fire=np.array([])
     try:
         ret.frp_fire=frp_fire_obj.get()
     except:
-        ret.frp_fire=np.array([np.nan]*FF)
+        ret.frp_fire=np.array([])
+    try:
+        sf=sample_fire_obj.get()
+        # Satellite information
+        N=1354 # Number of columns (maxim number of sample)
+        h=705. # Altitude of the satellite in km
+        p=1. # Nadir pixel resolution in km
+        ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
+    except:
+        ret.scan_fire=np.array([])
+        ret.track_fire=np.array([])
 
-    sf=sample_fire_obj.get()
-    # Satellite information
-    N=1354 # Number of columns (maxim number of sample)
-    h=705. # Altitude of the satellite in km
-    p=1. # Nadir pixel resolution in km
-    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
+    '''
+    s=hdff.attributes()['CoreMetadata.0']
+    clon=np.mean(np.array(s.split('GRINGPOINTLONGITUDE')[1].split('(')[1].split(')')[0].split(',')).astype(float))
+    clat=np.mean(np.array(s.split('GRINGPOINTLATITUDE')[1].split('(')[1].split(')')[0].split(',')).astype(float))
+    ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_scan(coords,center,h)
+    '''
     return ret
 
 def read_viirs_files(files):
@@ -561,6 +559,20 @@ def pixel_dim(sample,N,h,p):
     scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
     track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
     return (scan,track)
+
+def pixel_scan(lons,lats,center,h):
+    Re=6378.137 # approximation of the radius of the Earth in km
+    a=np.square(np.sin((center[1]-lats)/2))+np.cos(center[0])*np.cos(lats)*np.square(np.sin((center[0]-lons)/2))
+    print a
+    c=2*atan2(np.sqrt(a),np.sqrt(1-a))
+    print c
+    d=Re*c
+    print d
+    
+    scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
+    track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
+    return (theta,scan,track)
+
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
