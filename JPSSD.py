@@ -164,8 +164,10 @@ def read_modis_files(files):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
+
     hdfg=SD(files.geo,SDC.READ)
     hdff=SD(files.fire,SDC.READ)
+
     lat_obj=hdfg.select('Latitude')
     lon_obj=hdfg.select('Longitude')    
     fire_obj=hdff.select('fire mask')
@@ -176,17 +178,48 @@ def read_modis_files(files):
     conf_fire_obj=hdff.select('FP_confidence')
     t31_fire_obj=hdff.select('FP_T31')
     frp_fire_obj=hdff.select('FP_power')
+
     ret=Dict([])
     ret.lat=lat_obj.get()
     ret.lon=lon_obj.get()
     ret.fire=fire_obj.get()
-    ret.lat_fire=lat_fire_obj.get()
-    ret.lon_fire=lon_fire_obj.get()
-    ret.brig_fire=brig_fire_obj.get()
+
+    ff=ret.fire>=8
+    FF=ff.sum()
+    nf=np.logical_or(ret.fire == 3, ret.fire == 5)
+
+    try:
+        ret.lat_fire=lat_fire_obj.get()
+    except:
+        ret.lat_fire=ret.lat[ff]
+
+    try:
+        ret.lon_fire=lon_fire_obj.get()
+    except:
+        ret.lon_fire=ret.lon[ff]
+
+    try:   
+        ret.brig_fire=brig_fire_obj.get()
+    except:
+        ret.brig_fire=np.array([np.nan]*FF)
+
     ret.sat_fire=hdff.Satellite
-    ret.conf_fire=conf_fire_obj.get()
-    ret.t31_fire=t31_fire_obj.get()
-    ret.frp_fire=frp_fire_obj.get()
+    
+    try:
+        ret.conf_fire=conf_fire_obj.get()
+    except:
+        ret.conf_fire=np.array([np.nan]*FF)
+
+    try:
+        ret.t31_fire=t31_fire_obj.get()
+    except:
+        ret.t31_fire=np.array([np.nan]*FF)
+
+    try:
+        ret.frp_fire=frp_fire_obj.get()
+    except:
+        ret.frp_fire=np.array([np.nan]*FF)
+
     sf=sample_fire_obj.get()
     # Satellite information
     N=1354 # Number of columns (maxim number of sample)
