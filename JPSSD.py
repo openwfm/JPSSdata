@@ -193,7 +193,7 @@ def read_modis_files(files):
     try:   
         ret.brig_fire=brig_fire_obj.get()
     except:
-        ret.brig_fire=np.array([np.nan]*FF)
+        ret.brig_fire=np.array([])
     ret.sat_fire=hdff.Satellite 
     try:
         ret.conf_fire=conf_fire_obj.get()
