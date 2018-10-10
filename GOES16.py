@@ -4,6 +4,7 @@ Lauren Hearn, 10.2018
 Requirements:
 - must have rclone installed
 - configure new remote via rclone titled 'goes16aws'
+- must have subdirectory with rclone in path
 '''
 from subprocess import Popen, PIPE, STDOUT
 from netCDF4 import Dataset
