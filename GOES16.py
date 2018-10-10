@@ -1,25 +1,36 @@
-# GOES-16 data from amazon
-import boto3
-import botocore
+#GOES16 via AWS
+'''
+Lauren Hearn, 10.2018
+Requirements:
+- must have rclone installed
+- configure new remote via rclone titled 'goes16aws'
+'''
+from subprocess import Popen, PIPE, STDOUT
+from netCDF4 import Dataset
+from datetime import datetime, timedelta
+import numpy as np
+import matplotlib.pyplot as plt
 
-s3 = boto3.resource('s3',
-         aws_access_key_id=ACCESS_ID,
-         aws_secret_access_key= ACCESS_KEY)
+buckets = Popen('rclone lsd goes16aws:noaa-goes16', cwd='./rclone', shell=True) 
+date = raw_input("What date/time would you like to see(please use format <Year>/<Day of Year>/<Hour>)? ")
+type(str)
 
+path = 'goes16aws:noaa-goes16/ABI-L2-MCMIPC/' + date
+print path
 
-bucket1 = s3.Bucket('noaa-goes16')
+# get all files for given date/time, (i.e. 2018/262/02)
+cmd = 'rclone ls ' + path
+print cmd
+files = Popen('cmd', cwd='./rclone', shell=True)
+process = Popen(cmd, cwd='./rclone', shell=True, stdout=PIPE, stderr=STDOUT)
+output = process.communicate()[0]
+print 'available files for ' + date + ' are:', output # list available files for the given hour
 
-#Check that bucket exists
-try:
-    s3.meta.client.head_bucket(Bucket='bucket1')
-except botocore.exceptions.ClientError as e:
-    # If a client error is thrown, then check that it was a 404 error.
-    # If it was a 404 error, then the bucket does not exist.
-    error_code = int(e.response['Error']['Code'])
-    if error_code == 404:
-        exists = False
+# copy all files to given local directory
+download = Popen('rclone copyto ' + path + ' ./', cwd='./rclone', shell=True)
 
-#Print object key names from bucket        
-for bucket in s3.buckets.all():
-    for key in bucket.objects.all():
-        print(key.key)
+#now we open files to look around
+C_file = './rclone/' + raw_input("What file would you like to see? ") # allow a moment for download to complete
+C = Dataset(C_file, 'r')
+
+#will add mapping from https://github.com/blaylockbk/pyBKB_v2/blob/master/BB_GOES16/mapping_GOES16_FireTemperature.ipynb 
