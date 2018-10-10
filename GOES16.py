@@ -4,6 +4,7 @@ Lauren Hearn, 10.2018
 Requirements:
 - must have rclone installed
 - configure new remote via rclone titled 'goes16aws'
+- must have subdirectory with rclone in path
 '''
 from subprocess import Popen, PIPE, STDOUT
 from netCDF4 import Dataset
@@ -14,6 +15,7 @@ import matplotlib.pyplot as plt
 buckets = Popen('rclone lsd goes16aws:noaa-goes16', cwd='./rclone', shell=True) 
 date = raw_input("What date/time would you like to see(please use format <Year>/<Day of Year>/<Hour>)? ")
 type(str)
+# todo - change date format to be consistent with JPSS/datetime
 
 path = 'goes16aws:noaa-goes16/ABI-L2-MCMIPC/' + date
 print path
