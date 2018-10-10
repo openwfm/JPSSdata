@@ -486,6 +486,7 @@ def write_csv(data,bounds):
     'scan_angle': np.concatenate([data[d]['scan_angle_fire'] for d in list(data)]),
     'azimuth_angle': np.concatenate([data[d]['scan_angle_fire'] for d in list(data)])
     }
+    print [(k,len(d[k])) for k in list(d)]
     df=pd.DataFrame(data=d)
     df=df[(df['longitude']>bounds[0]) & (df['longitude']<bounds[1]) & (df['latitude']>bounds[2]) & (df['latitude']<bounds[3])]
     df.to_csv('fire_detections.csv', encoding='utf-8', index=False)
@@ -558,19 +559,27 @@ def pixel_dim(sample,N,h,p,a=None):
     s=np.arctan(p/h) # trigonometry (deg/sample)
     if isinstance(p,(list, tuple, np.ndarray)):
         Ns=np.array([int((a[k]-a[k-1])/s[k-1]) for k in range(1,len(a)-1)])
-        Ns=np.append(Ns,M-Ns.sum())
+        Ns=np.append(Ns,int(M-Ns.sum()))
         theta=s[0]*(sample-M)
         scan=Re*s[0]*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
         track=r*s[0]*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
         for k in range(1,len(Ns)):
-            kk=np.logical_or(sample<=M-Ns[0:k].sum(),sample>=M+Ns[0:k].sum())
-            theta[kk]=s[k]*(sample[kk]-M)
-            scan[kk]=Re*s[k]*(np.cos(theta[kk])/np.sqrt((Re/r)**2-np.square(np.sin(theta[kk])))-1)
-            track[kk]=r*s[k]*(np.cos(theta[kk])-np.sqrt((Re/r)**2-np.square(np.sin(theta[kk]))))
+            kk=sample<=M-Ns[0:k].sum()
+            theta[kk]=s[k]*(sample[kk]-(M-Ns[0:k].sum()))-(s[0:k]*Ns[0:k]).sum()
+            scan[kk]=Re*np.mean(s)*(np.cos(theta[kk])/np.sqrt((Re/r)**2-np.square(np.sin(theta[kk])))-1)
+            track[kk]=r*np.mean(s)*(np.cos(theta[kk])-np.sqrt((Re/r)**2-np.square(np.sin(theta[kk]))))
+            kk=sample>=M+Ns[0:k].sum()
+            theta[kk]=s[k]*(sample[kk]-(M+Ns[0:k].sum()))+(s[0:k]*Ns[0:k]).sum()
+            scan[kk]=Re*np.mean(s)*(np.cos(theta[kk])/np.sqrt((Re/r)**2-np.square(np.sin(theta[kk])))-1)
+            track[kk]=r*np.mean(s)*(np.cos(theta[kk])-np.sqrt((Re/r)**2-np.square(np.sin(theta[kk]))))
     else:
         theta=s*(sample-M)
         scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
         track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta)))) 
+    print sample
+    print theta
+    print scan
+    print track
     return (theta,scan,track)
 
 
