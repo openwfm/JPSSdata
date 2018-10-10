@@ -546,8 +546,9 @@ def pixel_dim(sample,N,h,p,a=None):
             N           Scalar, total number of pixels in each row of the image swath
             h           Scalar, altitude of the satellite in km
             p           Scalar, pixel nadir resolution in km 
-            a           Array of floats of the size of p
+            a           Array of floats of the size of p with the angles where the resolution change
         :returns: 
+            theta       Scan angle in radiands
             scan        Along-scan pixel size in km
             track       Along-track pixel size in km
                  
