@@ -546,6 +546,7 @@ def pixel_dim(sample,N,h,p,a=None):
             N           Scalar, total number of pixels in each row of the image swath
             h           Scalar, altitude of the satellite in km
             p           Scalar, pixel nadir resolution in km 
+            a           Array of floats of the size of p
         :returns: 
             scan        Along-scan pixel size in km
             track       Along-track pixel size in km
@@ -576,10 +577,6 @@ def pixel_dim(sample,N,h,p,a=None):
         theta=s*(sample-M)
         scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
         track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta)))) 
-    print sample
-    print theta
-    print scan
-    print track
     return (theta,scan,track)
 
 
