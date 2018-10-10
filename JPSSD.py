@@ -141,18 +141,21 @@ def group_all(path):
         :param:
             path    path to the geolocation (03) and fire (14) files
         :returns: 
-            files   list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
+            files   dictionary of products with a list of pairs with geolocation (03) and fire (14) file names in the path
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
+    files=Dict({})
     # MOD files
     modf=group_files(path,'MOD')
     # MYD files
     mydf=group_files(path,'MYD')
     # VIIRS files
     vif=group_files(path,'VNP')
-    files=[modf,mydf,vif]
+    files.MOD=modf
+    files.MYD=mydf
+    files.VNP=vif
     return files
 
 def read_modis_files(files):
@@ -177,11 +180,11 @@ def read_modis_files(files):
     conf_fire_obj=hdff.select('FP_confidence')
     t31_fire_obj=hdff.select('FP_T31')
     frp_fire_obj=hdff.select('FP_power')
+    azimuth_fire_obj=hdff.select('FP_RelAzAng')
     ret=Dict([])
     ret.lat=lat_obj.get()
     ret.lon=lon_obj.get()
     ret.fire=fire_obj.get()
-    nf=np.logical_or(ret.fire == 3, ret.fire == 5)
     try:
         ret.lat_fire=lat_fire_obj.get()
     except:
@@ -209,21 +212,13 @@ def read_modis_files(files):
         ret.frp_fire=np.array([])
     try:
         sf=sample_fire_obj.get()
-        # Satellite information
-        N=1354 # Number of columns (maxim number of sample)
-        h=705. # Altitude of the satellite in km
-        p=1. # Nadir pixel resolution in km
-        ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
     except:
-        ret.scan_fire=np.array([])
-        ret.track_fire=np.array([])
-
-    '''
-    s=hdff.attributes()['CoreMetadata.0']
-    clon=np.mean(np.array(s.split('GRINGPOINTLONGITUDE')[1].split('(')[1].split(')')[0].split(',')).astype(float))
-    clat=np.mean(np.array(s.split('GRINGPOINTLATITUDE')[1].split('(')[1].split(')')[0].split(',')).astype(float))
-    ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_scan(coords,center,h)
-    '''
+        sf=np.array([])
+    # Satellite information
+    N=1354 # Number of columns (maxim number of sample)
+    h=705. # Altitude of the satellite in km
+    p=1. # Nadir pixel resolution in km
+    ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
     return ret
 
 def read_viirs_files(files):
@@ -250,8 +245,10 @@ def read_viirs_files(files):
     # Satellite information
     N=3200 # Number of columns (maxim number of sample)
     h=828. # Altitude of the satellite in km
-    p=(0.75+0.75/2+0.75/3)/3 # Nadir pixel resolution in km (mean in 3 different sections)
-    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
+    alpha=np.array([0,31.59,44.68,56.06])/180*np.pi
+    p=np.array([0.75,0.75/2,0.75/3])
+    #p=(0.75+0.75/2+0.75/3)/3 # Nadir pixel resolution in km (mean in 3 different sections)
+    ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p,alpha)
     ret.sat_fire=ncf.SatelliteInstrument
     ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])
     ret.t31_fire=np.array(ncf.variables['FP_T15'][:])
@@ -424,9 +421,9 @@ def retrieve_af_data(bbox,time):
 
     # Generate data dictionary
     data=Dict({})
-    data.update(read_data(files[0],file_metadata))
-    data.update(read_data(files[1],file_metadata))
-    data.update(read_data(files[2],file_metadata))
+    data.update(read_data(files.MOD,file_metadata))
+    data.update(read_data(files.MYD,file_metadata))
+    data.update(read_data(files.VNP,file_metadata))
 
     return data
 
@@ -485,7 +482,10 @@ def write_csv(data,bounds):
     'instrument': np.concatenate([[data[d]['instrument']]*len(data[d]['lat_fire']) for d in list(data)]), 
     'confidence': np.concatenate([data[d]['conf_fire'] for d in list(data)]), 
     'bright_t31': np.concatenate([data[d]['t31_fire'] for d in list(data)]),
-    'frp': np.concatenate([data[d]['frp_fire'] for d in list(data)]) }
+    'frp': np.concatenate([data[d]['frp_fire'] for d in list(data)]),
+    'scan_angle': np.concatenate([data[d]['scan_angle_fire'] for d in list(data)]),
+    'azimuth_angle': np.concatenate([data[d]['scan_angle_fire'] for d in list(data)])
+    }
     df=pd.DataFrame(data=d)
     df=df[(df['longitude']>bounds[0]) & (df['longitude']<bounds[1]) & (df['latitude']>bounds[2]) & (df['latitude']<bounds[3])]
     df.to_csv('fire_detections.csv', encoding='utf-8', index=False)
@@ -537,7 +537,7 @@ def time_num2iso(time_num):
     # seconds since January 1, 1970
     return '%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
 
-def pixel_dim(sample,N,h,p):
+def pixel_dim(sample,N,h,p,a=None):
     """
     Computes pixel dimensions (along-scan and track pixel sizes)
         :param: 
@@ -553,24 +553,24 @@ def pixel_dim(sample,N,h,p):
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
     """
     Re=6378.137 # approximation of the radius of the Earth in km
-    s=np.arctan(p/h) # trigonometry (deg/sample)
     r=Re+h
-    theta=s*(sample-0.5*(N+1))
-    scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
-    track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
-    return (scan,track)
-
-def pixel_scan(lons,lats,center,h):
-    Re=6378.137 # approximation of the radius of the Earth in km
-    a=np.square(np.sin((center[1]-lats)/2))+np.cos(center[0])*np.cos(lats)*np.square(np.sin((center[0]-lons)/2))
-    print a
-    c=2*atan2(np.sqrt(a),np.sqrt(1-a))
-    print c
-    d=Re*c
-    print d
-    
-    scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
-    track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
+    M=(N-1)*0.5
+    s=np.arctan(p/h) # trigonometry (deg/sample)
+    if isinstance(p,(list, tuple, np.ndarray)):
+        Ns=np.array([int((a[k]-a[k-1])/s[k-1]) for k in range(1,len(a)-1)])
+        Ns=np.append(Ns,M-Ns.sum())
+        theta=s[0]*(sample-M)
+        scan=Re*s[0]*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
+        track=r*s[0]*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
+        for k in range(1,len(Ns)):
+            kk=np.logical_or(sample<=M-Ns[0:k].sum(),sample>=M+Ns[0:k].sum())
+            theta[kk]=s[k]*(sample[kk]-M)
+            scan[kk]=Re*s[k]*(np.cos(theta[kk])/np.sqrt((Re/r)**2-np.square(np.sin(theta[kk])))-1)
+            track[kk]=r*s[k]*(np.cos(theta[kk])-np.sqrt((Re/r)**2-np.square(np.sin(theta[kk]))))
+    else:
+        theta=s*(sample-M)
+        scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
+        track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta)))) 
     return (theta,scan,track)
 
 
