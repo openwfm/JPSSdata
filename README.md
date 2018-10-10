@@ -14,7 +14,7 @@ James Haley
 ### To do:
 - add download ability (completed)
 - download only certain leaves of the overall tree structure
-- reconcile data from M?D14 with geolocation data from M?D03
+- reconcile data from M?D14 with geolocation data from M?D03 (completed)
 - extend MODIS search to VIIRS (completed)
 - continue translating ncvarinfo to proper python grammar
 
@@ -23,3 +23,4 @@ James Haley
 - out.mat reads data downloaded from JPPSD.py, with ability to plot granules
 - sugarloaf.py plots sample data from Sugarloaf fire into mesh and plot
 - ncvarinfo.py is a python version of code originally found [here](https://github.com/openwfm/wrf-fire/blob/master/other/Matlab/netcdf/private/ncvarinfo.m). 
+- GOES16.py filters and downloads GOES satellite files from AWS.
