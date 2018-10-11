@@ -31,6 +31,7 @@ time_iso=(time_start_iso,time_final_iso) # tuple, not array
 data=retrieve_af_data(bbox,time_iso)
 
 print 'writting CSV detections'
+
 keys=['latitude','longitude','brightness','scan','track','acq_date','acq_time','satellite','instrument','confidence','bright_t31','frp','scan_angle']
 dkeys=['lat_fire','lon_fire','brig_fire','scan_fire','track_fire','acq_date','acq_time','sat_fire','instrument','conf_fire','t31_fire','frp_fire','scan_angle_fire']
 N=[len(data[d]['lat_fire']) for d in data]

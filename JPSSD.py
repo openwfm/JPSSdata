@@ -651,7 +651,7 @@ def json2kml(d,kml_path,bounds):
  
     with open(kml_path,'w') as kml:
 
-        copyto('partial1.kml',kml)
+        copyto('kmls/partial1.kml',kml)
 
         r = 6378   # Earth radius
         km_lat = 180/(math.pi*r)  # 1km in degrees latitude
@@ -665,7 +665,7 @@ def json2kml(d,kml_path,bounds):
             kml.write('<name>%s</name>\n' % type[t])
 
             if t=='FRP':
-                copyto('partial2.kml',kml)
+                copyto('kmls/partial2.kml',kml)
      
             lats=d['latitude']
             lons=d['longitude']
