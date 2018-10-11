@@ -1,6 +1,5 @@
 # General python for any case
-from JPSSD import retrieve_af_data, read_fire_mesh, time_iso2num, data2json, write_csv, json2kml
-from interpolation import sort_dates
+from JPSSD import retrieve_af_data, read_fire_mesh, time_iso2num, data2json, write_csv, json2kml, pixel_dim
 import saveload as sl
 import datetime as dt
 import sys
@@ -39,18 +38,13 @@ json=data2json(data,keys,dkeys,N)
 write_csv(json,bbox)
 json2kml(json,'fire_detections.kml',bbox)
 
-print 'writting no fire in KML'
+print 'writting KML with ground'
 
-keys=['latitude','longitude','fire mask']
-dkeys=['lat','lon','fire']
-N=[len(data[d]['lat']) for d in data]
-ret=data2json(data,keys,dkeys,N)
-nofi=np.logical_or(fire == 3, ret.fire == 5)
-ret.lat_nofire=ret.lat[nofi]
-ret.lon_nofire=ret.lon[nofi]
-sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
-sfn=sample[nofi]
-ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p)
+keys=['latitude','longitude','scan','track','acq_date','acq_time','satellite','instrument','scan_angle']
+dkeys=['lat_nofire','lon_nofire','scan_nofire','track_nofire','acq_date','acq_time','sat_fire','instrument','scan_angle_nofire']
+N=[len(data[d]['lat_nofire']) for d in data]
+json=data2json(data,keys,dkeys,N)
+json2kml(json,'nofire.kml',bbox)
 
 print 'saving data'
 

@@ -156,7 +156,7 @@ def group_all(path):
     files.VNP=vif
     return files
 
-def read_modis_files(files):
+def read_modis_files(files,bounds):
     """ 
     Read the geolocation (03) and fire (14) files for MODIS products (MOD or MYD)
     
@@ -191,41 +191,60 @@ def read_modis_files(files):
     ret.fire=fire_obj.get()
     # Fire detected information
     try:
-        ret.lat_fire=lat_fire_obj.get()
+        lats=lat_fire_obj.get()
     except:
-        ret.lat_fire=np.array([])
+        lats=np.array([])
     try:
-        ret.lon_fire=lon_fire_obj.get()
+        lons=lon_fire_obj.get()
     except:
-        ret.lon_fire=np.array([])
+        lons=np.array([])
+    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
+    ret.lat_fire=lats[ll]
+    ret.lon_fire=lons[ll]
     try:   
-        ret.brig_fire=brig_fire_obj.get()
+        ret.brig_fire=brig_fire_obj.get()[ll]
     except:
         ret.brig_fire=np.array([])
     ret.sat_fire=hdff.Satellite 
     try:
-        ret.conf_fire=conf_fire_obj.get()
+        ret.conf_fire=conf_fire_obj.get()[ll]
     except:
         ret.conf_fire=np.array([])
     try:
-        ret.t31_fire=t31_fire_obj.get()
+        ret.t31_fire=t31_fire_obj.get()[ll]
     except:
         ret.t31_fire=np.array([])
     try:
-        ret.frp_fire=frp_fire_obj.get()
+        ret.frp_fire=frp_fire_obj.get()[ll]
     except:
         ret.frp_fire=np.array([])
     try:
-        sf=sample_fire_obj.get()
+        sf=sample_fire_obj.get()[ll]
     except:
         sf=np.array([])
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
+    # No fire data
+    lats=np.reshape(ret.lat,np.prod(ret.lat.shape))
+    lons=np.reshape(ret.lon,np.prod(ret.lon.shape))
+    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
+    lats=lats[ll]
+    lons=lons[ll]
+    fire=np.reshape(ret.fire,np.prod(ret.fire.shape))
+    fire=fire[ll]
+    nf=np.logical_or(fire == 3, fire == 5)
+    ret.lat_nofire=lats[nf]
+    ret.lon_nofire=lons[nf]
+    sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
+    sample=np.reshape(sample,np.prod(sample.shape))
+    sample=sample[ll]
+    sfn=sample[nf]
+    ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p)
     # Close files
     hdfg.end()
     hdff.end()
     return ret
 
-def read_viirs_files(files):
+def read_viirs_files(files,bounds):
     """ 
     Read the geolocation (03) and fire (14) files for VIIRS products (VNP)
     
@@ -250,30 +269,40 @@ def read_viirs_files(files):
     ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
     ret.fire=np.array(ncf.variables['fire mask'][:])
     # Fire detected information
-    ret.lat_fire=np.array(ncf.variables['FP_latitude'][:])
-    ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])
-    ret.brig_fire=np.array(ncf.variables['FP_T13'][:])
+    lats=np.array(ncf.variables['FP_latitude'][:])
+    lons=np.array(ncf.variables['FP_longitude'][:])
+    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
+    ret.lat_fire=lats[ll]
+    ret.lon_fire=lons[ll]
+    ret.brig_fire=np.array(ncf.variables['FP_T13'][:])[ll]
     ret.sat_fire=ncf.SatelliteInstrument
-    ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])
-    ret.t31_fire=np.array(ncf.variables['FP_T15'][:])
-    ret.frp_fire=np.array(ncf.variables['FP_power'][:])
-    sf=np.array(ncf.variables['FP_sample'][:])
+    ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])[ll]
+    ret.t31_fire=np.array(ncf.variables['FP_T15'][:])[ll]
+    ret.frp_fire=np.array(ncf.variables['FP_power'][:])[ll]
+    sf=np.array(ncf.variables['FP_sample'][:])[ll]
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p,alpha)
-    # No fire detected information
-    '''
-    nofi=np.logical_or(ret.fire == 3, ret.fire == 5)
-    ret.lat_nofire=ret.lat[nofi]
-    ret.lon_nofire=ret.lon[nofi]
+    # No fire data
+    lats=np.reshape(ret.lat,np.prod(ret.lat.shape))
+    lons=np.reshape(ret.lon,np.prod(ret.lon.shape))
+    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
+    lats=lats[ll]
+    lons=lons[ll]
+    fire=np.reshape(ret.fire,np.prod(ret.fire.shape))
+    fire=fire[ll]
+    nf=np.logical_or(fire == 3, fire == 5)
+    ret.lat_nofire=lats[nf]
+    ret.lon_nofire=lons[nf]
     sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
-    sfn=sample[nofi]
+    sample=np.reshape(sample,np.prod(sample.shape))
+    sample=sample[ll]
+    sfn=sample[nf]
     ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p,alpha)
-    '''
     # Close files
     h5g.close()
     ncf.close()
     return ret
 
-def read_data(files,file_metadata):
+def read_data(files,file_metadata,bounds):
     """ 
     Read all the geolocation (03) and fire (14) files
 
@@ -325,10 +354,10 @@ def read_data(files,file_metadata):
         id = prefix + '_' + key
         print "id " + id
         if prefix=="MOD" or prefix=="MYD":
-            item=read_modis_files(f)
+            item=read_modis_files(f,bounds)
             item.instrument="MODIS"
         elif prefix=="VNP":
-            item=read_viirs_files(f)
+            item=read_viirs_files(f,bounds)
             item.instrument="VIIRS"
         else:
             print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
@@ -417,6 +446,7 @@ def retrieve_af_data(bbox,time):
 
     # Define settings
     lonmin,lonmax,latmin,latmax = bbox
+    bounds=bbox
     bbox = [(lonmin,latmax),(lonmin,latmin),(lonmax,latmin),(lonmax,latmax),(lonmin,latmax)]
     maxg = 100
 
@@ -447,9 +477,9 @@ def retrieve_af_data(bbox,time):
 
     # Generate data dictionary
     data=Dict({})
-    data.update(read_data(files.MOD,file_metadata))
-    data.update(read_data(files.MYD,file_metadata))
-    data.update(read_data(files.VNP,file_metadata))
+    data.update(read_data(files.MOD,file_metadata,bounds))
+    data.update(read_data(files.MYD,file_metadata,bounds))
+    data.update(read_data(files.VNP,file_metadata,bounds))
 
     return data
 
@@ -672,7 +702,7 @@ def json2kml(d,kml_path,bounds):
             acq_time=d['acq_time'][ll]
             satellite=d.get('satellite',np.array(['Not available']*NN))[ll]
             instrument=d.get('instrument',np.array(['Not available']*NN))[ll]
-            confidence=d.get('confidence',np.array(['Not available']*NN))[ll]
+            confidence=d.get('confidence',np.zeros(NN))[ll]
             frps=d.get('frp',np.zeros(NN))[ll]
             angles=d.get('scan_angle',np.array(['Not available']*NN))[ll]
             scans=d.get('scan',np.ones(NN))[ll]
