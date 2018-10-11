@@ -5,8 +5,16 @@ import saveload as sl
 
 fxlon,fxlat,bbox,time_esmf=read_fire_mesh('wrfout_d03_2018-09-03_15:00:00')
 
-# cannot get starting time from wrfout
-time_iso = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
+d = nc.Dataset('wrfout_d03_2018-09-03_15:00:00')
+fxlon = d.variables['FXLONG'][0,:,:] # boundary masking conditions previously calculated(0:409)
+fxlat = d.variables['FXLAT'][0,:,:]
+data = d.variables['TIGN_G'][10,:,:]
+
+bbox = [(np.amin(fxlon),np.amin(fxlat)),(np.amin(fxlon),np.amax(fxlat)),
+	(np.amax(fxlon),np.amin(fxlat)),(np.amax(fxlon),np.amax(fxlat))]
+print bbox
+
+d.close()
 
 data=retrieve_af_data(bbox,time_iso)
 
