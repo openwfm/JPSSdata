@@ -13,7 +13,10 @@ class Dict(dict):
         self.update(d)
 
     def __getattr__(self, item):
-        return self[item]
+    	try:
+    		return self[item]
+    	except KeyError:
+    		raise AttributeError(item)
 
     def __setattr__(self, item, value):
-        self[item] = value
+	self[item] = value
