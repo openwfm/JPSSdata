@@ -30,14 +30,27 @@ time_iso=(time_start_iso,time_final_iso) # tuple, not array
 
 data=retrieve_af_data(bbox,time_iso)
 
-print 'writting CSV detections'
+print 'writting fire detections in CSV and KML'
 
 keys=['latitude','longitude','brightness','scan','track','acq_date','acq_time','satellite','instrument','confidence','bright_t31','frp','scan_angle']
 dkeys=['lat_fire','lon_fire','brig_fire','scan_fire','track_fire','acq_date','acq_time','sat_fire','instrument','conf_fire','t31_fire','frp_fire','scan_angle_fire']
 N=[len(data[d]['lat_fire']) for d in data]
-d=data2json(data,keys,dkeys,N)
-write_csv(d,bbox)
-json2kml(d,'fire_detections.kml',bbox)
+json=data2json(data,keys,dkeys,N)
+write_csv(json,bbox)
+json2kml(json,'fire_detections.kml',bbox)
+
+print 'writting no fire in KML'
+
+keys=['latitude','longitude','fire mask']
+dkeys=['lat','lon','fire']
+N=[len(data[d]['lat']) for d in data]
+ret=data2json(data,keys,dkeys,N)
+nofi=np.logical_or(fire == 3, ret.fire == 5)
+ret.lat_nofire=ret.lat[nofi]
+ret.lon_nofire=ret.lon[nofi]
+sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
+sfn=sample[nofi]
+ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p)
 
 print 'saving data'
 

@@ -220,15 +220,6 @@ def read_modis_files(files):
     except:
         sf=np.array([])
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
-    # No fire detected information
-    '''
-    nofi=np.logical_or(ret.fire == 3, ret.fire == 5)
-    ret.lat_nofire=ret.lat[nofi]
-    ret.lon_nofire=ret.lon[nofi]
-    sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
-    sfn=sample[nofi]
-    ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p)
-    '''
     # Close files
     hdfg.end()
     hdff.end()
@@ -509,7 +500,7 @@ def data2json(data,keys,dkeys,N):
     ret=Dict({})
     for i,k in enumerate(keys):
         if isinstance(data[list(data)[0]][dkeys[i]],(list, tuple, np.ndarray)):
-            dd=[data[d][dkeys[i]] for d in list(data)]
+            dd=[np.reshape(data[d][dkeys[i]],np.prod(data[d][dkeys[i]].shape)) for d in list(data)]
             ret.update({k : np.concatenate(dd)})
         else:
             dd=[[data[d[1]][dkeys[i]]]*N[d[0]] for d in enumerate(list(data))]
@@ -698,8 +689,6 @@ def json2kml(d,kml_path,bounds):
                 timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
                 timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
     
-                print([lon,lat,acq_date[p],acq_time[p],satellite[p],instrument[p],conf,frp,angle,scan,track])
-    
                 kml.write('<Placemark>\n<name>Fire detection square</name>\n')
                 kml.write('<description>\nlongitude:   %s\n' % lon
                                       +  'latitude:    %s\n' % lat
@@ -745,7 +734,7 @@ def json2kml(d,kml_path,bounds):
 
         kml.write('</Document>\n</kml>\n')
     
-    print('Created file %s\n' % kml_path)
+    print 'Created file %s' % kml_path
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
