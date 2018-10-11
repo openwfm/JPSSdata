@@ -673,7 +673,7 @@ def json2kml(d,kml_path,bounds):
      
             lats=d['latitude']
             lons=d['longitude']
-            ll=np.logical_and(np.logical_and(np.logical_and(lats>bounds[0],lats<bounds[1]),lons>bounds[2]),lons<bounds[3])
+            ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
             latitude=lats[ll]
             longitude=lons[ll]
             NN=len(latitude)
