@@ -19,16 +19,16 @@ import time
 import pandas as pd
 
 def search_api(sname,bbox,time,maxg=50,platform="",version=""):
-    """API search of the different satellite granules
-        :param:
-            sname       short name 
-            bbox        polygon with the search bounding box
-            time        time interval (init_time,final_time)
-            maxg        max number of granules to process
-            platform    string with the platform
-            version     string with the version
-        :returns:
-            granules    dictionary with the metadata of the search
+    """
+    API search of the different satellite granules
+        
+    :param sname: short name 
+    :param bbox: polygon with the search bounding box
+    :param time: time interval (init_time,final_time)
+    :param maxg: max number of granules to process
+    :param platform: string with the platform
+    :param version: string with the version
+    :return granules: dictionary with the metadata of the search
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
@@ -81,12 +81,11 @@ def search_api(sname,bbox,time,maxg=50,platform="",version=""):
 def get_meta(bbox,time,maxg=50):
     """ 
     Get all the meta data from the API for all the necessary products
-        :param:
-            bbox        polygon with the search bounding box
-            time        time interval (init_time,final_time)
-            maxg        max number of granules to process
-        :returns:
-            granules    dictionary with the metadata of all the products
+    
+    :param bbox: polygon with the search bounding box
+    :param time: time interval (init_time,final_time)
+    :param maxg: max number of granules to process
+    :return granules: dictionary with the metadata of all the products
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
@@ -111,11 +110,10 @@ def get_meta(bbox,time,maxg=50):
 def group_files(path,reg):
     """ 
     Agrupate the geolocation (03) and fire (14) files of a specific product in a path
-        :param:
-            path    path to the geolocation (03) and fire (14) files
-            reg     string with the first 3 characters specifying the product (MOD, MYD or VNP)
-        :returns: 
-            files   list of pairs with geolocation (03) and fire (14) file names in the path of the specific product
+    
+    :param path: path to the geolocation (03) and fire (14) files
+    :param reg: string with the first 3 characters specifying the product (MOD, MYD or VNP)
+    :return files: list of pairs with geolocation (03) and fire (14) file names in the path of the specific product
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
@@ -138,10 +136,9 @@ def group_files(path,reg):
 def group_all(path):
     """ 
     Combine all the geolocation (03) and fire (14) files in a path
-        :param:
-            path    path to the geolocation (03) and fire (14) files
-        :returns: 
-            files   dictionary of products with a list of pairs with geolocation (03) and fire (14) file names in the path
+
+    :param path: path to the geolocation (03) and fire (14) files
+    :return files: dictionary of products with a list of pairs with geolocation (03) and fire (14) file names in the path
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
@@ -161,8 +158,9 @@ def group_all(path):
 def read_modis_files(files):
     """ 
     Read the geolocation (03) and fire (14) files for MODIS products (MOD or MYD)
-        :param: files  pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
-        :returns: ret  dictionary with Latitude, Longitude and fire mask arrays read
+    
+    :param files: pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
+    :return ret: dictionary with Latitude, Longitude and fire mask arrays read
     
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
@@ -224,10 +222,9 @@ def read_modis_files(files):
 def read_viirs_files(files):
     """ 
     Read the geolocation (03) and fire (14) files for VIIRS products (VNP)
-        :param:
-            files   pair with geolocation (03) and fire (14) file names for VIIRS products (VNP)
-        :returns:
-            ret     dictionary with Latitude, Longitude and fire mask arrays read
+    
+    :param files: pair with geolocation (03) and fire (14) file names for VIIRS products (VNP)
+    :return ret: dictionary with Latitude, Longitude and fire mask arrays read
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
@@ -258,23 +255,33 @@ def read_viirs_files(files):
 def read_data(files,file_metadata):
     """ 
     Read all the geolocation (03) and fire (14) files
-        :param files:           list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
-        :param file_metadata:   dictionary with file names as key and granules metadata as values
-        :returns:
-            data            dictionary with Latitude, Longitude and fire mask arrays read
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
-    Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
+    MODIS file names according to https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/archive/mod14_v5_user_guide.pdf
+    MOD14.AYYYYDDD.HHMM.vvv.yyyydddhhmmss.hdf
+    MYD14.AYYYYDDD.HHMM.vvv.yyyydddhhmmss.hdf
+    Where:
+    YYYYDDD =   year and    Julian  day (001-366) of    data    acquisition
+    HHMM =  hour    and minute  of  data    acquisition (approximate    beginning   time)
+    vvv =   version number
+    yyyyddd =   year    and Julian  day of  data    processing
+    hhmmss =    hour,   minute, and second  of  data    processing
 
     VIIRS file names according to https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/vnp14_user_guide_v1.3.pdf
     VNP14IMG.AYYYYDDD.HHMM.vvv.yyyydddhhmmss.nc
     VNP14.AYYYYDDD.HHMM.vvv.yyyydddhhmmss.nc
     Where:
-    YYYYDDD =	year and	Julian	day	(001-366) of	data	acquisition
-    HHMM =	hour	and	minute	of	data	acquisition	(approximate	beginning	time)
-    vvv =	version	number
-    yyyyddd =	year	and	Julian	day	of	data	processing
-    hhmmss =	hour,	minute,	and	second	of	data	processing
+    YYYYDDD =   year and    Julian  day (001-366) of    data    acquisition
+    HHMM =  hour    and minute  of  data    acquisition (approximate    beginning   time)
+    vvv =   version number
+    yyyyddd =   year    and Julian  day of  data    processing
+    hhmmss =    hour,   minute, and second  of  data    processing
+    
+    :param files: list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
+    :param file_metadata: dictionary with file names as key and granules metadata as values
+    :return data: dictionary with Latitude, Longitude and fire mask arrays read
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
     print "read_data files=%s" %  files
     data=Dict([])
@@ -329,10 +336,9 @@ def read_data(files,file_metadata):
 def download(granules):
     """
     Download files as listed in the granules metadata
-        :param: 
-            granules        list of products with a list of pairs with geolocation (03) and fire (14) file names in the path  
-        :returns: 
-            file_metadata   dictionary with file names as key and granules metadata as values
+        
+    :param granules: list of products with a list of pairs with geolocation (03) and fire (14) file names in the path  
+    :return file_metadata: dictionary with file names as key and granules metadata as values
     
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
@@ -379,11 +385,10 @@ def download(granules):
 def retrieve_af_data(bbox,time):
     """
     Retrieve the data in a bounding box coordinates and time interval and save it in a Matlab structure inside the out.mat Matlab file
-        :param: 
-            bbox    polygon with the search bounding box
-            time    time interval (init_time,final_time)      
-        :returns: 
-            out.mat Matlab file with all the data in a Matlab structure
+        
+    :param bbox: polygon with the search bounding box
+    :param time: time interval (init_time,final_time)      
+    :return data: dictonary with all the data and out.mat Matlab file with a Matlab structure of the dictionary
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
@@ -430,12 +435,12 @@ def retrieve_af_data(bbox,time):
 def read_fire_mesh(filename):
     """
     Read necessary variables in the fire mesh of the wrfout file filename
-        :param: 
-            filename    wrfout file    
-        :returns: 
-            fxlon,fxlat:    lon and lat coordinates in the fire mesh
-            bbox:           bounding box
-            time_esmf:      simulation times in ESMF format
+    
+    :param filename: wrfout file    
+    :return fxlon: lon coordinates in the fire mesh
+    :return fxlat: lat coordinates in the fire mesh
+    :return bbox: bounding box
+    :return time_esmf: simulation times in ESMF format
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
@@ -464,9 +469,9 @@ def read_fire_mesh(filename):
 def write_csv(data,bounds):
     """ 
     Write fire detections from data dictionary to a CSV file
-        :param:
-            data    dictionary with Latitude, Longitude and fire mask arrays and metadata information
-        :returns: write a fire_detections.csv file
+    
+    :param data: dictionary with Latitude, Longitude and fire mask arrays and metadata information
+    :return d: dictionary with all the detections information and write a fire_detections.csv file with all the detections
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
@@ -490,14 +495,16 @@ def write_csv(data,bounds):
     df=pd.DataFrame(data=d)
     df=df[(df['longitude']>bounds[0]) & (df['longitude']<bounds[1]) & (df['latitude']>bounds[2]) & (df['latitude']<bounds[3])]
     df.to_csv('fire_detections.csv', encoding='utf-8', index=False)
+    return d
 
 def plot_3D(xx,yy,zz):
     """
     Plot surface of (xx,yy,zz) data
-        :param: 
-            xx,yy   x and y arrays
-            zz      values at the (x,y) points
-        :returns: A plot show of the 3D data
+
+    :param xx: x arrays
+    :param yy: y arrays
+    :param zz: values at the (x,y) points
+    :return: a plot show of the 3D data
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com) 2018-09-21
@@ -513,44 +520,45 @@ def plot_3D(xx,yy,zz):
 def time_iso2num(time_iso):
     """
     Transform an iso time string to a time integer number of seconds since January 1, 1970
-        :param: 
-            time_iso        string iso date
-        :returns: Integer number of seconds since January 1, 1970
+    
+    :param time_iso: string iso date
+    :return s: integer number of seconds since January 1, 1970
     
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
     time_datetime=datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
     # seconds since January 1, 1970
-    return time.mktime(time_datetime.timetuple())
+    s=time.mktime(time_datetime.timetuple())
+    return s
 
 def time_num2iso(time_num):
     """
     Transform a time integer number of seconds since January 1, 1970 to an iso time string
-        :param: 
-            time_num       Integer number of seconds since January 1, 1970
-        :returns: String iso date
+    
+    :param time_num: integer number of seconds since January 1, 1970
+    :return date: time string in ISO date
     
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
     """
     dt=datetime.fromtimestamp(time_num)
     # seconds since January 1, 1970
-    return '%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
+    date='%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
+    return date
 
 def pixel_dim(sample,N,h,p,a=None):
     """
     Computes pixel dimensions (along-scan and track pixel sizes)
-        :param: 
-            sample      Array of integers with the column number (sample variable in files)
-            N           Scalar, total number of pixels in each row of the image swath
-            h           Scalar, altitude of the satellite in km
-            p           Scalar, pixel nadir resolution in km 
-            a           Array of floats of the size of p with the angles where the resolution change
-        :returns: 
-            theta       Scan angle in radiands
-            scan        Along-scan pixel size in km
-            track       Along-track pixel size in km
+    
+    :param sample: array of integers with the column number (sample variable in files)
+    :param N: scalar, total number of pixels in each row of the image swath
+    :param h: scalar, altitude of the satellite in km
+    :param p: scalar, pixel nadir resolution in km 
+    :param a: array of floats of the size of p with the angles where the resolution change
+    :return theta: scan angle in radiands
+    :return scan: along-scan pixel size in km
+    :return track: along-track pixel size in km
                  
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
@@ -579,7 +587,6 @@ def pixel_dim(sample,N,h,p,a=None):
         scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
         track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta)))) 
     return (theta,scan,track)
-
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]

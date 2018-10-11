@@ -10,25 +10,26 @@ from random import randint
 def sort_dates(data):
 	""" 
     Sorting a dictionary depending on the time number in seconds from January 1, 1970
-        :param:
-            data 		dictionary of granules where each granule has a time_num key
-        :returns: An array of dictionaries ordered by time_num key (seconds from January 1, 1970)
+    
+    :param data: dictionary of granules where each granule has a time_num key
+    :return s_data: an array of dictionaries ordered by time_num key (seconds from January 1, 1970)
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
-	return sorted(data.iteritems(), key=lambda x: x[1]['time_num'])
+    s_data=sorted(data.iteritems(), key=lambda x: x[1]['time_num'])
+	return s_data
 
 def nearest_euclidean(lon,lat,lons,lats,bounds):
 	""" 
     Returns the longitude and latitude arrays interpolated using Euclidean distance
-        :param:
-            lon 		2D array of longitudes to look the nearest neighbours
-            lat 		2D array of latitudes to look the nearest neighbours
-            lons		2D array of longitudes interpolating to
-            lats		2D array of latitudes interpolating to
-            bounds		array of 4 bounding boundaries where to interpolate: [minlon maxlon minlat maxlat]
-        :returns: A tuple with a 2D array of longitudes and 2D array of latitudes interpolated from (lon,lat) to (lons,lats)
+    
+    :param lon: 2D array of longitudes to look the nearest neighbours
+    :param lat: 2D array of latitudes to look the nearest neighbours
+    :param lons: 2D array of longitudes interpolating to
+    :param lats: 2D array of latitudes interpolating to
+    :param bounds: array of 4 bounding boundaries where to interpolate: [minlon maxlon minlat maxlat]
+    :return ret: tuple with a 2D array of longitudes and 2D array of latitudes interpolated from (lon,lat) to (lons,lats)
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
@@ -46,19 +47,20 @@ def nearest_euclidean(lon,lat,lons,lats,bounds):
 		else:
 			rlon[k]=np.nan;
 			rlat[k]=np.nan;	
-	return (np.reshape(rlon,lon.shape),np.reshape(rlat,lat.shape))
+	ret=(np.reshape(rlon,lon.shape),np.reshape(rlat,lat.shape))
+	return ret
 	
 
 def nearest_scipy(lon,lat,stree,bounds):
 	""" 
     Returns the coordinates interpolated from (lon,lat) to (lons,lats) and the value of the indices where NaN values
-        :param:
-            lon 		2D array of longitudes to look the nearest neighbours
-            lat 		2D array of latitudes to look the nearest neighbours
-            lons		2D array of longitudes interpolating to
-            lats		2D array of latitudes interpolating to
-            dub			optional: distance upper bound to look for the nearest neighbours
-        :returns: A tuple with a 2D array of coordinates interpolated from (lon,lat) to (lons,lats) and the value of the indices where NaN values
+    
+    :param lon:	2D array of longitudes to look the nearest neighbours
+    :param lat:	2D array of latitudes to look the nearest neighbours
+    :param lons: 2D array of longitudes interpolating to
+    :param lats: 2D array of latitudes interpolating to
+    :param dub: optional, distance upper bound to look for the nearest neighbours
+    :return ret: A tuple with a 2D array of coordinates interpolated from (lon,lat) to (lons,lats) and the value of the indices where NaN values
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
@@ -69,31 +71,33 @@ def nearest_scipy(lon,lat,stree,bounds):
 	M=(vlon>bounds[0])*(vlon<bounds[1])*(vlat>bounds[2])*(vlat<bounds[3])
 	vlonlat=vlonlat[M]
 	inds=np.array(stree.query(vlonlat)[1])
-	return (inds,M)
+	ret=(inds,M)
+	return ret
 
 def distance_upper_bound(dx,dy):
 	""" 
     Computes the distance upper bound
-        :param:
-            dx 		array of two elements with fire mesh grid resolutions
-            dy 		array of two elements with satellite grid resolutions
-        :returns: distance upper bound to look for the nearest neighbours
+
+    :param dx: array of two elements with fire mesh grid resolutions
+    :param dy: array of two elements with satellite grid resolutions
+    :return d: distance upper bound to look for the nearest neighbours
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
 	rx=np.sqrt(dx[0]**2+dx[1]**2)
 	ry=np.sqrt(dy[0]**2+dy[1]**2)
-	return max(rx,ry)
+	d=max(rx,ry)
+	return d
 
 def neighbor_indices(indices,shape,d=2):
 	""" 
     Computes all the neighbor indices from an indice list
-        :param:
-           	indices 	list of coordinates in a 1D array
-            shape 		array of two elements with satellite grid size
-            d 			optional: distance of the neighbours
-        :returns: Returns a numpy array with the indices and the neighbor indices in 1D array
+
+    :param indices: list of coordinates in a 1D array
+    :param shape: array of two elements with satellite grid size
+    :param d: optional, distance of the neighbours
+    :return ind: Returns a numpy array with the indices and the neighbor indices in 1D array
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
@@ -108,48 +112,17 @@ def neighbor_indices(indices,shape,d=2):
 	# Recompute the 1D indices of the 2D coordinates inside the 2D domain
 	ret=np.array([x[0]+w*x[1] for x in N])
 	# Sort them and take each indice once
-	return sorted(np.unique(ret))
-
-def neighbor_indices_opt(indices,shape,d=2):
-	""" 
-    Computes all the neighbor indices from an indice list
-        :param:
-           	indices 	list of coordinates in a 1D array
-            shape 		array of two elements with satellite grid size
-            d 			optional: distance of the neighbours
-        :returns: Returns a numpy array with the indices and the neighbor indices in 1D array
-
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
-    Angel Farguell (angel.farguell@gmail.com), 2018-09-20
-    """
-    # Width and Length of the 2D grid
-	w=shape[0]
-	l=shape[1]
-	# 2D indices of the 1D indices
-	I=[[np.mod(ind,w),ind/w] for ind in indices]
-	# Indices of the neighbor
-	ii=[np.array(range(max(i[0]-d,0),min(i[0]+d+1,w))) for i in I]
-	jj=[np.array(range(max(i[1]-d,0),min(i[1]+d+1,l))) for i in I]
-	# Union between consecutive group of indices
-	Ni=[ np.unique(np.concatenate(ii[0:k])) for k in range(1,len(ii)) ]
-	Ni.insert(0,np.array([]))
-	Nj=[ np.unique(np.concatenate(jj[0:k])) for k in range(1,len(jj)) ]
-	Nj.insert(0,np.array([]))
-	# Compute combinations (x,y) for all the neighbor points from x-d to x+d and y-d to y+d avoiding some repetitions
-	N=[ np.array(list(set(list(itertools.product(np.setdiff1d(ii[k],Ni[k]),jj[k]))) | set(list(itertools.product(ii[k],np.setdiff1d(jj[k],Nj[k])))))) for k in range(0,len(ii)) ]
-	# Recompute the 1D indices of the 2D coordinates inside the 2D domain
-	ret=np.array([xx[0]+w*xx[1] for x in N for xx in x])
-	# Sort them and take each indice once
-	return sorted(np.unique(ret))
+	ind=sorted(np.unique(ret))
+	return ind
 
 def neighbor_indices_ball(tree,indices,shape,d=2):
 	""" 
     Computes all the neighbor indices from an indice list in a grid of indices defined through a cKDTree
-        :param:
-           	indices 	list of coordinates in a 1D array
-            shape 		array of two elements with satellite grid size
-            d 			optional: distance of the neighbours computed as: sqrt(2*d**2)
-        :returns: Returns a numpy array with the indices and the neighbor indices in 1D array respect to the grid used in the tree
+    
+    :param indices: list of coordinates in a 1D array
+    :param shape: array of two elements with satellite grid size
+    :param d: optional, distance of the neighbours computed as: sqrt(2*d**2)
+    :return ind: returns a numpy array with the indices and the neighbor indices in 1D array respect to the grid used in the tree
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
@@ -163,7 +136,8 @@ def neighbor_indices_ball(tree,indices,shape,d=2):
 	# Request all the neighbors in a radius "radius"
 	N=tree.query_ball_point(I,r=radius)
 	# Return an unique and sorted array of 1D indices (indices pointing to the grid used for the tree)
-	return sorted(np.unique(np.concatenate(N)))
+	ind=sorted(np.unique(np.concatenate(N)))
+	return ind
 
 if __name__ == "__main__":
 	t_init = time()
@@ -227,14 +201,6 @@ if __name__ == "__main__":
 	t_final = time()
 	print '1D neighbors:'
 	print 'elapsed time: %ss.' % str(t_final-t_init)
-	t_init = time()
-	nne=neighbor_indices_opt(ind,shape,d=8)
-	t_final = time()
-	print '1D neighbours new:'
-	print 'elapsed time: %ss.' % str(t_final-t_init)
-	print 'Difference'
-	print np.setdiff1d(ne,nne)
-	print np.setdiff1d(nne,ne)
 	grid=np.array(list(itertools.product(np.array(range(0,shape[0])),np.array(range(0,shape[1])))))
 	tree=spatial.cKDTree(grid)
 	t_init = time()
