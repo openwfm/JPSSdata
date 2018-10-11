@@ -221,12 +221,14 @@ def read_modis_files(files):
         sf=np.array([])
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
     # No fire detected information
+    '''
     nofi=np.logical_or(ret.fire == 3, ret.fire == 5)
     ret.lat_nofire=ret.lat[nofi]
     ret.lon_nofire=ret.lon[nofi]
     sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
     sfn=sample[nofi]
     ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p)
+    '''
     # Close files
     hdfg.end()
     hdff.end()
@@ -267,12 +269,14 @@ def read_viirs_files(files):
     sf=np.array(ncf.variables['FP_sample'][:])
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p,alpha)
     # No fire detected information
+    '''
     nofi=np.logical_or(ret.fire == 3, ret.fire == 5)
     ret.lat_nofire=ret.lat[nofi]
     ret.lon_nofire=ret.lon[nofi]
     sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
     sfn=sample[nofi]
     ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p,alpha)
+    '''
     # Close files
     h5g.close()
     ncf.close()
