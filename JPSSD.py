@@ -17,6 +17,7 @@ import h5py
 from datetime import datetime
 import time
 import pandas as pd
+import math
 
 def search_api(sname,bbox,time,maxg=50,platform="",version=""):
     """
@@ -165,9 +166,15 @@ def read_modis_files(files):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
-
+    ret=Dict([])
+    # Satellite information
+    N=1354 # Number of columns (maxim number of sample)
+    h=705. # Altitude of the satellite in km
+    p=1. # Nadir pixel resolution in km
+    # Reading MODIS files
     hdfg=SD(files.geo,SDC.READ)
     hdff=SD(files.fire,SDC.READ)
+    # Creating all the objects
     lat_obj=hdfg.select('Latitude')
     lon_obj=hdfg.select('Longitude')    
     fire_obj=hdff.select('fire mask')
@@ -178,11 +185,11 @@ def read_modis_files(files):
     conf_fire_obj=hdff.select('FP_confidence')
     t31_fire_obj=hdff.select('FP_T31')
     frp_fire_obj=hdff.select('FP_power')
-    azimuth_fire_obj=hdff.select('FP_RelAzAng')
-    ret=Dict([])
+    # Geolocation and mask information
     ret.lat=lat_obj.get()
     ret.lon=lon_obj.get()
     ret.fire=fire_obj.get()
+    # Fire detected information
     try:
         ret.lat_fire=lat_fire_obj.get()
     except:
@@ -212,11 +219,17 @@ def read_modis_files(files):
         sf=sample_fire_obj.get()
     except:
         sf=np.array([])
-    # Satellite information
-    N=1354 # Number of columns (maxim number of sample)
-    h=705. # Altitude of the satellite in km
-    p=1. # Nadir pixel resolution in km
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
+    # No fire detected information
+    nofi=np.logical_or(ret.fire == 3, ret.fire == 5)
+    ret.lat_nofire=ret.lat[nofi]
+    ret.lon_nofire=ret.lon[nofi]
+    sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
+    sfn=sample[nofi]
+    ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p)
+    # Close files
+    hdfg.end()
+    hdff.end()
     return ret
 
 def read_viirs_files(files):
@@ -229,27 +242,40 @@ def read_viirs_files(files):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
-    h5g=h5py.File(files.geo,'r')
     ret=Dict([])
-    ret.lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
-    ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
-    ncf=nc.Dataset(files.fire,'r')
-    ret.fire=np.array(ncf.variables['fire mask'][:])
-    ret.lat_fire=np.array(ncf.variables['FP_latitude'][:])
-    ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])
-    ret.brig_fire=np.array(ncf.variables['FP_T13'][:])
-    sf=np.array(ncf.variables['FP_sample'][:])
     # Satellite information
     N=3200 # Number of columns (maxim number of sample)
     h=828. # Altitude of the satellite in km
     alpha=np.array([0,31.59,44.68,56.06])/180*np.pi
-    p=np.array([0.75,0.75/2,0.75/3])
     #p=(0.75+0.75/2+0.75/3)/3 # Nadir pixel resolution in km (mean in 3 different sections)
-    ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p,alpha)
+    p=np.array([0.75,0.75/2,0.75/3])
+    # Reading VIIRS files
+    h5g=h5py.File(files.geo,'r')
+    ncf=nc.Dataset(files.fire,'r')
+    # Geolocation and mask information
+    ret.lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
+    ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
+    ret.fire=np.array(ncf.variables['fire mask'][:])
+    # Fire detected information
+    ret.lat_fire=np.array(ncf.variables['FP_latitude'][:])
+    ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])
+    ret.brig_fire=np.array(ncf.variables['FP_T13'][:])
     ret.sat_fire=ncf.SatelliteInstrument
     ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])
     ret.t31_fire=np.array(ncf.variables['FP_T15'][:])
     ret.frp_fire=np.array(ncf.variables['FP_power'][:])
+    sf=np.array(ncf.variables['FP_sample'][:])
+    ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p,alpha)
+    # No fire detected information
+    nofi=np.logical_or(ret.fire == 3, ret.fire == 5)
+    ret.lat_nofire=ret.lat[nofi]
+    ret.lon_nofire=ret.lon[nofi]
+    sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
+    sfn=sample[nofi]
+    ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p,alpha)
+    # Close files
+    h5g.close()
+    ncf.close()
     return ret
 
 def read_data(files,file_metadata):
@@ -466,36 +492,40 @@ def read_fire_mesh(filename):
     
     return fxlon,fxlat,bbox,time_esmf
 
-def write_csv(data,bounds):
+def data2json(data,keys,dkeys,N):
     """ 
-    Write fire detections from data dictionary to a CSV file
+    Create a json for fire detections from data dictionary
     
     :param data: dictionary with Latitude, Longitude and fire mask arrays and metadata information
-    :return d: dictionary with all the detections information and write a fire_detections.csv file with all the detections
+    :return d: dictionary with all the fire detection information to create the KML file
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
-    d={'latitude': np.concatenate([data[d]['lat_fire'] for d in list(data)]), 
-    'longitude': np.concatenate([data[d]['lon_fire'] for d in list(data)]), 
-    'brightness': np.concatenate([data[d]['brig_fire'] for d in list(data)]),
-    'scan': np.concatenate([data[d]['scan_fire'] for d in list(data)]),
-    'track': np.concatenate([data[d]['track_fire'] for d in list(data)]),
-    'acq_date': np.concatenate([[data[d]['acq_date']]*len(data[d]['lat_fire']) for d in list(data)]), 
-    'acq_time': np.concatenate([[data[d]['acq_time']]*len(data[d]['lat_fire']) for d in list(data)]), 
-    'satellite': np.concatenate([[data[d]['sat_fire']]*len(data[d]['lat_fire']) for d in list(data)]), 
-    'instrument': np.concatenate([[data[d]['instrument']]*len(data[d]['lat_fire']) for d in list(data)]), 
-    'confidence': np.concatenate([data[d]['conf_fire'] for d in list(data)]), 
-    'bright_t31': np.concatenate([data[d]['t31_fire'] for d in list(data)]),
-    'frp': np.concatenate([data[d]['frp_fire'] for d in list(data)]),
-    'scan_angle': np.concatenate([data[d]['scan_angle_fire'] for d in list(data)]),
-    'azimuth_angle': np.concatenate([data[d]['scan_angle_fire'] for d in list(data)])
-    }
-    print [(k,len(d[k])) for k in list(d)]
+    ret=Dict({})
+    for i,k in enumerate(keys):
+        if isinstance(data[list(data)[0]][dkeys[i]],(list, tuple, np.ndarray)):
+            dd=[data[d][dkeys[i]] for d in list(data)]
+            ret.update({k : np.concatenate(dd)})
+        else:
+            dd=[[data[d[1]][dkeys[i]]]*N[d[0]] for d in enumerate(list(data))]
+            ret.update({k : np.concatenate(dd)})
+    return ret
+
+def write_csv(d,bounds):
+    """ 
+    Write fire detections from data dictionary d to a CSV file
+    
+    :param d: dictionary with Latitude, Longitude and fire mask arrays and metadata information
+    :param bounds: array of 4 components with the [lonmin,lonmax,latmin,latmax]
+    :return: fire_detections.csv file with all the detections
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-09-17
+    """
     df=pd.DataFrame(data=d)
     df=df[(df['longitude']>bounds[0]) & (df['longitude']<bounds[1]) & (df['latitude']>bounds[2]) & (df['latitude']<bounds[3])]
     df.to_csv('fire_detections.csv', encoding='utf-8', index=False)
-    return d
 
 def plot_3D(xx,yy,zz):
     """
@@ -574,19 +604,144 @@ def pixel_dim(sample,N,h,p,a=None):
         scan=Re*s[0]*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
         track=r*s[0]*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
         for k in range(1,len(Ns)):
-            kk=sample<=M-Ns[0:k].sum()
-            theta[kk]=s[k]*(sample[kk]-(M-Ns[0:k].sum()))-(s[0:k]*Ns[0:k]).sum()
-            scan[kk]=Re*np.mean(s)*(np.cos(theta[kk])/np.sqrt((Re/r)**2-np.square(np.sin(theta[kk])))-1)
-            track[kk]=r*np.mean(s)*(np.cos(theta[kk])-np.sqrt((Re/r)**2-np.square(np.sin(theta[kk]))))
-            kk=sample>=M+Ns[0:k].sum()
-            theta[kk]=s[k]*(sample[kk]-(M+Ns[0:k].sum()))+(s[0:k]*Ns[0:k]).sum()
-            scan[kk]=Re*np.mean(s)*(np.cos(theta[kk])/np.sqrt((Re/r)**2-np.square(np.sin(theta[kk])))-1)
-            track[kk]=r*np.mean(s)*(np.cos(theta[kk])-np.sqrt((Re/r)**2-np.square(np.sin(theta[kk]))))
+            p=sample<=M-Ns[0:k].sum()
+            theta[p]=s[k]*(sample[p]-(M-Ns[0:k].sum()))-(s[0:k]*Ns[0:k]).sum()
+            scan[p]=Re*np.mean(s)*(np.cos(theta[p])/np.sqrt((Re/r)**2-np.square(np.sin(theta[p])))-1)
+            track[p]=r*np.mean(s)*(np.cos(theta[p])-np.sqrt((Re/r)**2-np.square(np.sin(theta[p]))))
+            p=sample>=M+Ns[0:k].sum()
+            theta[p]=s[k]*(sample[p]-(M+Ns[0:k].sum()))+(s[0:k]*Ns[0:k]).sum()
+            scan[p]=Re*np.mean(s)*(np.cos(theta[p])/np.sqrt((Re/r)**2-np.square(np.sin(theta[p])))-1)
+            track[p]=r*np.mean(s)*(np.cos(theta[p])-np.sqrt((Re/r)**2-np.square(np.sin(theta[p]))))
     else:
         theta=s*(sample-M)
         scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
         track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta)))) 
     return (theta,scan,track)
+
+def copyto(partial_path,kml):
+    """
+    Copy information in partial_path to kml
+    
+    :param partial_path: path to a partial KML file
+    :param kml: KML object where to write to
+    :return: information from partial_path into kml
+                 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
+    """
+    with open(partial_path,'r') as part:
+        for line in part:
+            kml.write(line)
+
+def json2kml(d,kml_path,bounds):
+    """
+    Creates a KML file kml_path from a dictionary d
+    
+    :param d: dictionary with all the fire detection information to create the KML file
+    :param kml_path: path in where the KML file is going to be written
+    
+    :return: a KML file
+                 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
+    """
+    frp_style={-1:'modis_frp_no_data',40:'modis_frp_gt_400'}
+    for i in range(0,40):
+        frp_style[i]='modis_frp_%s_to_%s' % (i*10, i*10+10)
+ 
+    with open(kml_path,'w') as kml:
+
+        copyto('partial1.kml',kml)
+
+        r = 6378   # Earth radius
+        km_lat = 180/(math.pi*r)  # 1km in degrees latitude
+
+        type = {'AF':'Active Fires','FRP':'Fire Radiative Power'}
+        #type = {'AF':'Active Fires'}
+
+        for t in type:
+
+            kml.write('<Folder>\n')
+            kml.write('<name>%s</name>\n' % type[t])
+
+            if t=='FRP':
+                copyto('partial2.kml',kml)
+     
+            lats=d['latitude']
+            lons=d['longitude']
+            ll=np.logical_and(np.logical_and(np.logical_and(lats>bounds[0],lats<bounds[1]),lons>bounds[2]),lons<bounds[3])
+            latitude=lats[ll]
+            longitude=lons[ll]
+            NN=len(latitude)
+            acq_date=d['acq_date'][ll]
+            acq_time=d['acq_time'][ll]
+            satellite=d.get('satellite',np.array(['Not available']*NN))[ll]
+            instrument=d.get('instrument',np.array(['Not available']*NN))[ll]
+            confidence=d.get('confidence',np.array(['Not available']*NN))[ll]
+            frps=d.get('frp',np.zeros(NN))[ll]
+            angles=d.get('scan_angle',np.array(['Not available']*NN))[ll]
+            scans=d.get('scan',np.ones(NN))[ll]
+            tracks=d.get('track',np.ones(NN))[ll]
+
+            for p in range(0,NN):
+                lat=float(latitude[p])
+                lon=float(longitude[p])
+                conf=float(confidence[p])
+                frp=float(frps[p])
+                angle=float(angles[p])
+                scan=float(scans[p])
+                track=float(tracks[p])
+                timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
+                timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
+    
+                print([lon,lat,acq_date[p],acq_time[p],satellite[p],instrument[p],conf,frp,angle,scan,track])
+    
+                kml.write('<Placemark>\n<name>Fire detection square</name>\n')
+                kml.write('<description>\nlongitude:   %s\n' % lon
+                                      +  'latitude:    %s\n' % lat
+                                      +  'time:        %s\n' % timedescr
+                                      +  'satellite:   %s\n' % satellite[p]
+                                      +  'instrument:  %s\n' % instrument[p]
+                                      +  'confidence:  %s\n' % conf
+                                      +  'FRP:         %s\n' % frp
+                                      +  'scan angle:  %s\n' % angle 
+                                      +  'along-scan:  %s\n' % scan 
+                                      +  'along-track: %s\n' % track 
+                        + '</description>\n')
+                kml.write('<TimeStamp><when>%s</when></TimeStamp>\n' % timestamp)
+                if t == 'AF':
+                    if conf < 30:
+                        kml.write('<styleUrl> modis_conf_low </styleUrl>\n')
+                    elif conf < 80: 
+                        kml.write('<styleUrl> modis_conf_med </styleUrl>\n')
+                    else:
+                        kml.write('<styleUrl> modis_conf_high </styleUrl>\n')
+                elif t=='FRP':
+                    frpx = min(40,math.ceil(frp/10.)-1)
+                    kml.write('<styleUrl> %s </styleUrl>\n' % frp_style[frpx] )
+
+                kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
+    
+                km_lon=km_lat/math.cos(lat*math.pi/180)  # 1 km in longitude
+
+                sq_track_size_km=track
+                sq2_lat=km_lat * sq_track_size_km/2
+                sq_scan_size_km=scan
+                sq2_lon=km_lon * sq_scan_size_km/2
+
+                kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
+                kml.write('%s,%s,0\n' % (lon - sq2_lon, lat + sq2_lat))
+                kml.write('%s,%s,0\n' % (lon + sq2_lon, lat + sq2_lat))
+                kml.write('%s,%s,0\n' % (lon + sq2_lon, lat - sq2_lat))
+                kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
+    
+                kml.write('</coordinates>\n</LinearRing>\n</outerBoundaryIs>\n</Polygon>\n</Placemark>\n')
+    
+            kml.write('</Folder>\n')
+
+        kml.write('</Document>\n</kml>\n')
+    
+    print('Created file %s\n' % kml_path)
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
