@@ -12,13 +12,12 @@ def sort_dates(data):
     Sorting a dictionary depending on the time number in seconds from January 1, 1970
     
     :param data: dictionary of granules where each granule has a time_num key
-    :return s_data: an array of dictionaries ordered by time_num key (seconds from January 1, 1970)
+    :return: an array of dictionaries ordered by time_num key (seconds from January 1, 1970)
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
-    s_data=sorted(data.iteritems(), key=lambda x: x[1]['time_num'])
-	return s_data
+	return sorted(data.iteritems(), key=lambda x: x[1]['time_num'])
 
 def nearest_euclidean(lon,lat,lons,lats,bounds):
 	""" 
