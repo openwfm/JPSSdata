@@ -22,7 +22,7 @@ json2kml(json,'fire_detections.kml',bbox)
 print 'writting KML with ground'
 
 keys=['latitude','longitude','scan','track','acq_date','acq_time','satellite','instrument','scan_angle']
-dkeys=['lat_nofire','lon_nofire','scan_nofire','track_nofire','acq_date','acq_time','sat_fire','instrument','scan_angle_fire']
+dkeys=['lat_nofire','lon_nofire','scan_nofire','track_nofire','acq_date','acq_time','sat_fire','instrument','scan_angle_nofire']
 N=[len(data[d]['lat_nofire']) for d in data]
 json=data2json(data,keys,dkeys,N)
 json2kml(json,'nofire.kml',bbox)
