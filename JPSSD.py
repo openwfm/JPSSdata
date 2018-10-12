@@ -14,10 +14,11 @@ from pyhdf.SD import SD, SDC
 from utils import *
 import scipy.io as sio
 import h5py
-from datetime import datetime
+import datetime
 import time
 import pandas as pd
 import math
+from subprocess import check_output, call
 
 def search_api(sname,bbox,time,maxg=50,platform="",version=""):
     """
@@ -161,6 +162,7 @@ def read_modis_files(files,bounds):
     Read the geolocation (03) and fire (14) files for MODIS products (MOD or MYD)
     
     :param files: pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
+    :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return ret: dictionary with Latitude, Longitude and fire mask arrays read
     
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
@@ -249,6 +251,7 @@ def read_viirs_files(files,bounds):
     Read the geolocation (03) and fire (14) files for VIIRS products (VNP)
     
     :param files: pair with geolocation (03) and fire (14) file names for VIIRS products (VNP)
+    :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return ret: dictionary with Latitude, Longitude and fire mask arrays read
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
@@ -328,6 +331,7 @@ def read_data(files,file_metadata,bounds):
     
     :param files: list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
     :param file_metadata: dictionary with file names as key and granules metadata as values
+    :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return data: dictionary with Latitude, Longitude and fire mask arrays read
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
@@ -366,7 +370,7 @@ def read_data(files,file_metadata,bounds):
             # connect the file back to metadata
             item.time_start_geo_iso=file_metadata[f0]["time_start"]
             item.time_num=time_iso2num(item.time_start_geo_iso)
-            dt=datetime.strptime(item.time_start_geo_iso[0:18],'%Y-%m-%dT%H:%M:%S')
+            dt=datetime.datetime.strptime(item.time_start_geo_iso[0:18],'%Y-%m-%dT%H:%M:%S')
             item.acq_date='%02d-%02d-%02d' % (dt.year,dt.month,dt.day)
             item.acq_time='%02d%02d' % (dt.hour,dt.minute)
             item.time_start_fire_iso=file_metadata[f1]["time_start"]
@@ -431,7 +435,37 @@ def download(granules):
         except Exception as e:
             print 'download failed with error %s' % e 
     return file_metadata
-     
+
+def download_GOES16(time):
+    """
+    Download the GOES16 data through rclone application
+        
+    :param time: tupple with the start and end times    
+    :return bucket: dictionary of all the data downloaded and all the GOES16 data downloaded in the same directory level
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com) 2018-10-12
+    """
+    bucket=Dict({})
+    dts=[datetime.datetime.strptime(d,'%Y-%m-%dT%H:%M:%SZ') for d in time]
+    delta=dts[1]-dts[0]
+    nh=int(delta.total_seconds()/3600)
+    dates=[dts[0]+datetime.timedelta(seconds=3600*k) for k in range(1,nh+1)]
+    for date in dates:
+        tt=date.timetuple()
+        argT='%d/%03d/%02d' % (tt.tm_year,tt.tm_yday,tt.tm_hour)
+        try:
+            args=['rclone','copyto','goes16aws:noaa-goes16/ABI-L2-MCMIPC/'+argT,'.','-L']
+            print 'running: '+' '.join(args)
+            res=call(args)
+            print 'goes16aws:noaa-goes16/ABI-L2-MCMIPC/'+argT+' downloaded.'
+            args=['rclone','ls','goes16aws:noaa-goes16/ABI-L2-MCMIPC/'+argT,'-L']
+            out=check_output(args)
+            bucket.update({argT : [o.split(' ')[2] for o in out.split('\n')[:-1]]})
+        except Exception as e:
+            print 'download failed with error %s' % e 
+    return bucket
+
 def retrieve_af_data(bbox,time):
     """
     Retrieve the data in a bounding box coordinates and time interval and save it in a Matlab structure inside the out.mat Matlab file
@@ -519,10 +553,13 @@ def read_fire_mesh(filename):
 
 def data2json(data,keys,dkeys,N):
     """ 
-    Create a json for fire detections from data dictionary
+    Create a json dictionary from data dictionary
     
     :param data: dictionary with Latitude, Longitude and fire mask arrays and metadata information
-    :return d: dictionary with all the fire detection information to create the KML file
+    :param keys: keys which are going to be included into the json
+    :param dkeys: keys in the data dictionary which correspond to the previous keys (same order)
+    :param N: number of entries in each instance of the json dictionary (used for the variables with only one entry in the data dictionary)
+    :return ret: dictionary with all the fire detection information to create the KML file
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
@@ -542,7 +579,7 @@ def write_csv(d,bounds):
     Write fire detections from data dictionary d to a CSV file
     
     :param d: dictionary with Latitude, Longitude and fire mask arrays and metadata information
-    :param bounds: array of 4 components with the [lonmin,lonmax,latmin,latmax]
+    :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return: fire_detections.csv file with all the detections
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
@@ -582,7 +619,7 @@ def time_iso2num(time_iso):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
-    time_datetime=datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
+    time_datetime=datetime.datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
     # seconds since January 1, 1970
     s=time.mktime(time_datetime.timetuple())
     return s
@@ -597,7 +634,7 @@ def time_num2iso(time_num):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
     """
-    dt=datetime.fromtimestamp(time_num)
+    dt=datetime.datetime.fromtimestamp(time_num)
     # seconds since January 1, 1970
     date='%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
     return date
@@ -664,7 +701,7 @@ def json2kml(d,kml_path,bounds):
     
     :param d: dictionary with all the fire detection information to create the KML file
     :param kml_path: path in where the KML file is going to be written
-    
+    :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return: a KML file
                  
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
