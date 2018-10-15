@@ -695,7 +695,7 @@ def copyto(partial_path,kml):
         for line in part:
             kml.write(line)
 
-def json2kml(d,kml_path,bounds):
+def json2kml(d,kml_path,bounds,prods):
     """
     Creates a KML file kml_path from a dictionary d
     
@@ -718,13 +718,10 @@ def json2kml(d,kml_path,bounds):
         r = 6378   # Earth radius
         km_lat = 180/(math.pi*r)  # 1km in degrees latitude
 
-        type = {'AF':'Active Fires','FRP':'Fire Radiative Power'}
-        #type = {'AF':'Active Fires'}
-
-        for t in type:
+        for t in prods:
 
             kml.write('<Folder>\n')
-            kml.write('<name>%s</name>\n' % type[t])
+            kml.write('<name>%s</name>\n' % prods[t])
 
             if t=='FRP':
                 copyto('kmls/partial2.kml',kml)
@@ -755,19 +752,31 @@ def json2kml(d,kml_path,bounds):
                 track=float(tracks[p])
                 timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
                 timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
-    
-                kml.write('<Placemark>\n<name>Fire detection square</name>\n')
-                kml.write('<description>\nlongitude:   %s\n' % lon
-                                      +  'latitude:    %s\n' % lat
-                                      +  'time:        %s\n' % timedescr
-                                      +  'satellite:   %s\n' % satellite[p]
-                                      +  'instrument:  %s\n' % instrument[p]
-                                      +  'confidence:  %s\n' % conf
-                                      +  'FRP:         %s\n' % frp
-                                      +  'scan angle:  %s\n' % angle 
-                                      +  'along-scan:  %s\n' % scan 
-                                      +  'along-track: %s\n' % track 
-                        + '</description>\n')
+                
+                if t == 'NF':
+                    kml.write('<Placemark>\n<name>Ground detection square</name>\n')
+                    kml.write('<description>\nlongitude:   %s\n' % lon
+                                          +  'latitude:    %s\n' % lat
+                                          +  'time:        %s\n' % timedescr
+                                          +  'satellite:   %s\n' % satellite[p]
+                                          +  'instrument:  %s\n' % instrument[p]
+                                          +  'scan angle:  %s\n' % angle 
+                                          +  'along-scan:  %s\n' % scan 
+                                          +  'along-track: %s\n' % track 
+                            + '</description>\n')
+                else:
+                    kml.write('<Placemark>\n<name>Fire detection square</name>\n')
+                    kml.write('<description>\nlongitude:   %s\n' % lon
+                                          +  'latitude:    %s\n' % lat
+                                          +  'time:        %s\n' % timedescr
+                                          +  'satellite:   %s\n' % satellite[p]
+                                          +  'instrument:  %s\n' % instrument[p]
+                                          +  'confidence:  %s\n' % conf
+                                          +  'FRP:         %s\n' % frp
+                                          +  'scan angle:  %s\n' % angle 
+                                          +  'along-scan:  %s\n' % scan 
+                                          +  'along-track: %s\n' % track 
+                            + '</description>\n')
                 kml.write('<TimeStamp><when>%s</when></TimeStamp>\n' % timestamp)
                 if t == 'AF':
                     if conf < 30:
@@ -779,6 +788,8 @@ def json2kml(d,kml_path,bounds):
                 elif t=='FRP':
                     frpx = min(40,math.ceil(frp/10.)-1)
                     kml.write('<styleUrl> %s </styleUrl>\n' % frp_style[frpx] )
+                elif t=='NF':
+                    kml.write('<styleUrl> no_fire </styleUrl>\n')
 
                 kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
     

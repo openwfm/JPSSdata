@@ -36,7 +36,8 @@ dkeys=['lat_fire','lon_fire','brig_fire','scan_fire','track_fire','acq_date','ac
 N=[len(data[d]['lat_fire']) for d in data]
 json=data2json(data,keys,dkeys,N)
 write_csv(json,bbox)
-json2kml(json,'fire_detections.kml',bbox)
+prods={'AF':'Active Fires','FRP':'Fire Radiative Power'}
+json2kml(json,'fire_detections.kml',bbox,prods)
 
 print 'writting KML with ground'
 
@@ -44,7 +45,8 @@ keys=['latitude','longitude','scan','track','acq_date','acq_time','satellite','i
 dkeys=['lat_nofire','lon_nofire','scan_nofire','track_nofire','acq_date','acq_time','sat_fire','instrument','scan_angle_nofire']
 N=[len(data[d]['lat_nofire']) for d in data]
 json=data2json(data,keys,dkeys,N)
-json2kml(json,'nofire.kml',bbox)
+prods={'NF':'No Fire'}
+json2kml(json,'nofire.kml',bbox,prods)
 
 print 'saving data'
 

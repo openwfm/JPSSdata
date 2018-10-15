@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <kml xmlns="http://earth.google.com/kml/2.1">
   <Document>
-   
+     <Style id="no_fire">
+        <PolyStyle>
+          <outline>1</outline>
+          <color>5014B40A</color>
+        </PolyStyle>
+       </Style>
+
     <Style id="modis_conf_high">
       <PolyStyle>
         <outline>1</outline>
