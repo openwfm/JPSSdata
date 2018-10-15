@@ -8,8 +8,6 @@ fxlon,fxlat,bbox,time_esmf=read_fire_mesh('wrfout_d03_2018-09-03_15:00:00')
 # cannot get starting time from wrfout
 time_iso = ("2018-08-15T00:00:00Z", "2018-09-02T00:00:00Z") # tuple, not array
 
-goes=download_GOES16(time_iso)
-
 data=retrieve_af_data(bbox,time_iso)
 
 print 'writting CSV and KML with detections'
