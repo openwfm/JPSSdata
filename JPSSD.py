@@ -193,35 +193,35 @@ def read_modis_files(files,bounds):
     ret.fire=fire_obj.get()
     # Fire detected information
     try:
-        lats=lat_fire_obj.get()
+        flats=lat_fire_obj.get()
     except:
-        lats=np.array([])
+        flats=np.array([])
     try:
-        lons=lon_fire_obj.get()
+        flons=lon_fire_obj.get()
     except:
-        lons=np.array([])
-    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
-    ret.lat_fire=lats[ll]
-    ret.lon_fire=lons[ll]
+        flons=np.array([])
+    fll=np.logical_and(np.logical_and(np.logical_and(flons>bounds[0],flons<bounds[1]),flats>bounds[2]),flats<bounds[3])
+    ret.lat_fire=flats[fll]
+    ret.lon_fire=flons[fll]
     try:   
-        ret.brig_fire=brig_fire_obj.get()[ll]
+        ret.brig_fire=brig_fire_obj.get()[fll]
     except:
         ret.brig_fire=np.array([])
     ret.sat_fire=hdff.Satellite 
     try:
-        ret.conf_fire=conf_fire_obj.get()[ll]
+        ret.conf_fire=conf_fire_obj.get()[fll]
     except:
         ret.conf_fire=np.array([])
     try:
-        ret.t31_fire=t31_fire_obj.get()[ll]
+        ret.t31_fire=t31_fire_obj.get()[fll]
     except:
         ret.t31_fire=np.array([])
     try:
-        ret.frp_fire=frp_fire_obj.get()[ll]
+        ret.frp_fire=frp_fire_obj.get()[fll]
     except:
         ret.frp_fire=np.array([])
     try:
-        sf=sample_fire_obj.get()[ll]
+        sf=sample_fire_obj.get()[fll]
     except:
         sf=np.array([])
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
@@ -272,17 +272,17 @@ def read_viirs_files(files,bounds):
     ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
     ret.fire=np.array(ncf.variables['fire mask'][:])
     # Fire detected information
-    lats=np.array(ncf.variables['FP_latitude'][:])
-    lons=np.array(ncf.variables['FP_longitude'][:])
-    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
-    ret.lat_fire=lats[ll]
-    ret.lon_fire=lons[ll]
-    ret.brig_fire=np.array(ncf.variables['FP_T13'][:])[ll]
+    flats=np.array(ncf.variables['FP_latitude'][:])
+    flons=np.array(ncf.variables['FP_longitude'][:])
+    fll=np.logical_and(np.logical_and(np.logical_and(flons>bounds[0],flons<bounds[1]),flats>bounds[2]),flats<bounds[3])
+    ret.lat_fire=flats[fll]
+    ret.lon_fire=flons[fll]
+    ret.brig_fire=np.array(ncf.variables['FP_T13'][:])[fll]
     ret.sat_fire=ncf.SatelliteInstrument
-    ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])[ll]
-    ret.t31_fire=np.array(ncf.variables['FP_T15'][:])[ll]
-    ret.frp_fire=np.array(ncf.variables['FP_power'][:])[ll]
-    sf=np.array(ncf.variables['FP_sample'][:])[ll]
+    ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])[fll]
+    ret.t31_fire=np.array(ncf.variables['FP_T15'][:])[fll]
+    ret.frp_fire=np.array(ncf.variables['FP_power'][:])[fll]
+    sf=np.array(ncf.variables['FP_sample'][:])[fll]
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p,alpha)
     # No fire data
     lats=np.reshape(ret.lat,np.prod(ret.lat.shape))
