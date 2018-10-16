@@ -305,6 +305,9 @@ def read_data(files,file_metadata):
         elif prefix=="VNP":
             item=read_viirs_files(f)
             item.instrument="VIIRS"
+        elif prefix=="OR":
+            item=read_goes_files(f) # add function "read_goes_files()"
+            item.instrument="GOES"
         else:
             print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
             continue 
