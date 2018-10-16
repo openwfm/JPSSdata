@@ -17,7 +17,6 @@ import h5py
 import datetime
 import time
 import pandas as pd
-import math
 from subprocess import check_output, call
 
 def search_api(sname,bbox,time,maxg=50,platform="",version=""):
@@ -655,7 +654,7 @@ def pixel_dim(sample,N,h,p,a=None):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
     """
-    Re=6378.137 # approximation of the radius of the Earth in km
+    Re=6378 # approximation of the radius of the Earth in km
     r=Re+h
     M=(N-1)*0.5
     s=np.arctan(p/h) # trigonometry (deg/sample)
@@ -716,7 +715,7 @@ def json2kml(d,kml_path,bounds,prods):
         copyto('kmls/partial1.kml',kml)
 
         r = 6378   # Earth radius
-        km_lat = 180/(math.pi*r)  # 1km in degrees latitude
+        km_lat = 180/(np.pi*r)  # 1km in degrees latitude
 
         for t in prods:
 
@@ -786,14 +785,14 @@ def json2kml(d,kml_path,bounds,prods):
                     else:
                         kml.write('<styleUrl> modis_conf_high </styleUrl>\n')
                 elif t=='FRP':
-                    frpx = min(40,math.ceil(frp/10.)-1)
+                    frpx = min(40,np.ceil(frp/10.)-1)
                     kml.write('<styleUrl> %s </styleUrl>\n' % frp_style[frpx] )
                 elif t=='NF':
                     kml.write('<styleUrl> no_fire </styleUrl>\n')
 
                 kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
     
-                km_lon=km_lat/math.cos(lat*math.pi/180)  # 1 km in longitude
+                km_lon=km_lat/np.cos(lat*np.pi/180)  # 1 km in longitude
 
                 sq_track_size_km=track
                 sq2_lat=km_lat * sq_track_size_km/2

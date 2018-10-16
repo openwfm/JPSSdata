@@ -1,5 +1,5 @@
 # General python for any case
-from JPSSD import retrieve_af_data, read_fire_mesh, time_iso2num, data2json, write_csv, json2kml, pixel_dim
+from JPSSD import retrieve_af_data, read_fire_mesh, time_iso2num, data2json, write_csv, json2kml
 import saveload as sl
 import datetime as dt
 import sys

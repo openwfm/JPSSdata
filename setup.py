@@ -71,6 +71,8 @@ for gran in range(0,GG):
 	(ff,gg)=nearest_scipy(slon,slat,stree,bounds) ## indices to flattened granule array
 	vfire=np.reshape(fire,np.prod(fire.shape)) ## flaten the fire detection array
 	gfire=vfire[gg]   # the part withing the fire mesh bounds
+	gfire=vfire[gg]   # the part withing the fire mesh bounds
+	vlons=vfxlon[gg]   # the part withing the fire mesh bounds
 	fi=gfire >= 8  # where fire detected - nominal or high confidence 
 	nofi=np.logical_or(gfire == 3, gfire == 5) # where no fire detected
 	unkn=np.logical_not(np.logical_or(fi,nofi)) # where unknown
