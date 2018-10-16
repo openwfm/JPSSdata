@@ -1,5 +1,5 @@
 # General python for any case
-from JPSSD import retrieve_af_data, read_fire_mesh, time_iso2num, data2json, write_csv, json2kml
+from JPSSD import *
 import saveload as sl
 import datetime as dt
 import sys
@@ -26,6 +26,7 @@ time_final_iso='%d-%02d-%02dT%02d:%02d:%02dZ' % (dtf.year,dtf.month,dtf.day,dtf.
 
 # cannot get starting time from wrfout
 time_iso=(time_start_iso,time_final_iso) # tuple, not array
+goes=download_GOES16(time_iso)
 
 data=retrieve_af_data(bbox,time_iso)
 
