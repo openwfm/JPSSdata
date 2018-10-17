@@ -304,6 +304,38 @@ def read_viirs_files(files,bounds):
     ncf.close()
     return ret
 
+def read_goes_files(files):
+    """ 
+    Read the files for GOES products - geolocation and fire data already included (OS)
+    
+     remove :param files: pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
+    :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
+    :return ret: dictionary with Latitude, Longitude and fire mask arrays read
+    
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on WINDOWS10. 
+    Lauren Hearn (lauren@robotlauren.com), 2018-10-16
+    """
+    h5g=h5py.File(files.geo,'r')
+    ret=Dict([])
+    ret.lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
+    ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
+    ncf=nc.Dataset(files.fire,'r')
+    ret.fire=np.array(ncf.variables['fire mask'][:])
+    ret.lat_fire=np.array(ncf.variables['FP_latitude'][:])
+    ret.lon_fire=np.array(ncf.variables['FP_longitude'][:])
+    ret.brig_fire=np.array(ncf.variables['FP_T13'][:])
+    sf=np.array(ncf.variables['FP_sample'][:])
+    # Satellite information
+    N=2500 # Number of columns (maxim number of sample)
+    h=35786. # Altitude of the satellite in km
+    p=2. # Nadir pixel resolution in km
+    ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
+    ret.sat_fire=ncf.SatelliteInstrument
+    ret.conf_fire=np.array(ncf.variables['FP_confidence'][:])
+    ret.t31_fire=np.array(ncf.variables['FP_T15'][:])
+    ret.frp_fire=np.array(ncf.variables['FP_power'][:])
+    return ret
+
 def read_data(files,file_metadata,bounds):
     """ 
     Read all the geolocation (03) and fire (14) files
@@ -362,6 +394,9 @@ def read_data(files,file_metadata,bounds):
         elif prefix=="VNP":
             item=read_viirs_files(f,bounds)
             item.instrument="VIIRS"
+        elif prefix=="OR":
+            item=read_goes_files(f)
+            item.instrument="GOES"
         else:
             print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
             continue 
