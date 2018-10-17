@@ -114,16 +114,32 @@ def neighbor_indices(indices,shape,d=2):
 	ind=sorted(np.unique(ret))
 	return ind
 
-def neighbor_pixel(lons,lats,lon,lat,scan,track):
-	R=6378   # Earth radius
-    km_lat=180/(np.pi*R)  # 1km in degrees latitude
-    km_lon=km_lat/np.cos(lat*np.pi/180)  # 1 km in longitude
-    slat=km_lat*tracks/2
-    slon=km_lon*scans/2
-    bounds=[ (lon[k]-slon[k],lon[k]+slon[k],lat[k]-slat[k],lat[k]+slat[k]) for k in range(lat) ]
-    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
-    return ll
+def neighbor_indices_pixel(lons,lats,lon,lat,scan,track):
+	""" 
+    Computes all the neighbor indices depending on the size of the pixel
 
+    :param lons: one dimensional array of the fire mesh longitud coordinates
+    :param lats: one dimensional array of the fire mesh latitude coordinates
+    :param lon: one dimensional array of the fire detection longitud coordinates
+    :param lat: one dimensional array of the fire detection latitude coordinates
+    :param scan: one dimensional array of the fire detection along-scan sizes
+    :param track: one dimensional array of the fire detection along-track sizes
+    :return ll: returns a one dimensional logical array with the indices in the fire mesh including pixel neighbours
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-10-16
+    """
+	R=6378   # Earth radius
+	km_lat=180/(np.pi*R)  # 1km in degrees latitude
+	km_lon=km_lat/np.cos(lat*np.pi/180)  # 1 km in longitude
+	# pixel sizes in degrees
+	sqlat=km_lat*track/2
+	sqlon=km_lon*scan/2
+	# creating bounds for each fire detection (pixel vertexs)
+	bounds=[[lon[k]-sqlon[k],lon[k]+sqlon[k],lat[k]-sqlat[k],lat[k]+sqlat[k]] for k in range(len(lat))]
+	# creating a logical array of indices in the fire mesh with the intersection of all the cases
+	ll=np.sum([np.array(np.logical_and(np.logical_and(np.logical_and(lons>b[0],lons<b[1]),lats>b[2]),lats<b[3])) for b in bounds],axis=0).astype(bool)
+	return ll
 
 def neighbor_indices_ball(tree,indices,shape,d=2):
 	""" 
