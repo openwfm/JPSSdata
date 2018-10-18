@@ -61,7 +61,7 @@ University of Colorado Denver
 ### To do:
 - add download ability (completed)
 - download only certain leaves of the overall tree structure
-- reconcile data from M?D14 with geolocation data from M?D03 (done)
+- reconcile data from M?D14 with geolocation data from M?D03 (completed)
 - extend MODIS search to VIIRS (completed)
 - continue translating ncvarinfo to proper python grammar
 - interpolate to a fire mesh and set up upper and lower bounds for fire arrival time
@@ -81,3 +81,4 @@ University of Colorado Denver
 ### External links:
 - Tools for searching the CMR API https://cmr.earthdata.nasa.gov
 - VIIRS Active Fires users guide https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/vnp14_user_guide_v1.3.pdf
+- GOES16.py filters and downloads GOES satellite files from AWS.
