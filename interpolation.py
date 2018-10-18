@@ -141,6 +141,34 @@ def neighbor_indices_pixel(lons,lats,lon,lat,scan,track):
 	ll=np.sum([np.array(np.logical_and(np.logical_and(np.logical_and(lons>b[0],lons<b[1]),lats>b[2]),lats<b[3])) for b in bounds],axis=0).astype(bool)
 	return ll
 
+def neighbor_indices_ellipse(lons,lats,lon,lat,scan,track,mm=1):
+	""" 
+    Computes all the neighbor indices in an ellipse of radius the size of the pixel
+
+    :param lons: one dimensional array of the fire mesh longitud coordinates
+    :param lats: one dimensional array of the fire mesh latitude coordinates
+    :param lon: one dimensional array of the fire detection longitud coordinates
+    :param lat: one dimensional array of the fire detection latitude coordinates
+    :param scan: one dimensional array of the fire detection along-scan sizes
+    :param track: one dimensional array of the fire detection along-track sizes
+    :param mm: constant of magnitude of the ellipse, default mm=1 (ellipse inscribed in the pixel)
+    :return ll: returns a one dimensional logical array with the indices in the fire mesh including pixel neighbours
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-10-18
+    """
+	R=6378   # Earth radius
+	km_lat=180/(np.pi*R)  # 1km in degrees latitude
+	km_lon=km_lat/np.cos(lat*np.pi/180)  # 1 km in longitude
+	# pixel sizes in degrees
+	sqlat=km_lat*track/2
+	sqlon=km_lon*scan/2
+	# creating the coordinates in the center of the ellipse
+	C=[[(np.array(lons)-lon[k])/sqlon[k],(np.array(lats)-lat[k])/sqlat[k]] for k in range(len(lat))]
+	# creating a logical array of indices in the fire mesh with the intersection of all the cases
+	ll=np.sum([np.array((np.square(c[0])+np.square(c[1]))<=mm) for c in C],axis=0).astype(bool)
+	return ll
+
 def neighbor_indices_ball(tree,indices,shape,d=2):
 	""" 
     Computes all the neighbor indices from an indice list in a grid of indices defined through a cKDTree
