@@ -65,6 +65,7 @@ print 'X ='
 print X
 print 'Y ='
 print Y
+'''
 p=Proj(proj='utm', h=sat_h, lon_0=sat_lon, sweep=sat_sweep)
 # Convert map points to latitude and longitude with the magic provided by Pyproj
 XX, YY=np.meshgrid(X, Y)
@@ -75,6 +76,7 @@ print 'lons ='
 print lons
 print 'lats ='
 print lats
+'''
 
 # Visualize the way Brian Blaylock does
 p=Proj(proj='geos', h=sat_h, lon_0=sat_lon, sweep=sat_sweep)
@@ -104,21 +106,27 @@ plt.title('GOES-16 Fire Temperature', fontweight='semibold', fontsize=15)
 plt.title('%s' % dt.strftime('%H:%M UTC %d %B %Y'), loc='right')
 plt.show()
 
-# Sugarloaf bounds
+# location of South Sugarloaf fire
+l = {'latitude': 41.812,
+     'longitude': -116.324}
+'''
 bounds=(-116.655846, -115.5455, 41.243748, 42.069675)
 # Draw zoomed map
 mZ = Basemap(resolution='i', projection='cyl', area_thresh=50000,\
              llcrnrlon=bounds[0], llcrnrlat=bounds[2],\
              urcrnrlon=bounds[1], urcrnrlat=bounds[3],)
-# Now we can plot the GOES data on a zoomed in map centered on the Buzzard wildfire
+'''
+mZ = Basemap(resolution='i', projection='cyl', area_thresh=50000,\
+             llcrnrlon=l['longitude']-2.25, llcrnrlat=l['latitude']-2.25,\
+             urcrnrlon=l['longitude']+2.25, urcrnrlat=l['latitude']+2.25,)
+# Now we can plot the GOES data on a zoomed in map centered on the Sugarloaf wildfire
 plt.figure(figsize=[8, 8])
-# The values of R are ignored becuase we plot the color in colorTuple, but pcolormesh still needs its shape.
 newmap = mZ.pcolormesh(lons, lats, R, color=colorTuple, linewidth=0, latlon=True)
-newmap.set_array(None) # without this line, the linewidth is set to zero, but the RGB colorTuple is ignored. I don't know why.
+newmap.set_array(None) 
 mZ.drawcoastlines(color='w')
 mZ.drawcountries(color='w')
 mZ.drawstates(color='w')
 plt.title('GOES-16 Fire Temperature\n', fontweight='semibold', fontsize=15)
 plt.title('%s' % dt.strftime('%H:%M UTC %d %B %Y'), loc='right')
-plt.title('Buzzard Fire', loc='left')
+plt.title('South Sugarloaf Fire', loc='left')
 plt.show()
