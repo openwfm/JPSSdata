@@ -117,8 +117,8 @@ mZ = Basemap(resolution='i', projection='cyl', area_thresh=50000,\
              urcrnrlon=bounds[1], urcrnrlat=bounds[3],)
 '''
 mZ = Basemap(resolution='i', projection='cyl', area_thresh=50000,\
-             llcrnrlon=l['longitude']-2.25, llcrnrlat=l['latitude']-2.25,\
-             urcrnrlon=l['longitude']+2.25, urcrnrlat=l['latitude']+2.25,)
+             llcrnrlon=l['longitude']-.75, llcrnrlat=l['latitude']-.75,\
+             urcrnrlon=l['longitude']+.75, urcrnrlat=l['latitude']+.75,)
 # Now we can plot the GOES data on a zoomed in map centered on the Sugarloaf wildfire
 plt.figure(figsize=[8, 8])
 newmap = mZ.pcolormesh(lons, lats, R, color=colorTuple, linewidth=0, latlon=True)
