@@ -3,7 +3,7 @@ warnings.filterwarnings("ignore")
 import scipy.io as sio
 import pdb
 import saveload as sl
-from interpolation import sort_dates,nearest_scipy,distance_upper_bound,neighbor_indices_ball
+from interpolation import *
 import time
 import numpy as np
 import sys
@@ -79,8 +79,24 @@ for gran in range(0,GG):
 	print 'unknown          %s' % unkn.sum()
 	if fi.any():   # at fire points
 		U[ff[fi]]=ti   # set U to granule time where fire detected
-		kk=neighbor_indices_ball(itree,ff[fi],fxlon.shape,d=2) 
-		ii=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
+		bball=False
+		if bball:
+			kk=neighbor_indices_ball(itree,ff[fi],fxlon.shape,d=2) 
+			ii=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
+		else:
+			# indices with fire mask larger than 7
+			afi=gfire >= 7
+			# creating the fire labels of the elements larger than 7
+			gafire=gfire[afi]
+			# indices from the previous elements which are larger than 8
+			kk=gafire >= 8
+			# taking lon, lat, scan and track of the fire detections which are >=8
+			lon=sdata[gran][1]['lon_fire'][kk]
+			lat=sdata[gran][1]['lat_fire'][kk]
+			scan=sdata[gran][1]['scan_fire'][kk]
+			track=sdata[gran][1]['track_fire'][kk]
+			# creating the indices for all the pixel neighbours
+			ii=neighbor_indices_pixel(vfxlon,vfxlat,lon,lat,scan,track)
 		T[ii]=ti       # update mask
 	if nofi.any(): # set L at no-fire points and not masked
 		jj=np.logical_and(nofi,ti<T[ff])
