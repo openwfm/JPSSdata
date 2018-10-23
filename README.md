@@ -4,7 +4,7 @@
 
 	$ python case.py wrfout start_time days
 
-	Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a text file called 'data'. It creates as well a csv file and a KML file with all the detections called 'fire_detections.csv' and 'fire_detections.kml'. The input variales are:
+	Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a text file called 'data'. It creates as well a csv file and a KML file with all the detections called 'fire_detections.csv' and 'fire_detections.kml'. It is also created a KML file with the ground detections called 'nofire.kml'. The input variales are:
 
 	- wrfout:  string, link to the wrfout file of WRF-SFIRE simulation.	
 	- start_time - string, YYYYMMDDHHMMSS where:
