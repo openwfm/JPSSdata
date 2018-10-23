@@ -24,6 +24,7 @@ def get_contour_verts(cn):
     return contours
 
 if __name__ == "__main__":
+    print 'Loading the data...'
     # Load all the data in result.mat and mgout.mat
     result=loadmat('result.mat')
     mgout=loadmat('mgout.mat')
@@ -34,11 +35,11 @@ if __name__ == "__main__":
     xx=x[np.ix_(xind,yind)]
     y=np.array(result['fxlat'])
     yy=y[np.ix_(xind,yind)]
-    # Transpose of the solution is needed to match the coordinates, scaled and shift back
     tscale=mgout['tscale'][0]
     time_scale_num=mgout['time_scale_num'][0]
     zz=mgout['a']*tscale+time_scale_num[0]
     
+    print 'Computing the contours...'
     # Granules numeric times
     time_num_granules=result['time_num_granules'][0]
     # Datetimes for the first and last granule
@@ -74,6 +75,7 @@ if __name__ == "__main__":
                 plt.scatter(xx,yy)
         plt.show()
 
+    print 'Creating the dictionary...'
     # Creating an array of dictionaries for each perimeter
     conts=[Dict({'text':time_iso[k],
         'LineStyle':{ 
@@ -92,6 +94,7 @@ if __name__ == "__main__":
         'folder_name':'Perimeters'})
     data.update({'contours': conts})
 
+    print 'Creating the KML file...'
     # Creating the KML file
     contour2kml(data,'perimeters.kml')
 
