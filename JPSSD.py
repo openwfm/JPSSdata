@@ -105,7 +105,7 @@ def get_meta(bbox,time,maxg=50):
     #VNP03MODLL: VIIRS geolocation data, res 750m
     granules.VNP03=search_api("VNP03MODLL",bbox,time,maxg)
     #VNP14hi: VIIRS fire data, res 375m
-    #granules.VNP14hi=search("VNP14IMGTDL_NRT",bbox,time,maxg)
+    #granules.VNP14hi=search_api("VNP14IMGTDL_NRT",bbox,time,maxg)
     return granules
 
 def group_files(path,reg):
@@ -304,6 +304,72 @@ def read_viirs_files(files,bounds):
     ncf.close()
     return ret
 
+def read_viirs375_files(path,bounds):
+    """ 
+    Read the geolocation and fire information from VIIRS CSV files (fire_archive_*.csv and/or fire_nrt_*.csv)
+
+    :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
+    :return ret: dictionary with Latitude, Longitude and fire mask arrays read
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-10-23
+    """
+    # Opening files if they exist
+    f1=glob.glob(path+'/fire_archive_*.csv')
+    f2=glob.glob(path+'/fire_nrt_*.csv')
+    if len(f1)==1:
+        df1=pd.read_csv(f1[0])
+        if len(f2)==1:
+            df2=pd.read_csv(f2[0])
+            dfs=pd.concat([df1,df2],sort=True,ignore_index=True)
+        else:
+            dfs=df1
+    else:
+        if len(f2)==1:
+            dfs=pd.read_csv(f2[0])
+        else:
+            return {}
+
+    items=Dict({})
+    # In the case something exists, read all the information from the CSV files
+    dfs=dfs[(dfs['longitude']>bounds[0]) & (dfs['longitude']<bounds[1]) & (dfs['latitude']>bounds[2]) & (dfs['latitude']<bounds[3])]
+    date=np.array(dfs['acq_date'])
+    time=np.array(dfs['acq_time']).astype(str)
+    dfs['time']=np.array(['%s_%04d' % (date[k],time[k]) for k in range(len(date))])
+    dfs['time']=pd.to_datetime(dfs['time'], format='%Y-%m-%d_%H%M')
+    for group_name, df in df.groupby(pd.TimeGrouper("D")):
+        ret=Dict([])
+        ret.lat=np.array(df['latitude'])
+        ret.lon=np.array(df['longitude'])
+        conf=np.array(df['confidence'])
+        firemask=np.zeros(conf.shape)
+        conf_fire=np.zeros(conf.shape)
+        firemask[conf=='l']=7
+        conf_fire[conf=='l']=50.
+        firemask[conf=='n']=8
+        conf_fire[conf=='n']=75.
+        firemask[conf=='h']=9
+        conf_fire[conf=='h']=100.
+        ret.fire=firemask.astype(int)
+        ret.lat_fire=ret.lat
+        ret.lon_fire=ret.lon
+        ret.brig_fire=np.array(df['bright_ti4'])
+        ret.sat_fire='Suomi NPP'
+        ret.conf_fire=conf_fire
+        ret.t31_fire=np.array(df['bright_ti5'])
+        ret.frp_fire=np.array(df['frp'])
+        ret.scan_fire=np.array(df['scan'])
+        ret.track_fire=np.array(df['track'])
+        ret.scan_angle_fire=np.ones(ret.scan_fire.shape)*np.nan
+        ret.lat_nofire=np.array([])
+        ret.lon_nofire=np.array([])
+        ret.scan_angle_nofire=np.array([])
+        ret.scan_nofire=np.array([])
+        ret.track_nofire=np.array([])
+        ret.instrument=df['instrument'][0]
+        items.update({key: ret})
+    return items
+
 def read_goes_files(files):
     """ 
     Read the files for GOES products - geolocation and fire data already included (OS)
@@ -370,54 +436,58 @@ def read_data(files,file_metadata,bounds):
     """
     print "read_data files=%s" %  files
     data=Dict([])
-    for f in files:
-        print "read_data f=%s" % f
-        lf = len(f)
-        if lf != 2:
-            print 'ERROR: read_data got %s files using %s' % (lf,f)
-            continue
-        f0=os.path.basename(f.geo)
-        f1=os.path.basename(f.fire)
-        prefix = f0[:3] 
-        print 'prefix %s' % prefix
-        if prefix != f1[:3]:
-            print 'ERROR: the prefix of %s %s must coincide' % (f0,f1)
-            continue 
-        m=f.geo.split('/')
-        mm=m[-1].split('.')
-        key=mm[1]+'_'+mm[2]
-        id = prefix + '_' + key
-        print "id " + id
-        if prefix=="MOD" or prefix=="MYD":
-            item=read_modis_files(f,bounds)
-            item.instrument="MODIS"
-        elif prefix=="VNP":
-            item=read_viirs_files(f,bounds)
-            item.instrument="VIIRS"
-        elif prefix=="OR":
-            item=read_goes_files(f)
-            item.instrument="GOES"
-        else:
-            print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
-            continue 
-        if (f0 in file_metadata.keys()) and (f1 in file_metadata.keys()):
-            # connect the file back to metadata
-            item.time_start_geo_iso=file_metadata[f0]["time_start"]
-            item.time_num=time_iso2num(item.time_start_geo_iso)
-            dt=datetime.datetime.strptime(item.time_start_geo_iso[0:18],'%Y-%m-%dT%H:%M:%S')
-            item.acq_date='%02d-%02d-%02d' % (dt.year,dt.month,dt.day)
-            item.acq_time='%02d%02d' % (dt.hour,dt.minute)
-            item.time_start_fire_iso=file_metadata[f1]["time_start"]
-            item.time_end_geo_iso=file_metadata[f0]["time_end"]
-            item.time_end_fire_iso=file_metadata[f1]["time_end"]
-            item.file_geo=f0
-            item.file_fire=f1
-            item.prefix=prefix
-            item.name=key
-            data.update({id:item})
-        else:
-            print 'WARNING: file %s or %s not found in downloaded metadata, ignoring both' % (f0, f1)
-            continue
+    if isinstance(files,dict):
+        for f in files:
+            print "read_data f=%s" % f
+            lf = len(f)
+            if lf != 2:
+                print 'ERROR: read_data got %s files using %s' % (lf,f)
+                continue
+            f0=os.path.basename(f.geo)
+            f1=os.path.basename(f.fire)
+            prefix = f0[:3] 
+            print 'prefix %s' % prefix
+            if prefix != f1[:3]:
+                print 'ERROR: the prefix of %s %s must coincide' % (f0,f1)
+                continue 
+            m=f.geo.split('/')
+            mm=m[-1].split('.')
+            key=mm[1]+'_'+mm[2]
+            id = prefix + '_' + key
+            print "id " + id
+            if prefix=="MOD" or prefix=="MYD":
+                item=read_modis_files(f,bounds)
+                item.instrument="MODIS"
+            elif prefix=="VNP":
+                item=read_viirs_files(f,bounds)
+                item.instrument="VIIRS"
+            elif prefix=="OR":
+                item=read_goes_files(f)
+                item.instrument="GOES"
+            else:
+                print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
+                continue 
+            if (f0 in file_metadata.keys()) and (f1 in file_metadata.keys()):
+                # connect the file back to metadata
+                item.time_start_geo_iso=file_metadata[f0]["time_start"]
+                item.time_num=time_iso2num(item.time_start_geo_iso)
+                dt=datetime.datetime.strptime(item.time_start_geo_iso[0:18],'%Y-%m-%dT%H:%M:%S')
+                item.acq_date='%02d-%02d-%02d' % (dt.year,dt.month,dt.day)
+                item.acq_time='%02d%02d' % (dt.hour,dt.minute)
+                item.time_start_fire_iso=file_metadata[f1]["time_start"]
+                item.time_end_geo_iso=file_metadata[f0]["time_end"]
+                item.time_end_fire_iso=file_metadata[f1]["time_end"]
+                item.file_geo=f0
+                item.file_fire=f1
+                item.prefix=prefix
+                item.name=key
+                data.update({id:item})
+            else:
+                print 'WARNING: file %s or %s not found in downloaded metadata, ignoring both' % (f0, f1)
+                continue
+    else:
+        item=read_viirs375_files('.',bounds)
+
 
     return data
 

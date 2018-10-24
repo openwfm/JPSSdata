@@ -12,7 +12,7 @@ import itertools
 
 # setup.py settings
 maxsize=400 # Max size of the fire mesh
-ut=2 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
+ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
 lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
 mt=3 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
 if mt<2:
