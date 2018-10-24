@@ -65,18 +65,6 @@ print 'X ='
 print X
 print 'Y ='
 print Y
-'''
-p=Proj(proj='utm', h=sat_h, lon_0=sat_lon, sweep=sat_sweep)
-# Convert map points to latitude and longitude with the magic provided by Pyproj
-XX, YY=np.meshgrid(X, Y)
-lons, lats=p(XX, YY, inverse=True)
-lats[np.isnan(R)]=np.nan
-lons[np.isnan(R)]=np.nan
-print 'lons ='
-print lons
-print 'lats ='
-print lats
-'''
 
 # Visualize the way Brian Blaylock does
 p=Proj(proj='geos', h=sat_h, lon_0=sat_lon, sweep=sat_sweep)
@@ -86,7 +74,7 @@ lons, lats=p(XX, YY, inverse=True)
 lats[np.isnan(R)]=np.nan
 lons[np.isnan(R)]=np.nan
 # Make a new map object for the HRRR model domain map projection
-mH = Basemap(resolution='h', projection='lcc', area_thresh=5000, \
+mH = Basemap(resolution='l', projection='lcc', area_thresh=5000, \
              width=1800*3000, height=1060*3000, \
              lat_1=38.5, lat_2=38.5, \
              lat_0=38.5, lon_0=-97.5)
@@ -115,13 +103,9 @@ l = {'latitude': 41.812,
 # Buzzard fire
 #l = {'latitude': 33.724,
 #     'longitude': -108.538}
-'''
-mZ = Basemap(resolution='i', projection='cyl', area_thresh=500,\
-             llcrnrlon=l['longitude']-1.75, llcrnrlat=l['latitude']-1.75,\
-             urcrnrlon=l['longitude']+1.75, urcrnrlat=l['latitude']+1.75,)
-'''
+
 mZ = Basemap(projection='lcc', resolution='i',
-            width=5E5, height=5E5, 
+            width=3E5, height=3E5, 
             lat_0=l['latitude'], lon_0=l['longitude'],)
 
 # Now we can plot the GOES data on a zoomed in map centered on the Sugarloaf wildfire
