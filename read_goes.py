@@ -107,16 +107,16 @@ plt.title('%s' % dt.strftime('%H:%M UTC %d %B %Y'), loc='right')
 plt.show()
 
 # location of South Sugarloaf fire
-#l = {'latitude': 41.812,
-#     'longitude': -116.324}
+l = {'latitude': 41.812,
+     'longitude': -116.324}
 # Baltimore harbour
 #l = {'latitude': 39.2827513,
 #     'longitude':-76.6214623}
 # Buzzard fire
-l = {'latitude': 33.724,
-     'longitude': -108.538}
+#l = {'latitude': 33.724,
+#     'longitude': -108.538}
 
-mZ = Basemap(resolution='i', projection='cyl', area_thresh=50000,\
+mZ = Basemap(resolution='i', projection='cyl', area_thresh=500,\
              llcrnrlon=l['longitude']-1.75, llcrnrlat=l['latitude']-1.75,\
              urcrnrlon=l['longitude']+1.75, urcrnrlat=l['latitude']+1.75,)
 
