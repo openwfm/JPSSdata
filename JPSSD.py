@@ -453,7 +453,9 @@ def read_data(files,file_metadata,bounds):
     print "read_data files=%s" %  files
     data=Dict([])
     print "test of files:%s" % isinstance(files,(dict,Dict))
-    if isinstance(files,(dict,Dict)):
+    if files=='VIIRS375':
+        data.update(read_viirs375_files('.',bounds))
+    else:
         for f in files:
             print "read_data f=%s" % f
             lf = len(f)
@@ -502,8 +504,6 @@ def read_data(files,file_metadata,bounds):
             else:
                 print 'WARNING: file %s or %s not found in downloaded metadata, ignoring both' % (f0, f1)
                 continue
-    else:
-        data.update(read_viirs375_files('.',bounds))
 
     return data
 
@@ -634,7 +634,7 @@ def retrieve_af_data(bbox,time):
     data.update(read_data(files.MOD,file_metadata,bounds))
     data.update(read_data(files.MYD,file_metadata,bounds))
     data.update(read_data(files.VNP,file_metadata,bounds))
-    data.update(read_data('','',bounds))
+    data.update(read_data('VIIRS375','',bounds))
 
     return data
 
