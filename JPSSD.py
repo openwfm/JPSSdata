@@ -370,7 +370,7 @@ def read_viirs375_files(path,bounds):
         items.track_nofire=np.array([])
         items.instrument=df['instrument'][0]
         tt=df['datetime'][0].timetuple()
-        id='A%04d%03d_%02d%02d' % (tt.tm_year,tt.tm_yday,tt.tm_hour,tt.tm_min)
+        id='VNPH_A%04d%03d_%02d%02d' % (tt.tm_year,tt.tm_yday,tt.tm_hour,tt.tm_min)
         ret.update({id: items})
     return ret
 
@@ -621,6 +621,7 @@ def retrieve_af_data(bbox,time):
     data.update(read_data(files.MOD,file_metadata,bounds))
     data.update(read_data(files.MYD,file_metadata,bounds))
     data.update(read_data(files.VNP,file_metadata,bounds))
+    data.update(read_data('','',bounds))
 
     return data
 
