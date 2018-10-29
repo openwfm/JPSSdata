@@ -369,8 +369,20 @@ def read_viirs375_files(path,bounds):
         items.scan_nofire=np.array([])
         items.track_nofire=np.array([])
         items.instrument=df['instrument'][0]
+        dt=df['datetime'][0]
+        item.time_start_geo_iso='%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
+        item.time_num=time_iso2num(item.time_start_geo_iso)
+        item.acq_date='%02d-%02d-%02d' % (dt.year,dt.month,dt.day)
+        item.acq_time='%02d%02d' % (dt.hour,dt.minute)
+        item.time_start_fire_iso=item.time_start_geo_iso
+        item.time_end_geo_iso=item.time_start_geo_iso
+        item.time_end_fire_iso=item.time_start_geo_iso
+        item.file_geo=f1+f2
+        item.file_fire=item.file_geo
         tt=df['datetime'][0].timetuple()
         id='VNPH_A%04d%03d_%02d%02d' % (tt.tm_year,tt.tm_yday,tt.tm_hour,tt.tm_min)
+        item.prefix='VNPH'
+        item.name='A%04d%03d_%02d%02d' % (tt.tm_year,tt.tm_yday,tt.tm_hour,tt.tm_min)
         ret.update({id: items})
     return ret
 
