@@ -370,19 +370,19 @@ def read_viirs375_files(path,bounds):
         items.track_nofire=np.array([])
         items.instrument=df['instrument'][0]
         dt=df['datetime'][0]
-        item.time_start_geo_iso='%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
-        item.time_num=time_iso2num(item.time_start_geo_iso)
-        item.acq_date='%02d-%02d-%02d' % (dt.year,dt.month,dt.day)
-        item.acq_time='%02d%02d' % (dt.hour,dt.minute)
-        item.time_start_fire_iso=item.time_start_geo_iso
-        item.time_end_geo_iso=item.time_start_geo_iso
-        item.time_end_fire_iso=item.time_start_geo_iso
-        item.file_geo=f1+f2
-        item.file_fire=item.file_geo
+        items.time_start_geo_iso='%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
+        items.time_num=time_iso2num(items.time_start_geo_iso)
+        items.acq_date='%02d-%02d-%02d' % (dt.year,dt.month,dt.day)
+        items.acq_time='%02d%02d' % (dt.hour,dt.minute)
+        items.time_start_fire_iso=items.time_start_geo_iso
+        items.time_end_geo_iso=items.time_start_geo_iso
+        items.time_end_fire_iso=items.time_start_geo_iso
+        items.file_geo=f1+f2
+        items.file_fire=items.file_geo
         tt=df['datetime'][0].timetuple()
         id='VNPH_A%04d%03d_%02d%02d' % (tt.tm_year,tt.tm_yday,tt.tm_hour,tt.tm_min)
-        item.prefix='VNPH'
-        item.name='A%04d%03d_%02d%02d' % (tt.tm_year,tt.tm_yday,tt.tm_hour,tt.tm_min)
+        items.prefix='VNPH'
+        items.name='A%04d%03d_%02d%02d' % (tt.tm_year,tt.tm_yday,tt.tm_hour,tt.tm_min)
         ret.update({id: items})
     return ret
 
@@ -452,7 +452,7 @@ def read_data(files,file_metadata,bounds):
     """
     print "read_data files=%s" %  files
     data=Dict([])
-    if isinstance(files,dict):
+    if isinstance(files,(dict,Dict)):
         for f in files:
             print "read_data f=%s" % f
             lf = len(f)
