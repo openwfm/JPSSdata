@@ -452,6 +452,7 @@ def read_data(files,file_metadata,bounds):
     """
     print "read_data files=%s" %  files
     data=Dict([])
+    print "test of files:%s" % isinstance(files,(dict,Dict))
     if isinstance(files,(dict,Dict)):
         for f in files:
             print "read_data f=%s" % f
