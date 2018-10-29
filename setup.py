@@ -19,6 +19,7 @@ if mt<2:
 	dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
 elif mt>2:
 	mm=2 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
+pen=False # Creating heterogeneous penalty depending on the confidence level
 
 print 'Loading data'
 data,fxlon,fxlat,time_num=sl.load('data')
@@ -54,12 +55,16 @@ mint=time_num[0]
 time_scale_num=[mint-0.5*(maxt-mint),maxt+2*(maxt-mint)]
 
 # Creating the resulting arrays
-U=np.empty(np.prod(fxlon.shape))
+DD=np.prod(fxlon.shape)
+U=np.empty(DD)
 U[:]=time_scale_num[1]
-L=np.empty(np.prod(fxlon.shape))
+L=np.empty(DD)
 L[:]=time_scale_num[0]
-T=np.empty(np.prod(fxlon.shape))
+T=np.empty(DD)
 T[:]=time_scale_num[1]
+if pen:
+	LP=np.zeros(DD)
+	UP=np.zeros(DD)
 
 # For granules in order increasing in time
 GG=len(sdata)
@@ -86,34 +91,50 @@ for gran in range(GG):
 	print 'no fire detected %s' % nofi.sum()
 	print 'unknown          %s' % unkn.sum()
 	if fi.any():   # at fire points
-		if ut>1 or mt>1:
-			# indices with fire mask larger than 7
-			afi=gfire >= 7
-			# creating the fire labels of the elements larger than 7
-			gafire=gfire[afi]
-			# indices from the previous elements which are larger than 8
-			kk=gafire >= 8
+		# indices with fire mask larger than 7
+		afi=gfire >= 7
+		# creating the fire labels of the elements larger than 7
+		gafire=gfire[afi]
+		# indices from the previous elements which are larger than 8
+		flc=gafire >= 8 # fire large confidence indexes
+		# Set upper bounds
+		if ut==1:
+			iu=ff[fi]
+			if pen:
+				conf=sdata[gran][1]['conf_fire'][flc]
+				LP[iu]=conf
+		elif ut==2:
 			# taking lon, lat, scan and track of the fire detections which are >=8
-			lon=sdata[gran][1]['lon_fire'][kk]
-			lat=sdata[gran][1]['lat_fire'][kk]
-			scan=sdata[gran][1]['scan_fire'][kk]
-			track=sdata[gran][1]['track_fire'][kk]
+			lon=sdata[gran][1]['lon_fire'][flc]
+			lat=sdata[gran][1]['lat_fire'][flc]
+			scan=sdata[gran][1]['scan_fire'][flc]
+			track=sdata[gran][1]['track_fire'][flc]
 			# creating the indices for all the pixel neighbours of the upper bound
 			iu=neighbor_indices_ellipse(vfxlon,vfxlat,lon,lat,scan,track)
-			U[iu]=ti
-			if mt<3:
-				# creating the indices for all the pixel neighbours
-				ii=neighbor_indices_pixel(vfxlon,vfxlat,lon,lat,scan,track)
-			else:
-				# creating the indices for all the pixel neighbours
-				ii=neighbor_indices_ellipse(vfxlon,vfxlat,lon,lat,scan,track,mm)
 		else:
-			U[ff[fi]]=ti   # set U to granule time where fire detected
+			print 'ERROR: invalid ut option.'
+			sys.exit()
+		U[iu]=ti   # set U to granule time where fire detected
+		# Set mask
+		if mt==1:
 			kk=neighbor_indices_ball(itree,ff[fi],fxlon.shape,dist) 
-			ii=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
-		T[ii]=ti       # update mask
+			im=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
+		elif mt==2:
+			# creating the indices for all the pixel neighbours
+			im=neighbor_indices_pixel(vfxlon,vfxlat,lon,lat,scan,track)
+		elif mt==3:
+			# creating the indices for all the pixel neighbours
+			im=neighbor_indices_ellipse(vfxlon,vfxlat,lon,lat,scan,track,mm)
+		else:
+			print 'ERROR: invalid mt option.'
+			sys.exit()		
+		T[im]=ti       # update mask
+
 	if nofi.any(): # set L at no-fire points and not masked
-		if lt>1:
+		if lt==1:
+			jj=np.logical_and(nofi,ti<T[ff])
+			il=ff[jj]
+		elif lt==2:
 			# taking lon, lat, scan and track of the ground detections
 			lon=sdata[gran][1]['lon_nofire']
 			lat=sdata[gran][1]['lat_nofire']
@@ -121,11 +142,11 @@ for gran in range(GG):
 			track=sdata[gran][1]['track_nofire']
 			# creating the indices for all the pixel neighbours
 			nofi=neighbor_indices_pixel(vfxlon,vfxlat,lon,lat,scan,track)
-			jj=np.logical_and(nofi,ti<T)
-			L[jj]=ti
+			il=np.logical_and(nofi,ti<T)
 		else:
-			jj=np.logical_and(nofi,ti<T[ff])
-			L[ff[jj]]=ti
+			print 'ERROR: invalid lt option.'
+			sys.exit()	
+		L[il]=ti
 		print 'L set at %s points' % jj.sum()
 	t_final = time.time()
 	print 'elapsed time: %ss.' % str(t_final-t_init)
@@ -145,8 +166,14 @@ T=np.transpose(np.reshape(T-time_scale_num[0],fxlon.shape))
 print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_scale_num[0]
 sl.save((U,L,T),'result')
 
-result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
-          'time_num':time_num, 'time_scale_num' : time_scale_num, 'time_num_granules' : tt}
+if pen:
+	result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
+	'time_num':time_num, 'time_scale_num' : time_scale_num, 
+	'time_num_granules' : tt, 'UP':UP, 'LP':LP}
+else:
+	result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
+	'time_num':time_num, 'time_scale_num' : time_scale_num, 
+	'time_num_granules' : tt}
 
 sio.savemat('result.mat', mdict=result)
 

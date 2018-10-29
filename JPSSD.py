@@ -330,45 +330,49 @@ def read_viirs375_files(path,bounds):
         else:
             return {}
 
-    items=Dict({})
+    ret=Dict({})
     # In the case something exists, read all the information from the CSV files
     dfs=dfs[(dfs['longitude']>bounds[0]) & (dfs['longitude']<bounds[1]) & (dfs['latitude']>bounds[2]) & (dfs['latitude']<bounds[3])]
     date=np.array(dfs['acq_date'])
-    time=np.array(dfs['acq_time']).astype(str)
+    time=np.array(dfs['acq_time'])
     dfs['time']=np.array(['%s_%04d' % (date[k],time[k]) for k in range(len(date))])
     dfs['time']=pd.to_datetime(dfs['time'], format='%Y-%m-%d_%H%M')
-    for group_name, df in df.groupby(pd.TimeGrouper("D")):
-        ret=Dict([])
-        ret.lat=np.array(df['latitude'])
-        ret.lon=np.array(df['longitude'])
+    dfs['datetime']=dfs['time']
+    dfs=dfs.set_index('time')
+    for group_name, df in dfs.groupby(pd.TimeGrouper("D")):
+        items=Dict([])
+        items.lat=np.array(df['latitude'])
+        items.lon=np.array(df['longitude'])
         conf=np.array(df['confidence'])
         firemask=np.zeros(conf.shape)
         conf_fire=np.zeros(conf.shape)
         firemask[conf=='l']=7
-        conf_fire[conf=='l']=50.
+        conf_fire[conf=='l']=30.
         firemask[conf=='n']=8
-        conf_fire[conf=='n']=75.
+        conf_fire[conf=='n']=60.
         firemask[conf=='h']=9
-        conf_fire[conf=='h']=100.
-        ret.fire=firemask.astype(int)
-        ret.lat_fire=ret.lat
-        ret.lon_fire=ret.lon
-        ret.brig_fire=np.array(df['bright_ti4'])
-        ret.sat_fire='Suomi NPP'
-        ret.conf_fire=conf_fire
-        ret.t31_fire=np.array(df['bright_ti5'])
-        ret.frp_fire=np.array(df['frp'])
-        ret.scan_fire=np.array(df['scan'])
-        ret.track_fire=np.array(df['track'])
-        ret.scan_angle_fire=np.ones(ret.scan_fire.shape)*np.nan
-        ret.lat_nofire=np.array([])
-        ret.lon_nofire=np.array([])
-        ret.scan_angle_nofire=np.array([])
-        ret.scan_nofire=np.array([])
-        ret.track_nofire=np.array([])
-        ret.instrument=df['instrument'][0]
-        items.update({key: ret})
-    return items
+        conf_fire[conf=='h']=90.
+        items.fire=firemask.astype(int)
+        items.lat_fire=items.lat
+        items.lon_fire=items.lon
+        items.brig_fire=np.array(df['bright_ti4'])
+        items.sat_fire='Suomi NPP'
+        items.conf_fire=conf_fire
+        items.t31_fire=np.array(df['bright_ti5'])
+        items.frp_fire=np.array(df['frp'])
+        items.scan_fire=np.array(df['scan'])
+        items.track_fire=np.array(df['track'])
+        items.scan_angle_fire=np.ones(items.scan_fire.shape)*np.nan
+        items.lat_nofire=np.array([])
+        items.lon_nofire=np.array([])
+        items.scan_angle_nofire=np.array([])
+        items.scan_nofire=np.array([])
+        items.track_nofire=np.array([])
+        items.instrument=df['instrument'][0]
+        tt=df['datetime'][0].timetuple()
+        id='A%04d%03d_%02d%02d' % (tt.tm_year,tt.tm_yday,tt.tm_hour,tt.tm_min)
+        ret.update({id: items})
+    return ret
 
 def read_goes_files(files):
     """ 
@@ -486,8 +490,7 @@ def read_data(files,file_metadata,bounds):
                 print 'WARNING: file %s or %s not found in downloaded metadata, ignoring both' % (f0, f1)
                 continue
     else:
-        item=read_viirs375_files('.',bounds)
-
+        data.update(read_viirs375_files('.',bounds))
 
     return data
 
