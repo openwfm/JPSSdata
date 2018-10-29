@@ -452,7 +452,6 @@ def read_data(files,file_metadata,bounds):
     """
     print "read_data files=%s" %  files
     data=Dict([])
-    print "test of files:%s" % isinstance(files,(dict,Dict))
     if files=='VIIRS375':
         data.update(read_viirs375_files('.',bounds))
     else:
