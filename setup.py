@@ -9,6 +9,8 @@ import numpy as np
 import sys
 from scipy import spatial
 import itertools
+from utils import *
+import matplotlib.pyplot as plt
 
 # setup.py settings
 maxsize=400 # Max size of the fire mesh
@@ -66,6 +68,9 @@ if pen:
 	LP=np.zeros(DD)
 	UP=np.zeros(DD)
 
+# Confidence analysis
+confanalysis=Dict({'f7': np.array([]),'f8': np.array([]), 'f9': np.array([])})
+
 # For granules in order increasing in time
 GG=len(sdata)
 for gran in range(GG):
@@ -86,14 +91,17 @@ for gran in range(GG):
 	gfire=vfire[gg]   # the part withing the fire mesh bounds
 	fi=gfire >= 7  # where fire detected - low, nominal or high confidence (all the fire data in the granule)
 	ffi=ff[fi] # indices in the fire mesh where the fire detections are
-	# cheking the confidence level
 	nofi=np.logical_or(gfire == 3, gfire == 5) # where no fire detected
 	unkn=np.logical_not(np.logical_or(fi,nofi)) # where unknown
 	print 'fire detected    %s' % fi.sum()
 	print 'no fire detected %s' % nofi.sum()
 	print 'unknown          %s' % unkn.sum()
 	if fi.any():   # at fire points
+		rfire=gfire[gfire>=7]
 		conf=sdata[gran][1]['conf_fire'] # confidence of the fire detections
+		confanalysis.f7=np.concatenate((confanalysis.f7,conf[rfire==7]))
+		confanalysis.f8=np.concatenate((confanalysis.f8,conf[rfire==8]))
+		confanalysis.f9=np.concatenate((confanalysis.f9,conf[rfire==9]))
 		flc=conf>70. # fire large confidence indexes
 		if ut>1 or mt>1:
 			# taking lon, lat, scan and track of the fire detections which fire large confidence indexes
@@ -160,6 +168,24 @@ print "L=U: %s" % (L==U).sum()
 print "L>U: %s" % (L>U).sum()
 print "average U-L %s" % ((U-L).sum()/np.prod(U.shape))
 print np.histogram((U-L)/(24*3600))
+
+print 'Confidence analysis'
+plt.subplot(1,3,1)
+plt.hist(x=confanalysis.f7,bins='auto',color='#ff0000',alpha=0.7, rwidth=0.85)
+plt.xlabel('Confidence')
+plt.ylabel('Frequency')
+plt.title('Fire label 7: %d' % len(confanalysis.f7))
+plt.subplot(1,3,2)
+plt.hist(x=confanalysis.f8,bins='auto',color='#00ff00',alpha=0.7, rwidth=0.85)
+plt.xlabel('Confidence')
+plt.ylabel('Frequency')
+plt.title('Fire label 8: %d' % len(confanalysis.f8))
+plt.subplot(1,3,3)
+plt.hist(x=confanalysis.f9,bins='auto',color='#0000ff',alpha=0.7, rwidth=0.85)
+plt.xlabel('Confidence')
+plt.ylabel('Frequency')
+plt.title('Fire label 9: %d' % len(confanalysis.f9))
+plt.show()
 
 print 'Saving results'
 # Result
