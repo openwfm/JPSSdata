@@ -537,6 +537,8 @@ def download(granules):
             s = 0
             print 'downloading %s as %s' % (url,filename)
             r = requests.get(url, stream=True)
+            print 'status:'
+            print r.status_code
             if r.status_code == 200:
                 content_size = int(r.headers['Content-Length'])
                 print 'downloading %s as %s size %sB' % (url, filename, content_size)

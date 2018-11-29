@@ -17,11 +17,10 @@ maxsize=400 # Max size of the fire mesh
 ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
 lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
 mt=3 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
-if mt<2:
-	dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
-elif mt>2:
-	mm=5 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
+dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
+mm=4 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
 pen=False # Creating heterogeneous penalty depending on the confidence level
+confl=70. # Minimum confidence level for the pixels
 
 print 'Loading data'
 data,fxlon,fxlat,time_num=sl.load('data')
@@ -102,7 +101,7 @@ for gran in range(GG):
 		confanalysis.f7=np.concatenate((confanalysis.f7,conf[rfire==7]))
 		confanalysis.f8=np.concatenate((confanalysis.f8,conf[rfire==8]))
 		confanalysis.f9=np.concatenate((confanalysis.f9,conf[rfire==9]))
-		flc=conf>70. # fire large confidence indexes
+		flc=conf>confl # fire large confidence indexes
 		if ut>1 or mt>1:
 			# taking lon, lat, scan and track of the fire detections which fire large confidence indexes
 			lon=sdata[gran][1]['lon_fire'][flc]
