@@ -552,7 +552,7 @@ def download(granules):
                 print 'web request status code %s' % r.status_code
                 print 'Make sure you have file ~/.netrc permission 600 with the content'
                 print 'machine urs.earthdata.nasa.gov\nlogin yourusername\npassword yourpassword' 
-                sys.exit(1)
+                #sys.exit(1)
         except Exception as e:
             print 'download failed with error %s' % e 
     return file_metadata
