@@ -452,7 +452,6 @@ def read_data(files,file_metadata,bounds):
     """
     print "read_data files=%s" %  files
     data=Dict([])
-    print "test of files:%s" % isinstance(files,(dict,Dict))
     if files=='VIIRS375':
         data.update(read_viirs375_files('.',bounds))
     else:
@@ -538,6 +537,8 @@ def download(granules):
             s = 0
             print 'downloading %s as %s' % (url,filename)
             r = requests.get(url, stream=True)
+            print 'status:'
+            print r.status_code
             if r.status_code == 200:
                 content_size = int(r.headers['Content-Length'])
                 print 'downloading %s as %s size %sB' % (url, filename, content_size)

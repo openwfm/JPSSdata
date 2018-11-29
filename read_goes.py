@@ -65,18 +65,6 @@ print 'X ='
 print X
 print 'Y ='
 print Y
-'''
-p=Proj(proj='utm', h=sat_h, lon_0=sat_lon, sweep=sat_sweep)
-# Convert map points to latitude and longitude with the magic provided by Pyproj
-XX, YY=np.meshgrid(X, Y)
-lons, lats=p(XX, YY, inverse=True)
-lats[np.isnan(R)]=np.nan
-lons[np.isnan(R)]=np.nan
-print 'lons ='
-print lons
-print 'lats ='
-print lats
-'''
 
 # Visualize the way Brian Blaylock does
 p=Proj(proj='geos', h=sat_h, lon_0=sat_lon, sweep=sat_sweep)
@@ -86,12 +74,12 @@ lons, lats=p(XX, YY, inverse=True)
 lats[np.isnan(R)]=np.nan
 lons[np.isnan(R)]=np.nan
 # Make a new map object for the HRRR model domain map projection
-mH = Basemap(resolution='i', projection='lcc', area_thresh=5000, \
+mH = Basemap(resolution='l', projection='lcc', area_thresh=5000, \
              width=1800*3000, height=1060*3000, \
              lat_1=38.5, lat_2=38.5, \
              lat_0=38.5, lon_0=-97.5)
 # Create a color tuple for pcolormesh
-rgb = RGB[:,:-1,:] # Using one less column is very imporant, else your image will be scrambled! (This is the stange nature of pcolormesh)
+rgb = RGB[:,:-1,:] # Using one less column is very important, else your image will be scrambled! (This is the stange nature of pcolormesh)
 colorTuple = rgb.reshape((rgb.shape[0] * rgb.shape[1]), 3) # flatten array, becuase that's what pcolormesh wants.
 colorTuple = np.insert(colorTuple, 3, 1.0, axis=1) # adding an alpha channel will plot faster, according to stackoverflow. Not sure why.
 # Now we can plot the GOES data on the HRRR map domain and projection
@@ -109,23 +97,27 @@ plt.show()
 # location of South Sugarloaf fire
 l = {'latitude': 41.812,
      'longitude': -116.324}
-'''
-bounds=(-116.655846, -115.5455, 41.243748, 42.069675)
-# Draw zoomed map
-mZ = Basemap(resolution='i', projection='cyl', area_thresh=50000,\
-             llcrnrlon=bounds[0], llcrnrlat=bounds[2],\
-             urcrnrlon=bounds[1], urcrnrlat=bounds[3],)
-'''
-mZ = Basemap(resolution='i', projection='cyl', area_thresh=50000,\
-             llcrnrlon=l['longitude']-2.25, llcrnrlat=l['latitude']-2.25,\
-             urcrnrlon=l['longitude']+2.25, urcrnrlat=l['latitude']+2.25,)
+# Baltimore harbour
+#l = {'latitude': 39.2827513,
+#     'longitude':-76.6214623}
+# Buzzard fire
+#l = {'latitude': 33.724,
+#     'longitude': -108.538}
+
+mZ = Basemap(projection='lcc', resolution='i',
+            width=3E5, height=3E5, 
+            lat_0=l['latitude'], lon_0=l['longitude'],)
+
 # Now we can plot the GOES data on a zoomed in map centered on the Sugarloaf wildfire
-plt.figure(figsize=[8, 8])
+plt.figure(figsize=[10, 10])
 newmap = mZ.pcolormesh(lons, lats, R, color=colorTuple, linewidth=0, latlon=True)
-newmap.set_array(None) 
+newmap.set_array(None)
+
+#mZ.scatter(l['longitude'], l['latitude'], marker='o', s=1000, facecolor='none', edgecolor='greenyellow') # circle fire area
 mZ.drawcoastlines(color='w')
 mZ.drawcountries(color='w')
 mZ.drawstates(color='w')
+
 plt.title('GOES-16 Fire Temperature\n', fontweight='semibold', fontsize=15)
 plt.title('%s' % dt.strftime('%H:%M UTC %d %B %Y'), loc='right')
 plt.title('South Sugarloaf Fire', loc='left')
