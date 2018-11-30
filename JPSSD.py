@@ -537,8 +537,6 @@ def download(granules):
             s = 0
             print 'downloading %s as %s' % (url,filename)
             r = requests.get(url, stream=True)
-            print 'status:'
-            print r.status_code
             if r.status_code == 200:
                 content_size = int(r.headers['Content-Length'])
                 print 'downloading %s as %s size %sB' % (url, filename, content_size)
@@ -616,6 +614,9 @@ def retrieve_af_data(bbox,time):
     granules=get_meta(bbox,time,maxg)
     #print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': ')) 
 
+    # Eliminating the NRT data (repeated always)
+    nrt_elimination(granules)
+
     file_metadata = {}
     for k,g in granules.items():
         print 'Downloading %s files' % k
@@ -635,9 +636,26 @@ def retrieve_af_data(bbox,time):
     data.update(read_data(files.MOD,file_metadata,bounds))
     data.update(read_data(files.MYD,file_metadata,bounds))
     data.update(read_data(files.VNP,file_metadata,bounds))
-    data.update(read_data('VIIRS375','',bounds))
+    #data.update(read_data('VIIRS375','',bounds))
 
     return data
+
+def nrt_elimination(granules):
+    """
+    Cleaning all the NRT data which is repeated
+        
+    :param granules: Dictionary of granules products to clean up
+    :return: It will update the granules dictionary
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-11-30
+    """
+
+    nlist=[g for g in granules['MOD14'] if g['data_center']=='LPDAAC_ECS']
+    granules['MOD14']=nlist
+    nlist=[g for g in granules['MYD14'] if g['data_center']=='LPDAAC_ECS']
+    granules['MYD14']=nlist
+
 
 def read_fire_mesh(filename):
     """
@@ -935,6 +953,7 @@ def json2kml(d,kml_path,bounds,prods):
         kml.write('</Document>\n</kml>\n')
     
     print 'Created file %s' % kml_path
+
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
