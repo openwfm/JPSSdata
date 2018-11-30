@@ -18,9 +18,10 @@ ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscrib
 lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
 mt=3 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
 dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
-mm=4 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
+mm=5 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
 pen=False # Creating heterogeneous penalty depending on the confidence level
 confl=70. # Minimum confidence level for the pixels
+confa=False # Histogram plot of the confidence level distribution
 
 print 'Loading data'
 data,fxlon,fxlat,time_num=sl.load('data')
@@ -169,22 +170,23 @@ print "average U-L %s" % ((U-L).sum()/np.prod(U.shape))
 print np.histogram((U-L)/(24*3600))
 
 print 'Confidence analysis'
-plt.subplot(1,3,1)
-plt.hist(x=confanalysis.f7,bins='auto',color='#ff0000',alpha=0.7, rwidth=0.85)
-plt.xlabel('Confidence')
-plt.ylabel('Frequency')
-plt.title('Fire label 7: %d' % len(confanalysis.f7))
-plt.subplot(1,3,2)
-plt.hist(x=confanalysis.f8,bins='auto',color='#00ff00',alpha=0.7, rwidth=0.85)
-plt.xlabel('Confidence')
-plt.ylabel('Frequency')
-plt.title('Fire label 8: %d' % len(confanalysis.f8))
-plt.subplot(1,3,3)
-plt.hist(x=confanalysis.f9,bins='auto',color='#0000ff',alpha=0.7, rwidth=0.85)
-plt.xlabel('Confidence')
-plt.ylabel('Frequency')
-plt.title('Fire label 9: %d' % len(confanalysis.f9))
-plt.show()
+if confa:
+	plt.subplot(1,3,1)
+	plt.hist(x=confanalysis.f7,bins='auto',color='#ff0000',alpha=0.7, rwidth=0.85)
+	plt.xlabel('Confidence')
+	plt.ylabel('Frequency')
+	plt.title('Fire label 7: %d' % len(confanalysis.f7))
+	plt.subplot(1,3,2)
+	plt.hist(x=confanalysis.f8,bins='auto',color='#00ff00',alpha=0.7, rwidth=0.85)
+	plt.xlabel('Confidence')
+	plt.ylabel('Frequency')
+	plt.title('Fire label 8: %d' % len(confanalysis.f8))
+	plt.subplot(1,3,3)
+	plt.hist(x=confanalysis.f9,bins='auto',color='#0000ff',alpha=0.7, rwidth=0.85)
+	plt.xlabel('Confidence')
+	plt.ylabel('Frequency')
+	plt.title('Fire label 9: %d' % len(confanalysis.f9))
+	plt.show()
 
 print 'Saving results'
 # Result
@@ -193,7 +195,7 @@ L=np.transpose(np.reshape(L-time_scale_num[0],fxlon.shape))
 T=np.transpose(np.reshape(T-time_scale_num[0],fxlon.shape))
 
 print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_scale_num[0]
-sl.save((U,L,T),'result')
+#sl.save((U,L,T),'result')
 
 if pen:
 	result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
