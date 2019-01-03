@@ -530,12 +530,20 @@ def read_data(files,file_metadata,bounds):
     else:
         for f in files:
             print "read_data f=%s" % f
-            lf = len(f)
-            if lf != 2:
-                print 'ERROR: read_data got %s files using %s' % (lf,f)
-                continue
-            f0=os.path.basename(f.geo)
-            f1=os.path.basename(f.fire)
+            if 'geo' in f.keys():
+                f0=os.path.basename(f.geo)
+            else:
+                print 'ERROR: read_data cannot read files=%s, not geo file' % f
+                sys.exit(1)
+            if 'fire' in f.keys():
+                f1=os.path.basename(f.fire)
+            else:
+                print 'ERROR: read_data cannot read files=%s, not geo file' % f
+                sys.exit(1)
+            boo=True
+            if 'ref' in f.keys():
+                f2=os.path.basename(f.ref)
+                boo=False
             prefix = f0[:3] 
             print 'prefix %s' % prefix
             if prefix != f1[:3]:
@@ -558,7 +566,10 @@ def read_data(files,file_metadata,bounds):
             else:
                 print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
                 continue 
-            if (f0 in file_metadata.keys()) and (f1 in file_metadata.keys()):
+            if not boo:
+                if f2 in file_metadata.keys():
+                    boo=True
+            if (f0 in file_metadata.keys()) and (f1 in file_metadata.keys()) and boo:
                 # connect the file back to metadata
                 item.time_start_geo_iso=file_metadata[f0]["time_start"]
                 item.time_num=time_iso2num(item.time_start_geo_iso)
@@ -570,6 +581,8 @@ def read_data(files,file_metadata,bounds):
                 item.time_end_fire_iso=file_metadata[f1]["time_end"]
                 item.file_geo=f0
                 item.file_fire=f1
+                if 'ref' in f.keys():
+                    item.file_ref=f2
                 item.prefix=prefix
                 item.name=key
                 data.update({id:item})
