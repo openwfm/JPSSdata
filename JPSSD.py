@@ -364,12 +364,13 @@ def read_viirs_files(files,bounds):
         M8=hdf.select('750m Surface Reflectance Band M8') # 1.24 nm
         M10=hdf.select('750m Surface Reflectance Band M10') # 1.61 nm
         M11=hdf.select('750m Surface Reflectance Band M11') # 2.25 nm
-        ret.M7=M7.get()*1e-4
-        ret.M8=M8.get()*1e-4
-        ret.M10=M10.get()*1e-4
-        ret.M11=M11.get()*1e-4
+        bands=Dict({})
+        bands.M7=M7.get()*1e-4
+        bands.M8=M8.get()*1e-4
+        bands.M10=M10.get()*1e-4
+        bands.M11=M11.get()*1e-4
         # Burned scar mask using the burned scar granule algorithm
-        ret.burned=burned_algorithm(ret)
+        ret.burned=burned_algorithm(bands)
         # Close reflectance file
         hdf.end()
     # Close files
@@ -493,7 +494,7 @@ def read_goes_files(files):
 
 def read_data(files,file_metadata,bounds):
     """ 
-    Read all the geolocation (03) and fire (14) files
+    Read all the geolocation (03) and fire (14) files and if necessary, the reflectance (09) files
 
     MODIS file names according to https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/archive/mod14_v5_user_guide.pdf
     MOD14.AYYYYDDD.HHMM.vvv.yyyydddhhmmss.hdf
@@ -583,6 +584,8 @@ def read_data(files,file_metadata,bounds):
                 item.file_fire=f1
                 if 'ref' in f.keys():
                     item.file_ref=f2
+                    item.time_start_ref_iso=file_metadata[f2]["time_start"]
+                    item.time_end_ref_iso=file_metadata[f2]["time_end"]
                 item.prefix=prefix
                 item.name=key
                 data.update({id:item})
