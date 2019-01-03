@@ -8,7 +8,7 @@ from JPSSD import read_viirs_files
 from mpl_toolkits.mplot3d import Axes3D
 import sys
 
-def create_pixels(lons,lats,widths,heights,alphas,color):
+def create_pixels(lons,lats,widths,heights,alphas,color,label):
 	"""
     Plot of pixels using centers (lons,lats), with sizes (widhts,heights), angle alphas, and color color.
     
@@ -40,6 +40,8 @@ def create_pixels(lons,lats,widths,heights,alphas,color):
 	col.set_facecolor( [color]*len(lons) )
 	# No lines
 	col.set_linewidth( 0 )
+	# Label
+	#col.set_label(label)
 
 	return col
 
@@ -113,7 +115,7 @@ def irregular_pixels_plot(g,bounds):
 	heights=km_lats*tracks
 	alphas=angles(lons,lats,ad)
 	color=(0,0.59765625,0)
-	col_nofire=create_pixels(lons,lats,widths,heights,alphas,color)
+	col_nofire=create_pixels(lons,lats,widths,heights,alphas,color,'Ground')
 	ax.add_collection(col_nofire)
 
 	# Fire pixels
@@ -127,7 +129,7 @@ def irregular_pixels_plot(g,bounds):
 	heights=km_lats*tracks
 	alphas=[np.mean(alphas)]*len(lons)
 	color=(0.59765625,0,0)
-	col_fire=create_pixels(lons,lats,widths,heights,alphas,color)
+	col_fire=create_pixels(lons,lats,widths,heights,alphas,color,'Fire')
 	ax.add_collection(col_fire)
 
 	# Set axis
@@ -175,9 +177,9 @@ def regular_pixels_plot(g,bounds):
 
 	# Mean between the distances
 	w=dh
-	w[:,1:-1]=np.hstack([np.maximum(dh[:,[k]],dh[:,[k+1]]) for k in range(dh.shape[1]-2)])
+	w[:,1:-1]=np.hstack([(dh[:,[k]]+dh[:,[k+1]])/2 for k in range(dh.shape[1]-2)])
 	h=dv
-	h[1:-1,:]=np.vstack([np.maximum(dv[k],dv[k+1]) for k in range(dv.shape[0]-2)])
+	h[1:-1,:]=np.vstack([(dv[k]+dv[k+1])/2 for k in range(dv.shape[0]-2)])
 
 	'''
 	# Maximum between the distances
@@ -226,7 +228,7 @@ def regular_pixels_plot(g,bounds):
 	heights=height[nofi]
 	alphas=alpha[nofi]
 	color=(0,0.59765625,0)
-	col_nofire=create_pixels(lons,lats,widths,heights,alphas,color)
+	col_nofire=create_pixels(lons,lats,widths,heights,alphas,color,'Ground')
 	ax.add_collection(col_nofire)
 
 	# Fire pixels
@@ -236,12 +238,18 @@ def regular_pixels_plot(g,bounds):
 	heights=height[fi]
 	alphas=alpha[fi]
 	color=(0.59765625,0,0)
-	col_fire=create_pixels(lons,lats,widths,heights,alphas,color)
+	col_fire=create_pixels(lons,lats,widths,heights,alphas,color,'Fire')
 	ax.add_collection(col_fire)
 
 	# Set axis
 	ax.set_xlim(bounds[0],bounds[1])
 	ax.set_ylim(bounds[2],bounds[3])
+
+	# Color map
+	#colors=[(0,0.59765625,0),(0.59765625,0,0)]
+	#cmap=mp.colors.ListedColormap(colors)
+
+	#cb.set_ticklabels(colors)
 
 	plt.show()
 
