@@ -322,7 +322,6 @@ def read_viirs_files(files,bounds):
     # Reading VIIRS files
     h5g=h5py.File(files.geo,'r')
     ncf=nc.Dataset(files.fire,'r')
-    hdf=SD(files.ref,SDC.READ)
     # Geolocation and mask information
     ret.lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
     ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
@@ -356,21 +355,26 @@ def read_viirs_files(files,bounds):
     sample=sample[ll]
     sfn=sample[nf]
     ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p,alpha)
-    # Bands data
-    M7=hdf.select('750m Surface Reflectance Band M7') # 0.86 nm
-    M8=hdf.select('750m Surface Reflectance Band M8') # 1.24 nm
-    M10=hdf.select('750m Surface Reflectance Band M10') # 1.61 nm
-    M11=hdf.select('750m Surface Reflectance Band M11') # 2.25 nm
-    ret.M7=M7.get()*1e-4
-    ret.M8=M8.get()*1e-4
-    ret.M10=M10.get()*1e-4
-    ret.M11=M11.get()*1e-4
-    # Burned scar mask using the burned scar granule algorithm
-    ret.burned=burned_algorithm(ret)
+    # Reflectance data for burned scar algorithm
+    if 'ref' in files.keys():
+        # Read reflectance data
+        hdf=SD(files.ref,SDC.READ)
+        # Bands data
+        M7=hdf.select('750m Surface Reflectance Band M7') # 0.86 nm
+        M8=hdf.select('750m Surface Reflectance Band M8') # 1.24 nm
+        M10=hdf.select('750m Surface Reflectance Band M10') # 1.61 nm
+        M11=hdf.select('750m Surface Reflectance Band M11') # 2.25 nm
+        ret.M7=M7.get()*1e-4
+        ret.M8=M8.get()*1e-4
+        ret.M10=M10.get()*1e-4
+        ret.M11=M11.get()*1e-4
+        # Burned scar mask using the burned scar granule algorithm
+        ret.burned=burned_algorithm(ret)
+        # Close reflectance file
+        hdf.end()
     # Close files
     h5g.close()
     ncf.close()
-    hdf.end()
     return ret
 
 def read_viirs375_files(path,bounds):
