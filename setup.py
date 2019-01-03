@@ -22,6 +22,7 @@ mm=10 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<
 pen=False # Creating heterogeneous penalty depending on the confidence level
 confl=70. # Minimum confidence level for the pixels
 confa=False # Histogram plot of the confidence level distribution
+burn=True
 
 print 'Loading data'
 data,fxlon,fxlat,time_num=sl.load('data')
@@ -126,6 +127,11 @@ for gran in range(GG):
 		U[iu]=ti # set U to granule time where fire detected
 
 		# Set mask
+		if 'burned' in sdata[gran][1].keys():
+			# if burned scar exists, set the mask in the burned scar pixels
+			burned=sdata[gran][1]['burned']
+			bm=np.reshape(burned,np.prod(burned.shape))[gg]
+			T[bm]=ti
 		if mt==1:
 			# creating the indices for all the pixel neighbours of the upper bound indices
 			kk=neighbor_indices_ball(itree,ffi[flc],fxlon.shape,dist) 
