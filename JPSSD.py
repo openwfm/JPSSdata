@@ -364,12 +364,13 @@ def read_viirs_files(files,bounds):
         M8=hdf.select('750m Surface Reflectance Band M8') # 1.24 nm
         M10=hdf.select('750m Surface Reflectance Band M10') # 1.61 nm
         M11=hdf.select('750m Surface Reflectance Band M11') # 2.25 nm
-        ret.M7=M7.get()*1e-4
-        ret.M8=M8.get()*1e-4
-        ret.M10=M10.get()*1e-4
-        ret.M11=M11.get()*1e-4
+        bands=Dict({})
+        bands.M7=M7.get()*1e-4
+        bands.M8=M8.get()*1e-4
+        bands.M10=M10.get()*1e-4
+        bands.M11=M11.get()*1e-4
         # Burned scar mask using the burned scar granule algorithm
-        ret.burned=burned_algorithm(ret)
+        ret.burned=burned_algorithm(bands)
         # Close reflectance file
         hdf.end()
     # Close files
