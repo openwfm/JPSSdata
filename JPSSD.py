@@ -80,6 +80,41 @@ def search_api(sname,bbox,time,maxg=50,platform="",version=""):
         granules = api.get(sh)
     return granules
 
+def search_archive(url,prod,time,grans):
+    """
+    Archive search of the different satellite granules
+        
+    :param url: base url of the archive domain 
+    :param prod: string of product with version, for instance: '5000/VNP09'
+    :param time: time interval (init_time,final_time)
+    :param grans: granules of the geolocation metadata
+    :return granules: dictionary with the metadata of the search
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com), 2018-01-03
+    """
+    ids=['.'.join(k['producer_granule_id'].split('.')[1:3]) for k in grans] # satellite ids in bounding box
+    granules=[]
+    dts=[datetime.datetime.strptime(d,'%Y-%m-%dT%H:%M:%SZ') for d in time]
+    delta=dts[1]-dts[0]
+    nh=int(delta.total_seconds()/3600)
+    dates=[dts[0]+datetime.timedelta(seconds=3600*k) for k in range(1,nh+1)]
+    fold=np.unique(['%d/%03d' % (date.timetuple().tm_year,date.timetuple().tm_yday) for date in dates])
+    urls=[url+'/'+prod+'/'+f for f in fold]
+    for u in urls:
+        js=requests.get(u+'.json').json()
+        for j in js:
+            arg=np.argwhere(np.array(ids)=='.'.join(j['name'].split('.')[1:3]))
+            if arg.size!=0:
+                ar=arg[0][0]
+                g=Dict(j)
+                g.links=[{'href':u+'/'+g.name}]
+                g.time_start=grans[ar]["time_start"]
+                g.time_end=grans[ar]["time_end"]
+                granules.append(g)
+    print "%s gets %s hits in this range" % (prod.split('/')[-1],len(granules))
+    return granules
+
 def get_meta(bbox,time,maxg=50):
     """ 
     Get all the meta data from the API for all the necessary products
@@ -97,16 +132,24 @@ def get_meta(bbox,time,maxg=50):
     granules.MOD14=search_api("MOD14",bbox,time,maxg,"Terra")
     #MOD03: MODIS Terra geolocation data
     granules.MOD03=search_api("MOD03",bbox,time,maxg,"Terra","6")
+    #MOD09: MODIS Atmospherically corrected surface reflectance
+    #granules.MOD09=search_api("MOD09",bbox,time,maxg,"Terra","6")
     #MYD14: MODIS Aqua fire data
     granules.MYD14=search_api("MYD14",bbox,time,maxg,"Aqua")
     #MYD03: MODIS Aqua geolocation data
     granules.MYD03=search_api("MYD03",bbox,time,maxg,"Aqua","6")
+    #MOD09: MODIS Atmospherically corrected surface reflectance
+    #granules.MYD09=search_api("MYD09",bbox,time,maxg,"Terra","6")
     #VNP14: VIIRS fire data, res 750m
     granules.VNP14=search_api("VNP14",bbox,time,maxg)
     #VNP03MODLL: VIIRS geolocation data, res 750m
     granules.VNP03=search_api("VNP03MODLL",bbox,time,maxg)
     #VNP14hi: VIIRS fire data, res 375m
     #granules.VNP14hi=search_api("VNP14IMGTDL_NRT",bbox,time,maxg)
+    #VNP09: VIIRS Atmospherically corrected surface reflectance
+    url="https://ladsweb.modaps.eosdis.nasa.gov/archive/allData" # base url
+    prod="5000/VNP09" # product
+    granules.VNP09=search_archive(url,prod,time,granules.VNP03)
     return granules
 
 def group_files(path,reg):
@@ -122,6 +165,7 @@ def group_files(path,reg):
     """
     files=[Dict({'geo':k}) for k in glob.glob(path+'/'+reg+'03*')]
     filesf=glob.glob(path+'/'+reg+'14*')
+    filesr=glob.glob(path+'/'+reg+'09*')
     if len(filesf)>0:
         for f in filesf:
             mf=re.split("/",f)
@@ -133,6 +177,17 @@ def group_files(path,reg):
                         mm=mmf[-1].split('.')
                         if mm[0][1]==m[0][1] and mm[1]+'.'+mm[2]==m[1]+'.'+m[2]:
                             files[k].fire=f 
+    if len(filesr)>0:
+        for f in filesr:
+            mf=re.split("/",f)
+            if mf is not None:
+                m=mf[-1].split('.')
+                if m is not None:
+                    for k,g in enumerate(files):
+                        mmf=re.split("/",g.geo)
+                        mm=mmf[-1].split('.')
+                        if mm[0][1]==m[0][1] and mm[1]+'.'+mm[2]==m[1]+'.'+m[2]:
+                            files[k].ref=f 
     return files
 
 def group_all(path):
@@ -267,6 +322,7 @@ def read_viirs_files(files,bounds):
     # Reading VIIRS files
     h5g=h5py.File(files.geo,'r')
     ncf=nc.Dataset(files.fire,'r')
+    hdf=SD(files.ref,SDC.READ)
     # Geolocation and mask information
     ret.lat=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Latitude'])
     ret.lon=np.array(h5g['HDFEOS']['SWATHS']['VNP_750M_GEOLOCATION']['Geolocation Fields']['Longitude'])
@@ -300,9 +356,21 @@ def read_viirs_files(files,bounds):
     sample=sample[ll]
     sfn=sample[nf]
     ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p,alpha)
+    # Bands data
+    M7=hdf.select('750m Surface Reflectance Band M7') # 0.86 nm
+    M8=hdf.select('750m Surface Reflectance Band M8') # 1.24 nm
+    M10=hdf.select('750m Surface Reflectance Band M10') # 1.61 nm
+    M11=hdf.select('750m Surface Reflectance Band M11') # 2.25 nm
+    ret.M7=M7.get()*1e-4
+    ret.M8=M8.get()*1e-4
+    ret.M10=M10.get()*1e-4
+    ret.M11=M11.get()*1e-4
+    # Burned scar mask using the burned scar granule algorithm
+    ret.burned=burned_algorithm(ret)
     # Close files
     h5g.close()
     ncf.close()
+    hdf.end()
     return ret
 
 def read_viirs375_files(path,bounds):
@@ -1028,6 +1096,45 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
     
     print 'Created file %s' % kml_path
 
+def burned_algorithm(data):
+    """
+    Computes mask of burned scar pixels
+    
+    :param data: data dictionary with all the necessary bands M7, M8, M10 and M11
+    :return C: Mask of burned scar pixels
+                 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Angel Farguell (angel.farguell@gmail.com) 2019-01-03
+    """
+    # Parameters
+    RthSub=0.05
+    Rth=0.81
+    M07UB=0.19
+    M08LB=0.00
+    M08UB=0.28
+    M10LB=0.07
+    M10UB=1.00
+    M11LB=0.05
+    eps=1e-30
+    # Bands
+    M7=data.M7
+    M8=data.M8
+    M10=data.M10
+    M11=data.M11
+    # Eq 1a
+    M=(M8.astype(float)-RthSub)/(M11.astype(float)+eps)
+    C1=np.logical_and(M>0,M<Rth)
+    # Eq 1b
+    C2=np.logical_and(M8>M08LB,M8<M08UB)
+    # Eq 1c
+    C3=M7<M07UB
+    # Eq 1d
+    C4=M11>M11LB
+    # Eq 1e
+    C5=np.logical_and(M10>M10LB,M10<M10UB)
+    # All the conditions at the same time
+    C=np.logical_and(np.logical_and(np.logical_and(np.logical_and(C1,C2),C3),C4),C5)
+    return C
 
 if __name__ == "__main__":
     bbox=[-132.86966,-102.0868788,44.002495,66.281204]
