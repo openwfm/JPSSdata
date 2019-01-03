@@ -493,7 +493,7 @@ def read_goes_files(files):
 
 def read_data(files,file_metadata,bounds):
     """ 
-    Read all the geolocation (03) and fire (14) files
+    Read all the geolocation (03) and fire (14) files and if necessary, the reflectance (09) files
 
     MODIS file names according to https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/archive/mod14_v5_user_guide.pdf
     MOD14.AYYYYDDD.HHMM.vvv.yyyydddhhmmss.hdf
@@ -583,6 +583,8 @@ def read_data(files,file_metadata,bounds):
                 item.file_fire=f1
                 if 'ref' in f.keys():
                     item.file_ref=f2
+                    item.time_start_ref_iso=file_metadata[f2]["time_start"]
+                    item.time_end_ref_iso=file_metadata[f2]["time_end"]
                 item.prefix=prefix
                 item.name=key
                 data.update({id:item})
