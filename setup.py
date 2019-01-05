@@ -16,13 +16,13 @@ import matplotlib.pyplot as plt
 maxsize=400 # Max size of the fire mesh
 ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
 lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
-mt=3 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
+mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
 dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
 mm=10 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
 pen=False # Creating heterogeneous penalty depending on the confidence level
 confl=70. # Minimum confidence level for the pixels
 confa=False # Histogram plot of the confidence level distribution
-burn=True
+burn=True # Using or not the burned scar product
 
 print 'Loading data'
 data,fxlon,fxlat,time_num=sl.load('data')
@@ -127,11 +127,6 @@ for gran in range(GG):
 		U[iu]=ti # set U to granule time where fire detected
 
 		# Set mask
-		if 'burned' in sdata[gran][1].keys():
-			# if burned scar exists, set the mask in the burned scar pixels
-			burned=sdata[gran][1]['burned']
-			bm=np.reshape(burned,np.prod(burned.shape))[gg]
-			T[bm]=ti
 		if mt==1:
 			# creating the indices for all the pixel neighbours of the upper bound indices
 			kk=neighbor_indices_ball(itree,ffi[flc],fxlon.shape,dist) 
@@ -146,6 +141,14 @@ for gran in range(GG):
 			print 'ERROR: invalid mt option.'
 			sys.exit()		
 		T[im]=ti # update mask T
+
+	# Set mask from burned scar data
+	if burn:
+		if 'burned' in sdata[gran][1].keys():
+			# if burned scar exists, set the mask in the burned scar pixels
+			burned=sdata[gran][1]['burned']
+			bm=ff[np.reshape(burned,np.prod(burned.shape))[gg]]
+			T[bm]=ti
 
 	if nofi.any(): # set L at no-fire points and not masked
 		if lt==1:
