@@ -18,14 +18,14 @@ if len(sys.argv) != 4:
 	print '		HH - hour'
 	print '		MM - minute'
 	print '		SS - second'
-	print '	* days - integer, number of days of simulation'
+	print '	* days - float, number of days of simulation (can be less than a day)'
 	sys.exit(0)
 
 fxlon,fxlat,bbox,time_esmf=read_fire_mesh(sys.argv[1])
 
 dti=dt.datetime.strptime(sys.argv[2],'%Y%m%d%H%M%S')
 time_start_iso='%d-%02d-%02dT%02d:%02d:%02dZ' % (dti.year,dti.month,dti.day,dti.hour,dti.minute,dti.second)
-dtf=dti+dt.timedelta(days=int(sys.argv[3]))
+dtf=dti+dt.timedelta(days=float(sys.argv[3]))
 time_final_iso='%d-%02d-%02dT%02d:%02d:%02dZ' % (dtf.year,dtf.month,dtf.day,dtf.hour,dtf.minute,dtf.second)
 
 # cannot get starting time from wrfout

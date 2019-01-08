@@ -1,4 +1,3 @@
 #!/bin/bash
 
-python case.py wrfout 201815080000 0.5 &> example.log
-
+python case.py wrfout 20181108195500 0.066 &> example.log
