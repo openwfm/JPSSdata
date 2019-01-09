@@ -9,17 +9,20 @@ import numpy as np
 import sys
 from scipy import spatial
 import itertools
+from utils import *
+import matplotlib.pyplot as plt
 
 # setup.py settings
 maxsize=400 # Max size of the fire mesh
 ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
 lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
-mt=3 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
-if mt<2:
-	dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
-elif mt>2:
-	mm=5 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
+mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
+dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
+mm=10 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
 pen=False # Creating heterogeneous penalty depending on the confidence level
+confl=70. # Minimum confidence level for the pixels
+confa=False # Histogram plot of the confidence level distribution
+burn=True # Using or not the burned scar product
 
 print 'Loading data'
 data,fxlon,fxlat,time_num=sl.load('data')
@@ -66,6 +69,9 @@ if pen:
 	LP=np.zeros(DD)
 	UP=np.zeros(DD)
 
+# Confidence analysis
+confanalysis=Dict({'f7': np.array([]),'f8': np.array([]), 'f9': np.array([])})
+
 # For granules in order increasing in time
 GG=len(sdata)
 for gran in range(GG):
@@ -86,15 +92,18 @@ for gran in range(GG):
 	gfire=vfire[gg]   # the part withing the fire mesh bounds
 	fi=gfire >= 7  # where fire detected - low, nominal or high confidence (all the fire data in the granule)
 	ffi=ff[fi] # indices in the fire mesh where the fire detections are
-	# cheking the confidence level
 	nofi=np.logical_or(gfire == 3, gfire == 5) # where no fire detected
 	unkn=np.logical_not(np.logical_or(fi,nofi)) # where unknown
 	print 'fire detected    %s' % fi.sum()
 	print 'no fire detected %s' % nofi.sum()
 	print 'unknown          %s' % unkn.sum()
 	if fi.any():   # at fire points
+		rfire=gfire[gfire>=7]
 		conf=sdata[gran][1]['conf_fire'] # confidence of the fire detections
-		flc=conf>70. # fire large confidence indexes
+		confanalysis.f7=np.concatenate((confanalysis.f7,conf[rfire==7]))
+		confanalysis.f8=np.concatenate((confanalysis.f8,conf[rfire==8]))
+		confanalysis.f9=np.concatenate((confanalysis.f9,conf[rfire==9]))
+		flc=conf>confl # fire large confidence indexes
 		if ut>1 or mt>1:
 			# taking lon, lat, scan and track of the fire detections which fire large confidence indexes
 			lon=sdata[gran][1]['lon_fire'][flc]
@@ -133,6 +142,14 @@ for gran in range(GG):
 			sys.exit()		
 		T[im]=ti # update mask T
 
+	# Set mask from burned scar data
+	if burn:
+		if 'burned' in sdata[gran][1].keys():
+			# if burned scar exists, set the mask in the burned scar pixels
+			burned=sdata[gran][1]['burned']
+			bm=ff[np.reshape(burned,np.prod(burned.shape))[gg]]
+			T[bm]=ti
+
 	if nofi.any(): # set L at no-fire points and not masked
 		if lt==1:
 			# indices of clear ground
@@ -161,6 +178,25 @@ print "L>U: %s" % (L>U).sum()
 print "average U-L %s" % ((U-L).sum()/np.prod(U.shape))
 print np.histogram((U-L)/(24*3600))
 
+print 'Confidence analysis'
+if confa:
+	plt.subplot(1,3,1)
+	plt.hist(x=confanalysis.f7,bins='auto',color='#ff0000',alpha=0.7, rwidth=0.85)
+	plt.xlabel('Confidence')
+	plt.ylabel('Frequency')
+	plt.title('Fire label 7: %d' % len(confanalysis.f7))
+	plt.subplot(1,3,2)
+	plt.hist(x=confanalysis.f8,bins='auto',color='#00ff00',alpha=0.7, rwidth=0.85)
+	plt.xlabel('Confidence')
+	plt.ylabel('Frequency')
+	plt.title('Fire label 8: %d' % len(confanalysis.f8))
+	plt.subplot(1,3,3)
+	plt.hist(x=confanalysis.f9,bins='auto',color='#0000ff',alpha=0.7, rwidth=0.85)
+	plt.xlabel('Confidence')
+	plt.ylabel('Frequency')
+	plt.title('Fire label 9: %d' % len(confanalysis.f9))
+	plt.show()
+
 print 'Saving results'
 # Result
 U=np.transpose(np.reshape(U-time_scale_num[0],fxlon.shape))
@@ -168,7 +204,7 @@ L=np.transpose(np.reshape(L-time_scale_num[0],fxlon.shape))
 T=np.transpose(np.reshape(T-time_scale_num[0],fxlon.shape))
 
 print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_scale_num[0]
-sl.save((U,L,T),'result')
+#sl.save((U,L,T),'result')
 
 if pen:
 	result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
