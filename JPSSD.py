@@ -23,8 +23,8 @@ from subprocess import check_output, call
 def search_api(sname,bbox,time,maxg=50,platform="",version=""):
     """
     API search of the different satellite granules
-        
-    :param sname: short name 
+
+    :param sname: short name
     :param bbox: polygon with the search bounding box
     :param time: time interval (init_time,final_time)
     :param maxg: max number of granules to process
@@ -32,11 +32,11 @@ def search_api(sname,bbox,time,maxg=50,platform="",version=""):
     :param version: string with the version
     :return granules: dictionary with the metadata of the search
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     api = GranuleQuery()
-    if not version:    
+    if not version:
         if not platform:
             search = api.parameters(
                                 short_name=sname,
@@ -83,14 +83,14 @@ def search_api(sname,bbox,time,maxg=50,platform="",version=""):
 def search_archive(url,prod,time,grans):
     """
     Archive search of the different satellite granules
-        
-    :param url: base url of the archive domain 
+
+    :param url: base url of the archive domain
     :param prod: string of product with version, for instance: '5000/VNP09'
     :param time: time interval (init_time,final_time)
     :param grans: granules of the geolocation metadata
     :return granules: dictionary with the metadata of the search
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-01-03
     """
     ids=['.'.join(k['producer_granule_id'].split('.')[1:3]) for k in grans] # satellite ids in bounding box
@@ -116,15 +116,15 @@ def search_archive(url,prod,time,grans):
     return granules
 
 def get_meta(bbox,time,maxg=50):
-    """ 
+    """
     Get all the meta data from the API for all the necessary products
-    
+
     :param bbox: polygon with the search bounding box
     :param time: time interval (init_time,final_time)
     :param maxg: max number of granules to process
     :return granules: dictionary with the metadata of all the products
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     granules=Dict([]);
@@ -153,14 +153,14 @@ def get_meta(bbox,time,maxg=50):
     return granules
 
 def group_files(path,reg):
-    """ 
+    """
     Agrupate the geolocation (03) and fire (14) files of a specific product in a path
-    
+
     :param path: path to the geolocation (03) and fire (14) files
     :param reg: string with the first 3 characters specifying the product (MOD, MYD or VNP)
     :return files: list of pairs with geolocation (03) and fire (14) file names in the path of the specific product
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     files=[Dict({'geo':k}) for k in glob.glob(path+'/'+reg+'03*')]
@@ -176,7 +176,7 @@ def group_files(path,reg):
                         mmf=re.split("/",g.geo)
                         mm=mmf[-1].split('.')
                         if mm[0][1]==m[0][1] and mm[1]+'.'+mm[2]==m[1]+'.'+m[2]:
-                            files[k].fire=f 
+                            files[k].fire=f
     if len(filesr)>0:
         for f in filesr:
             mf=re.split("/",f)
@@ -187,17 +187,17 @@ def group_files(path,reg):
                         mmf=re.split("/",g.geo)
                         mm=mmf[-1].split('.')
                         if mm[0][1]==m[0][1] and mm[1]+'.'+mm[2]==m[1]+'.'+m[2]:
-                            files[k].ref=f 
+                            files[k].ref=f
     return files
 
 def group_all(path):
-    """ 
+    """
     Combine all the geolocation (03) and fire (14) files in a path
 
     :param path: path to the geolocation (03) and fire (14) files
     :return files: dictionary of products with a list of pairs with geolocation (03) and fire (14) file names in the path
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     files=Dict({})
@@ -213,14 +213,14 @@ def group_all(path):
     return files
 
 def read_modis_files(files,bounds):
-    """ 
+    """
     Read the geolocation (03) and fire (14) files for MODIS products (MOD or MYD)
-    
+
     :param files: pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
     :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return ret: dictionary with Latitude, Longitude and fire mask arrays read
-    
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     ret=Dict([])
@@ -233,7 +233,7 @@ def read_modis_files(files,bounds):
     hdff=SD(files.fire,SDC.READ)
     # Creating all the objects
     lat_obj=hdfg.select('Latitude')
-    lon_obj=hdfg.select('Longitude')    
+    lon_obj=hdfg.select('Longitude')
     fire_obj=hdff.select('fire mask')
     lat_fire_obj=hdff.select('FP_latitude')
     lon_fire_obj=hdff.select('FP_longitude')
@@ -258,11 +258,11 @@ def read_modis_files(files,bounds):
     fll=np.logical_and(np.logical_and(np.logical_and(flons>bounds[0],flons<bounds[1]),flats>bounds[2]),flats<bounds[3])
     ret.lat_fire=flats[fll]
     ret.lon_fire=flons[fll]
-    try:   
+    try:
         ret.brig_fire=brig_fire_obj.get()[fll]
     except:
         ret.brig_fire=np.array([])
-    ret.sat_fire=hdff.Satellite 
+    ret.sat_fire=hdff.Satellite
     try:
         ret.conf_fire=conf_fire_obj.get()[fll]
     except:
@@ -302,14 +302,14 @@ def read_modis_files(files,bounds):
     return ret
 
 def read_viirs_files(files,bounds):
-    """ 
+    """
     Read the geolocation (03) and fire (14) files for VIIRS products (VNP)
-    
+
     :param files: pair with geolocation (03) and fire (14) file names for VIIRS products (VNP)
     :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return ret: dictionary with Latitude, Longitude and fire mask arrays read
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     ret=Dict([])
@@ -379,13 +379,13 @@ def read_viirs_files(files,bounds):
     return ret
 
 def read_viirs375_files(path,bounds):
-    """ 
+    """
     Read the geolocation and fire information from VIIRS CSV files (fire_archive_*.csv and/or fire_nrt_*.csv)
 
     :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return ret: dictionary with Latitude, Longitude and fire mask arrays read
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-10-23
     """
     # Opening files if they exist
@@ -461,14 +461,14 @@ def read_viirs375_files(path,bounds):
     return ret
 
 def read_goes_files(files):
-    """ 
+    """
     Read the files for GOES products - geolocation and fire data already included (OS)
-    
+
      remove :param files: pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
     :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return ret: dictionary with Latitude, Longitude and fire mask arrays read
-    
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on WINDOWS10. 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on WINDOWS10.
     Lauren Hearn (lauren@robotlauren.com), 2018-10-16
     """
     h5g=h5py.File(files.geo,'r')
@@ -493,7 +493,7 @@ def read_goes_files(files):
     return ret
 
 def read_data(files,file_metadata,bounds):
-    """ 
+    """
     Read all the geolocation (03) and fire (14) files and if necessary, the reflectance (09) files
 
     MODIS file names according to https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/archive/mod14_v5_user_guide.pdf
@@ -515,13 +515,13 @@ def read_data(files,file_metadata,bounds):
     vvv =   version number
     yyyyddd =   year    and Julian  day of  data    processing
     hhmmss =    hour,   minute, and second  of  data    processing
-    
+
     :param files: list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
     :param file_metadata: dictionary with file names as key and granules metadata as values
     :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return data: dictionary with Latitude, Longitude and fire mask arrays read
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
     print "read_data files=%s" %  files
@@ -545,11 +545,11 @@ def read_data(files,file_metadata,bounds):
             if 'ref' in f.keys():
                 f2=os.path.basename(f.ref)
                 boo=False
-            prefix = f0[:3] 
+            prefix = f0[:3]
             print 'prefix %s' % prefix
             if prefix != f1[:3]:
                 print 'ERROR: the prefix of %s %s must coincide' % (f0,f1)
-                continue 
+                continue
             m=f.geo.split('/')
             mm=m[-1].split('.')
             key=mm[1]+'_'+mm[2]
@@ -566,7 +566,7 @@ def read_data(files,file_metadata,bounds):
                 item.instrument="GOES"
             else:
                 print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
-                continue 
+                continue
             if not boo:
                 if f2 in file_metadata.keys():
                     boo=True
@@ -599,16 +599,16 @@ def read_data(files,file_metadata,bounds):
 def download(granules):
     """
     Download files as listed in the granules metadata
-        
-    :param granules: list of products with a list of pairs with geolocation (03) and fire (14) file names in the path  
+
+    :param granules: list of products with a list of pairs with geolocation (03) and fire (14) file names in the path
     :return file_metadata: dictionary with file names as key and granules metadata as values
-    
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
-    file_metadata = {} 
+    file_metadata = {}
     for granule in granules:
-        #print json.dumps(granule,indent=4, separators=(',', ': ')) 
+        #print json.dumps(granule,indent=4, separators=(',', ': '))
         url = granule['links'][0]['href']
         filename=os.path.basename(urlparse.urlsplit(url).path)
         file_metadata[filename]=granule
@@ -635,24 +635,24 @@ def download(granules):
                         f.write(chunk)
                         s =  s + len(chunk)
                         print('downloaded %sB  of %sB' % (s, content_size))
-            else: 
+            else:
                 print 'cannot connect to %s' % url
                 print 'web request status code %s' % r.status_code
                 print 'Make sure you have file ~/.netrc permission 600 with the content'
-                print 'machine urs.earthdata.nasa.gov\nlogin yourusername\npassword yourpassword' 
+                print 'machine urs.earthdata.nasa.gov\nlogin yourusername\npassword yourpassword'
                 sys.exit(1)
         except Exception as e:
-            print 'download failed with error %s' % e 
+            print 'download failed with error %s' % e
     return file_metadata
 
 def download_GOES16(time):
     """
     Download the GOES16 data through rclone application
-        
-    :param time: tupple with the start and end times    
+
+    :param time: tupple with the start and end times
     :return bucket: dictionary of all the data downloaded and all the GOES16 data downloaded in the same directory level
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com) 2018-10-12
     """
     bucket=Dict({})
@@ -672,18 +672,18 @@ def download_GOES16(time):
             out=check_output(args)
             bucket.update({argT : [o.split(' ')[2] for o in out.split('\n')[:-1]]})
         except Exception as e:
-            print 'download failed with error %s' % e 
+            print 'download failed with error %s' % e
     return bucket
 
 def retrieve_af_data(bbox,time):
     """
     Retrieve the data in a bounding box coordinates and time interval and save it in a Matlab structure inside the out.mat Matlab file
-        
+
     :param bbox: polygon with the search bounding box
-    :param time: time interval (init_time,final_time)      
+    :param time: time interval (init_time,final_time)
     :return data: dictonary with all the data and out.mat Matlab file with a Matlab structure of the dictionary
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
 
@@ -702,7 +702,7 @@ def retrieve_af_data(bbox,time):
 
     # Get data
     granules=get_meta(bbox,time,maxg)
-    #print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': ')) 
+    #print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': '))
 
     # Eliminating the NRT data (repeated always)
     nrt_elimination(granules)
@@ -710,6 +710,7 @@ def retrieve_af_data(bbox,time):
     file_metadata = {}
     for k,g in granules.items():
         print 'Downloading %s files' % k
+        sys.stdout.flush()
         file_metadata.update(download(g))
         #print "download g:"
         #print g
@@ -733,11 +734,11 @@ def retrieve_af_data(bbox,time):
 def nrt_elimination(granules):
     """
     Cleaning all the NRT data which is repeated
-        
+
     :param granules: Dictionary of granules products to clean up
     :return: It will update the granules dictionary
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-11-30
     """
 
@@ -750,14 +751,14 @@ def nrt_elimination(granules):
 def read_fire_mesh(filename):
     """
     Read necessary variables in the fire mesh of the wrfout file filename
-    
-    :param filename: wrfout file    
+
+    :param filename: wrfout file
     :return fxlon: lon coordinates in the fire mesh
     :return fxlat: lat coordinates in the fire mesh
     :return bbox: bounding box
     :return time_esmf: simulation times in ESMF format
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
     print 'opening ' + filename
@@ -778,20 +779,20 @@ def read_fire_mesh(filename):
     plot = False
     if plot:
         plot_3D(fxlon,fxlat,tign_g)
-    
+
     return fxlon,fxlat,bbox,time_esmf
 
 def data2json(data,keys,dkeys,N):
-    """ 
+    """
     Create a json dictionary from data dictionary
-    
+
     :param data: dictionary with Latitude, Longitude and fire mask arrays and metadata information
     :param keys: keys which are going to be included into the json
     :param dkeys: keys in the data dictionary which correspond to the previous keys (same order)
     :param N: number of entries in each instance of the json dictionary (used for the variables with only one entry in the data dictionary)
     :return ret: dictionary with all the fire detection information to create the KML file
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     ret=Dict({})
@@ -806,16 +807,16 @@ def data2json(data,keys,dkeys,N):
     return ret
 
 def sdata2json(sdata,keys,dkeys,N):
-    """ 
+    """
     Create a json dictionary from sorted array of data dictionaries
-    
+
     :param sdata: sorted array of data dictionaries with Latitude, Longitude and fire mask arrays and metadata information
     :param keys: keys which are going to be included into the json
     :param dkeys: keys in the data dictionary which correspond to the previous keys (same order)
     :param N: number of entries in each instance of the json dictionary (used for the variables with only one entry in the data dictionary)
     :return ret: dictionary with all the fire detection information to create the KML file
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-12-03
     """
     ret=Dict({'granules': [d[0] for d in sdata]})
@@ -831,14 +832,14 @@ def sdata2json(sdata,keys,dkeys,N):
 
 
 def write_csv(d,bounds):
-    """ 
+    """
     Write fire detections from data dictionary d to a CSV file
-    
+
     :param d: dictionary with Latitude, Longitude and fire mask arrays and metadata information
     :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return: fire_detections.csv file with all the detections
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
     df=pd.DataFrame(data=d)
@@ -854,7 +855,7 @@ def plot_3D(xx,yy,zz):
     :param zz: values at the (x,y) points
     :return: a plot show of the 3D data
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com) 2018-09-21
     """
     from mpl_toolkits.mplot3d import Axes3D
@@ -868,11 +869,11 @@ def plot_3D(xx,yy,zz):
 def time_iso2num(time_iso):
     """
     Transform an iso time string to a time integer number of seconds since January 1, 1970
-    
+
     :param time_iso: string iso date
     :return s: integer number of seconds since January 1, 1970
-    
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
     time_datetime=datetime.datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
@@ -883,11 +884,11 @@ def time_iso2num(time_iso):
 def time_num2iso(time_num):
     """
     Transform a time integer number of seconds since January 1, 1970 to an iso time string
-    
+
     :param time_num: integer number of seconds since January 1, 1970
     :return date: time string in ISO date
-    
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
     """
     dt=datetime.datetime.fromtimestamp(time_num)
@@ -898,17 +899,17 @@ def time_num2iso(time_num):
 def pixel_dim(sample,N,h,p,a=None):
     """
     Computes pixel dimensions (along-scan and track pixel sizes)
-    
+
     :param sample: array of integers with the column number (sample variable in files)
     :param N: scalar, total number of pixels in each row of the image swath
     :param h: scalar, altitude of the satellite in km
-    :param p: scalar, pixel nadir resolution in km 
+    :param p: scalar, pixel nadir resolution in km
     :param a: array of floats of the size of p with the angles where the resolution change
     :return theta: scan angle in radiands
     :return scan: along-scan pixel size in km
     :return track: along-track pixel size in km
-                 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
     """
     Re=6378 # approximation of the radius of the Earth in km
@@ -933,18 +934,18 @@ def pixel_dim(sample,N,h,p,a=None):
     else:
         theta=s*(sample-M)
         scan=Re*s*(np.cos(theta)/np.sqrt((Re/r)**2-np.square(np.sin(theta)))-1)
-        track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta)))) 
+        track=r*s*(np.cos(theta)-np.sqrt((Re/r)**2-np.square(np.sin(theta))))
     return (theta,scan,track)
 
 def copyto(partial_path,kml):
     """
     Copy information in partial_path to kml
-    
+
     :param partial_path: path to a partial KML file
     :param kml: KML object where to write to
     :return: information from partial_path into kml
-                 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
     with open(partial_path,'r') as part:
@@ -954,13 +955,13 @@ def copyto(partial_path,kml):
 def json2kml(d,kml_path,bounds,prods,opt='granule'):
     """
     Creates a KML file kml_path from a dictionary d
-    
+
     :param d: dictionary with all the fire detection information to create the KML file
     :param kml_path: path in where the KML file is going to be written
     :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return: a KML file
-                 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
 
@@ -981,7 +982,7 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
     frp_style={-1:'modis_frp_no_data',40:'modis_frp_gt_400'}
     for i in range(0,40):
         frp_style[i]='modis_frp_%s_to_%s' % (i*10, i*10+10)
- 
+
     with open(kml_path,'w') as kml:
 
         copyto('kmls/partial1.kml',kml)
@@ -996,7 +997,7 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
 
             if prod == 'FRP':
                 copyto('kmls/partial2.kml',kml)
-            
+
             for t in range(len(d['latitude'])):
                 lats=np.array(d['latitude'][t])
                 lons=np.array(d['longitude'][t])
@@ -1061,9 +1062,9 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                                               +  'time:        %s\n' % timedescr
                                               +  'satellite:   %s\n' % satellite[p]
                                               +  'instrument:  %s\n' % instrument[p]
-                                              +  'scan angle:  %s\n' % angle 
-                                              +  'along-scan:  %s\n' % scan 
-                                              +  'along-track: %s\n' % track 
+                                              +  'scan angle:  %s\n' % angle
+                                              +  'along-scan:  %s\n' % scan
+                                              +  'along-track: %s\n' % track
                                 + '</description>\n')
                     else:
                         kml.write('<Placemark>\n<name>Fire detection square</name>\n')
@@ -1074,15 +1075,15 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                                               +  'instrument:  %s\n' % instrument[p]
                                               +  'confidence:  %s\n' % conf
                                               +  'FRP:         %s\n' % frp
-                                              +  'scan angle:  %s\n' % angle 
-                                              +  'along-scan:  %s\n' % scan 
-                                              +  'along-track: %s\n' % track 
+                                              +  'scan angle:  %s\n' % angle
+                                              +  'along-scan:  %s\n' % scan
+                                              +  'along-track: %s\n' % track
                                 + '</description>\n')
                     kml.write('<TimeStamp><when>%s</when></TimeStamp>\n' % timestamp)
                     if prod == 'AF':
                         if conf < 30:
                             kml.write('<styleUrl> modis_conf_low </styleUrl>\n')
-                        elif conf < 80: 
+                        elif conf < 80:
                             kml.write('<styleUrl> modis_conf_med </styleUrl>\n')
                         else:
                             kml.write('<styleUrl> modis_conf_high </styleUrl>\n')
@@ -1093,7 +1094,7 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                         kml.write('<styleUrl> no_fire </styleUrl>\n')
 
                     kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
-        
+
                     km_lon=km_lat/np.cos(lat*np.pi/180)  # 1 km in longitude
 
                     sq_track_size_km=track
@@ -1106,24 +1107,24 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                     kml.write('%s,%s,0\n' % (lon + sq2_lon, lat + sq2_lat))
                     kml.write('%s,%s,0\n' % (lon + sq2_lon, lat - sq2_lat))
                     kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
-        
+
                     kml.write('</coordinates>\n</LinearRing>\n</outerBoundaryIs>\n</Polygon>\n</Placemark>\n')
                 kml.write('</Folder>\n')
 
             kml.write('</Folder>\n')
 
         kml.write('</Document>\n</kml>\n')
-    
+
     print 'Created file %s' % kml_path
 
 def burned_algorithm(data):
     """
     Computes mask of burned scar pixels
-    
+
     :param data: data dictionary with all the necessary bands M7, M8, M10 and M11
     :return C: Mask of burned scar pixels
-                 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com) 2019-01-03
     """
     # Parameters
