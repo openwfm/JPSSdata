@@ -9,6 +9,7 @@ import datetime
 import time
 from JPSSD import time_num2iso
 from contour2kml import contour2kml
+import sys
 
 def get_contour_verts(cn):
     contours = []
@@ -25,23 +26,18 @@ def get_contour_verts(cn):
 
 if __name__ == "__main__":
     print 'Loading the data...'
-    # Load all the data in result.mat and mgout.mat
-    result=loadmat('result.mat')
-    mgout=loadmat('mgout.mat')
-    # Indexing the coordinates into the same as the multigrid solution
-    xind=mgout['sm'][0]-1
-    yind=mgout['sn'][0]-1
-    x=np.array(result['fxlon'])
-    xx=x[np.ix_(xind,yind)]
-    y=np.array(result['fxlat'])
-    yy=y[np.ix_(xind,yind)]
-    tscale=mgout['tscale'][0]
-    time_scale_num=mgout['time_scale_num'][0]
-    zz=mgout['a']*tscale+time_scale_num[0]
+    # Load all the data in svm.mat
+    svm=loadmat('svm.mat')
+    xx=np.array(svm['fxlon'])
+    yy=np.array(svm['fxlat'])
+    tscale=svm['tscale'][0]
+    time_scale_num=svm['time_scale_num'][0]
+    zz=svm['fmc_g']*tscale+time_scale_num[0]
 
     print 'Computing the contours...'
     # Granules numeric times
-    time_num_granules=result['time_num_granules'][0]
+    time_num_granules=svm['time_num_granules'][0]
+    #sys.exit()
     # Datetimes for the first and last granule
     dt1=datetime.datetime.fromtimestamp(time_num_granules[0])
     dt2=datetime.datetime.fromtimestamp(time_num_granules[-1])
@@ -51,7 +47,7 @@ if __name__ == "__main__":
     # Number of periods of 6 hours we need to compute rounded
     d=dtf-dti
     hours=d.total_seconds()/3600
-    contour_dt_hours = 24
+    contour_dt_hours = 6
     M=int(np.round((hours+1)/contour_dt_hours ))
     # Datetimes where we are going to compute the levels
     dts=[dti+datetime.timedelta(hours=k*contour_dt_hours) for k in range(1,M)]
@@ -65,7 +61,7 @@ if __name__ == "__main__":
     contours=get_contour_verts(cn)
 
     # Plotting or not the contour lines
-    plot=False
+    plot=True
     if plot:
         print 'contours are collections of line, each line consisting of poins with x and y coordinates'
         for c in contours:

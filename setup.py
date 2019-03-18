@@ -16,13 +16,13 @@ import matplotlib.pyplot as plt
 maxsize=400 # Max size of the fire mesh
 ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
 lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
-mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
+mt=3 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
 dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
-mm=10 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
+mm=3 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
 pen=False # Creating heterogeneous penalty depending on the confidence level
 confl=70. # Minimum confidence level for the pixels
 confa=False # Histogram plot of the confidence level distribution
-burn=True # Using or not the burned scar product
+burn=False # Using or not the burned scar product
 
 print 'Loading data'
 data,fxlon,fxlat,time_num=sl.load('data')
@@ -43,7 +43,7 @@ stree=spatial.cKDTree(vfgrid)
 vfind=np.array(list(itertools.product(np.array(range(0,fxlon.shape[0])),np.array(range(0,fxlon.shape[1])))))
 itree=spatial.cKDTree(vfind)
 
-# Sort dictionary by time_num into an array of tuples (key, dictionary of values) 
+# Sort dictionary by time_num into an array of tuples (key, dictionary of values)
 print 'Sort the granules by dates'
 sdata=sort_dates(data)
 tt=[ dd[1]['time_num'] for dd in sdata ]  # array of times
@@ -78,7 +78,7 @@ for gran in range(GG):
 	t_init = time.time()
 	print 'Loading data of granule %d/%d' % (gran+1,GG)
 	# Load granule lon, lat, fire arrays and time number
-	slon=sdata[gran][1]['lon'] 
+	slon=sdata[gran][1]['lon']
 	slat=sdata[gran][1]['lat']
 	ti=sdata[gran][1]['time_num']
 	fire=sdata[gran][1]['fire']
@@ -129,7 +129,7 @@ for gran in range(GG):
 		# Set mask
 		if mt==1:
 			# creating the indices for all the pixel neighbours of the upper bound indices
-			kk=neighbor_indices_ball(itree,ffi[flc],fxlon.shape,dist) 
+			kk=neighbor_indices_ball(itree,ffi[flc],fxlon.shape,dist)
 			im=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
 		elif mt==2:
 			# creating the indices for all the pixel neighbours of the upper bound indices
@@ -139,7 +139,7 @@ for gran in range(GG):
 			im=neighbor_indices_ellipse(vfxlon,vfxlat,lon,lat,scan,track,mm)
 		else:
 			print 'ERROR: invalid mt option.'
-			sys.exit()		
+			sys.exit()
 		T[im]=ti # update mask T
 
 	# Set mask from burned scar data
@@ -166,7 +166,7 @@ for gran in range(GG):
 			il=np.logical_and(nofi,ti<T)
 		else:
 			print 'ERROR: invalid lt option.'
-			sys.exit()	
+			sys.exit()
 		L[il]=ti # set L to granule time where fire detected
 		print 'L set at %s points' % jj.sum()
 	t_final = time.time()
@@ -207,12 +207,12 @@ print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_sc
 #sl.save((U,L,T),'result')
 
 if pen:
-	result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
-	'time_num':time_num, 'time_scale_num' : time_scale_num, 
+	result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat,
+	'time_num':time_num, 'time_scale_num' : time_scale_num,
 	'time_num_granules' : tt, 'UP':UP, 'LP':LP}
 else:
-	result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat, 
-	'time_num':time_num, 'time_scale_num' : time_scale_num, 
+	result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat,
+	'time_num':time_num, 'time_scale_num' : time_scale_num,
 	'time_num_granules' : tt}
 
 sio.savemat('result.mat', mdict=result)
