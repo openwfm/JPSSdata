@@ -4,8 +4,14 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from scipy import spatial
 import scipy.io as sio
+import time
+
+t_init = time()
+
 print('Loading data...')
 data,fxlon,fxlat,time_num=sl.load('data')
+t1 = time()
+print('elapsed time: ',abs(t_init-t1),'s')
 prefixes={'MOD': 'MOD14', 'MYD': 'MYD14', 'VNP': 'NPP_VAF_L2'}
 
 # constants for geotransform
@@ -16,6 +22,8 @@ rot = 0.0    # rotation (not currently supported)
 radius = 0.05
 
 for gran in list(data):
+	print('Processing granule: ',gran)
+	tg1 = time()
 	splitted=gran.split('_')
 	prefix=splitted[0]
 	date=splitted[1][3:8]+splitted[2]+'00'
@@ -37,11 +45,18 @@ for gran in list(data):
 	fires = np.reshape(data[gran].fire,np.prod(data[gran].fire.shape)).astype(np.int8)
 
 	# making tree
-	
+	print('Making the tree...')
+	t1 = time()
 	tree = spatial.cKDTree(np.column_stack((lons,lats)))
+	t2 = time()
+	print('elapsed time: ',abs(t2-t1),'s')
 	glons = np.reshape(lons_interp,np.prod(lons_interp.shape))
 	glats = np.reshape(lats_interp,np.prod(lats_interp.shape))
+	print('Interpolating the data...')
+	t1 = time()
 	indexes = np.array(tree.query_ball_point(np.column_stack((glons,glats)),radius))
+	t2 = time()
+	print('elapsed time: ',abs(t2-t1),'s')
 	filtered_indexes = np.array([index[0] if len(index) > 0 else np.nan for index in indexes])
 	fire1d = [fires[int(ii)] if not np.isnan(ii) else 0 for ii in filtered_indexes]
 	fires_interp = np.reshape(fire1d,lons_interp.shape)
@@ -70,11 +85,16 @@ for gran in list(data):
 		#plt.colorbar()
 		ax2.scatter(lons[0::nums],lats[0::nums],c=fires[0::nums],edgecolors='face')
 		plt.show()
+	print('Saving the data...')
+	t1 = time()
 	result = {'data': fires_interp.astype(np.int8),'geotransform':geotransform}
 	sio.savemat(file_name,mdict = result)
+	t2 = time()
+	print('elapsed time: ',abs(t2-t1),'s')
 
 	print('File saved as ',file_name)
-
+	tg2 = time()
+	print('elapsed time for the granule: ',abs(tg2-tg1),'s')
 	
 
 	
