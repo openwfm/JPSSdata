@@ -1,4 +1,20 @@
 function plot_cycling(file,varargin)
+% Call:
+% plot_cycling(file) 
+% plot_cycling(file,bounds)
+%
+% Description:
+% Plots a granule from make_mat.py, input file for cycling
+%
+% Inputs:
+%   file    matlab file output of make_mat.py
+%   bounds  optional: array of [min_lon, max_lon, min_lat, max_lat]
+%
+% Developed in Matlab 9.2.0.556344 (R2017a) on MACINTOSH. 
+% Angel Farguell (angel.farguell@gmail.com), 2018-08-24
+%-------------------------------------------------------------------------
+
+
 load(file);
 
 [Nlat,Nlon] = size(data);
