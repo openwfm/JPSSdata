@@ -11,18 +11,18 @@ t_init = time()
 print('Loading data...')
 data,fxlon,fxlat,time_num=sl.load('data')
 t1 = time()
-print('elapsed time: ',abs(t_init-t1),'s')
+print 'elapsed time: ',abs(t_init-t1),'s'
 prefixes={'MOD': 'MOD14', 'MYD': 'MYD14', 'VNP': 'NPP_VAF_L2'}
 
 # constants for geotransform
-res = 0.01   # resolution
+res = 0.05   # resolution
 rot = 0.0    # rotation (not currently supported)
 
 # radius for the tree
 radius = 0.05
 
 for gran in list(data):
-	print('Processing granule: ',gran)
+	print 'Processing granule: ',gran
 	tg1 = time()
 	splitted=gran.split('_')
 	prefix=splitted[0]
@@ -49,14 +49,14 @@ for gran in list(data):
 	t1 = time()
 	tree = spatial.cKDTree(np.column_stack((lons,lats)))
 	t2 = time()
-	print('elapsed time: ',abs(t2-t1),'s')
+	print 'elapsed time: ',abs(t2-t1),'s'
 	glons = np.reshape(lons_interp,np.prod(lons_interp.shape))
 	glats = np.reshape(lats_interp,np.prod(lats_interp.shape))
 	print('Interpolating the data...')
 	t1 = time()
 	indexes = np.array(tree.query_ball_point(np.column_stack((glons,glats)),radius))
 	t2 = time()
-	print('elapsed time: ',abs(t2-t1),'s')
+	print 'elapsed time: ',abs(t2-t1),'s'
 	filtered_indexes = np.array([index[0] if len(index) > 0 else np.nan for index in indexes])
 	fire1d = [fires[int(ii)] if not np.isnan(ii) else 0 for ii in filtered_indexes]
 	fires_interp = np.reshape(fire1d,lons_interp.shape)
@@ -73,8 +73,6 @@ for gran in list(data):
 	#fires_interp = griddata(coordinates,fires,(lons_interp,lats_interp),method='nearest',fill_value = np.nan)
 	print('Done interpolating, now plotting')
 
-	print('Nans in fire: ',np.isnan(fires_interp).sum())
-
 	plot = False
 	if plot:
 		#number of elements in arrays to plot
@@ -90,13 +88,14 @@ for gran in list(data):
 	result = {'data': fires_interp.astype(np.int8),'geotransform':geotransform}
 	sio.savemat(file_name,mdict = result)
 	t2 = time()
-	print('elapsed time: ',abs(t2-t1),'s')
+	print 'elapsed time: ',abs(t2-t1),'s'
 
-	print('File saved as ',file_name)
+	print 'File saved as ',file_name
 	tg2 = time()
-	print('elapsed time for the granule: ',abs(tg2-tg1),'s')
+	print 'elapsed time for the granule: ',abs(tg2-tg1),'s'
 
-
+t_final = time()
+print 'Total elapsed time: ',abs(t_final-t_init),'s'
 
 
 
