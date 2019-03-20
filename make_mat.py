@@ -29,7 +29,7 @@ for gran in list(data):
 	date=splitted[1][3:8]+splitted[2]+'00'
 	file_name = prefixes[prefix]+'.'+date+'.tif.mat'
 
-	if not os.path.isfile(file):
+	if not os.path.isfile(file_name):
 		# Creating meshgrid where to interpolate the data
 		bounds = [data[gran].lon.min(),data[gran].lon.max(),data[gran].lat.min(),data[gran].lat.max()]
 		lons_interp = np.arange(bounds[0],bounds[1],res)
