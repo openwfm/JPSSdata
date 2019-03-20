@@ -86,7 +86,7 @@ for gran in list(data):
 	print '> File saved as ',file_name
 	tg2 = time()
 	print '>> Elapsed time for the granule: ',abs(tg2-tg1),'s'
-	sys.exit()
+	sys.stdout.flush()
 
 t_final = time()
 print '>> Total elapsed time: ',abs(t_final-t_init),'s <<'
