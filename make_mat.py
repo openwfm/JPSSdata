@@ -6,6 +6,7 @@ from scipy import spatial
 import scipy.io as sio
 from time import time
 import sys
+import os
 
 t_init = time()
 
