@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from scipy import spatial
 import scipy.io as sio
-import time
+from time import time
 
 t_init = time()
 
@@ -76,7 +76,7 @@ for gran in list(data):
 	print('Nans in fire: ',np.isnan(fires_interp).sum())
 
 	plot = False
-	if plot: 
+	if plot:
 		#number of elements in arrays to plot
 		nums = 100
 		nums1 = 50
@@ -95,8 +95,8 @@ for gran in list(data):
 	print('File saved as ',file_name)
 	tg2 = time()
 	print('elapsed time for the granule: ',abs(tg2-tg1),'s')
-	
 
-	
-	
-		
+
+
+
+
