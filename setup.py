@@ -77,6 +77,7 @@ GG=len(sdata)
 for gran in range(GG):
 	t_init = time.time()
 	print 'Loading data of granule %d/%d' % (gran+1,GG)
+	print 'Granule name: %s' % sdata[gran][0]
 	# Load granule lon, lat, fire arrays and time number
 	slon=sdata[gran][1]['lon']
 	slat=sdata[gran][1]['lat']
