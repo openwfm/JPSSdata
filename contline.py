@@ -7,8 +7,9 @@ import datetime
 import time
 from JPSSD import time_num2iso
 from contour2kml import contour2kml
+from scipy.ndimage import gaussian_filter
 
-def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6, plot_contours=False):
+def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6, gauss_filter=True, plot_contours=False):
     # Computing the levels
     # Datetimes for the first and last granule
     dt1=datetime.datetime.fromtimestamp(time_num_granules[0])
@@ -24,23 +25,47 @@ def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour
     dts=[dti+datetime.timedelta(hours=k*contour_dt_hours) for k in range(1,M)]
     levels=[time.mktime(t.timetuple()) for t in dts]
 
-    # Computing the contours
-    cn=plt.contour(xx,yy,zz,levels=levels)
-
     # Scaling the time components as in detections
-    time_num=np.array(cn.levels)
+    time_num=np.array(levels)
     time_iso=[time_num2iso(t) for t in time_num]
 
-    # Generating the coordinates for the contours
+    # Computing and generating the coordinates for the contours
     contours = []
-    # for each contour line
-    for cc in cn.collections:
-        paths = []
-        # for each separate section of the contour line
-        for pp in cc.get_paths():
-            # read all the vertices
-            paths.append(pp.vertices)
-        contours.append(paths)
+    if gauss_filter:
+        # for each level
+        for level in levels:
+            # copy the fire arrival time
+            Z = np.array(zz)
+            # distinguish either in or out the perimeter
+            Z[Z < level] = 0
+            Z[Z == level] = 0.5
+            Z[Z > level] = 1
+            # smooth the perimeter using a gaussian filter
+            sigma = 1.
+            ZZ = gaussian_filter(Z,sigma)
+            # find the contour line in between
+            cn = plt.contour(xx,yy,ZZ,levels=0.5)
+            # contour line
+            cc = cn.collections[0]
+            # initialize the path
+            paths = []
+            # for each separate section of the contour line
+            for pp in cc.get_paths():
+                # read all the vertices
+                paths.append(pp.vertices)
+            contours.append(paths)
+    else:
+        # computing all the contours
+        cn = plt.contour(xx,yy,zz,levels=levels)
+        # for each contour line
+        for cc in cn.collections:
+            # initialize the path
+            paths = []
+            # for each separate section of the contour line
+            for pp in cc.get_paths():
+                # read all the vertices
+                paths.append(pp.vertices)
+            contours.append(paths)
 
     # Plotting or not the contour lines
     if plot_contours:
@@ -91,7 +116,7 @@ if __name__ == "__main__":
     print 'Computing the contours...'
     # Granules numeric times
     time_num_granules = result['time_num_granules'][0]
-    data = get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=24)
+    data = get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=24, gauss_filter=False)
 
     print 'Creating the KML file...'
     # Creating the KML file

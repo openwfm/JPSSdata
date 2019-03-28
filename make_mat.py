@@ -43,7 +43,7 @@ prefixes={'MOD': 'MOD14', 'MYD': 'MYD14', 'VNP': 'NPP_VAF_L2'}
 if whole:
 	res = 0.05   # resolution
 else:
-	res = 0.01   # resolution
+	res = 0.005  # resolution
 	fbounds = [fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()] # fire mesh bounds
 rot = 0.0    # rotation (not currently supported)
 print '>> General geotransform constants <<'
