@@ -2,10 +2,18 @@ import numpy as np
 from scipy.io import loadmat
 from contline import get_contour_verts
 from contour2kml import contour2kml
+import os
+import sys
 
-print 'Loading the data...'
-# Load all the data in svm.mat
-svm=loadmat('svm.mat')
+matlab_file = 'svm.mat'
+if os.path.isfile(matlab_file) and os.access(matlab_file,os.R_OK):
+    print 'Loading the data...'
+    svm=loadmat('svm.mat')
+else:
+    print 'Error: file %s not exist or not readable' % matlab_file
+    sys.exit(1)
+
+# Reading the variables in the file
 xx=np.array(svm['fxlon'])
 yy=np.array(svm['fxlat'])
 tscale=svm['tscale'][0]

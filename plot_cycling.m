@@ -21,9 +21,12 @@ s_mark = 50;
 
 load(file);
 
-[Nlat,Nlon] = size(data);
-xx = linspace(geotransform(1),geotransform(1)+geotransform(2)*(Nlon-1),Nlon);
-yy = linspace(geotransform(4)-geotransform(6)*(Nlat-1),geotransform(4),Nlat);
+[rows,cols] = size(data);
+geo = geotransform;
+Xpixel=(0:cols-1)+0.5;
+Ypixel=(0:rows-1)+0.5;
+xx = geo(1)+Xpixel*geo(2);
+yy = geo(4)+Ypixel*geo(6);
 [lon,lat] = meshgrid(xx,yy);
 
 figure, h=pcolor(lon,lat,data); 

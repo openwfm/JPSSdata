@@ -64,16 +64,18 @@ for ng,gran in enumerate(grans):
 	print '>> Processing granule',gran,'-','%d/%d' % (ng+1,NG)
 	tg1 = time()
 	# creating file_name
-	splitted=gran.split('_')
-	prefix=splitted[0]
-	date=splitted[1][3:8]+splitted[2]+'00'
+	splitted = gran.split('_')
+	prefix = splitted[0]
+	date = splitted[1][3:8]+splitted[2]+'00'
 	file_name = prefixes[prefix]+'.'+date+'.tif.mat'
 
 	if not os.path.isfile(file_name):
 		# creating meshgrid where to interpolate the data
 		bounds = [data[gran].lon.min(),data[gran].lon.max(),data[gran].lat.min(),data[gran].lat.max()]
 		lons_interp = np.arange(bounds[0],bounds[1],res)
+		print 'cols:',len(lons_interp)
 		lats_interp = np.arange(bounds[2],bounds[3],res)
+		print 'rows:',len(lats_interp)
 		lons_interp,lats_interp = np.meshgrid(lons_interp,lats_interp)
 		glons = np.reshape(lons_interp,np.prod(lons_interp.shape))
 		glats = np.reshape(lats_interp,np.prod(lats_interp.shape))
@@ -83,7 +85,7 @@ for ng,gran in enumerate(grans):
 			fires_interp = np.zeros(np.prod(lons_interp.shape))
 
 		# creating geotransform array with necessary geolocation information
-		geotransform = [bounds[0],res,rot,bounds[3],rot,res]
+		geotransform = [bounds[0]-res*.5,res,rot,bounds[2]-res*.5,rot,res]
 
 		# approximation of the radius for the tree
 		dlon = abs(data[gran].lon[1,1]-data[gran].lon[0,0])

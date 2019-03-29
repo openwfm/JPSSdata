@@ -8,6 +8,8 @@ import time
 from JPSSD import time_num2iso
 from contour2kml import contour2kml
 from scipy.ndimage import gaussian_filter
+import os
+import sys
 
 def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6, gauss_filter=True, plot_contours=False):
     # Computing the levels
@@ -38,10 +40,9 @@ def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour
             Z = np.array(zz)
             # distinguish either in or out the perimeter
             Z[Z < level] = 0
-            Z[Z == level] = 0.5
-            Z[Z > level] = 1
+            Z[Z >= level] = 1
             # smooth the perimeter using a gaussian filter
-            sigma = 1.
+            sigma = 2.
             ZZ = gaussian_filter(Z,sigma)
             # find the contour line in between
             cn = plt.contour(xx,yy,ZZ,levels=0.5)
@@ -98,10 +99,16 @@ def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour
     return data
 
 if __name__ == "__main__":
-    print 'Loading the data...'
-    # Load all the data in result.mat and mgout.mat
-    result=loadmat('result.mat')
-    mgout=loadmat('mgout.mat')
+    result_file = 'result.mat'
+    mgout_file = 'mgout.mat'
+    if os.path.isfile(result_file) and os.access(result_file,os.R_OK) and os.path.isfile(mgout_file) and os.access(mgout_file,os.R_OK):
+        print 'Loading the data...'
+        result=loadmat(result_file)
+        mgout=loadmat(mgout_file)
+    else:
+        print 'Error: file %s or %s not exist or not readable' % (result_file,mgout_file)
+        sys.exit(1)
+
     # Indexing the coordinates into the same as the multigrid solution
     xind=mgout['sm'][0]-1
     yind=mgout['sn'][0]-1
