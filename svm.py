@@ -73,13 +73,14 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
     # Create a mask with lower bound less than the previous maximum upper bound value
     with np.errstate(invalid='ignore'):
         low = (ll < muu)
-    # Create a mask with all False of low size
-    mask = np.repeat(False,len(low[low == True]))
-    # Take just a subset of the nodes
-    clear_level = 50
-    mask[0::clear_level] = True
-    # Mask the subset
-    low[low == True] = mask
+    if low.sum() > 10000:
+        # Create a mask with all False of low size
+        mask = np.repeat(False,len(low[low == True]))
+        # Take just a subset of the nodes
+        clear_level = 50
+        mask[0::clear_level] = True
+        # Mask the subset
+        low[low == True] = mask
     # Eliminate all the previous elements from the mask
     mk[low] = False
     # Masking lower bounds outside the mask
@@ -407,9 +408,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
 
     # Plot options
     # plot original data
-    plot_data = False
+    plot_data = True
     # plot scaled data with artificial data
-    plot_scaled = False
+    plot_scaled = True
     # plot meshgrid data before predicting and after predicting
     plot_meshgrid = False
     # plot decision function volume
@@ -419,9 +420,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     # plot polynomial approximation (if postech=='poly')
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = False
+    plot_supports = True
     # plot resulting fire arrival time vs detections
-    plot_result = False
+    plot_result = True
 
     # Other options
     # number of horizontal nodes per observation
