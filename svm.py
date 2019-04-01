@@ -7,18 +7,14 @@
 #       conda install scikit-image
 
 from sklearn import svm
-from sklearn.model_selection import GridSearchCV
-from skimage import measure
 from scipy import interpolate, spatial
 from mpl_toolkits.mplot3d import axes3d
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.font_manager
-import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
 import sys
-import warnings
 from time import time
 from shiftcmap import shiftedColorMap
 
@@ -217,6 +213,7 @@ def frontier(clf, xx, yy, zz, bal=.5, postech='poly', poly='spline', plot_decisi
         sio.savemat('decision.mat', mdict=decision)
 
     if plot_decision or postech == 'marching':
+        from skimage import measure
         # Finding the separating hyperplane by recreating the isosurface =0 if possible (if not the average value)
         print '>> Finding isosurface = 0'
         ZZ = Z.reshape(xx.shape)
@@ -408,9 +405,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
 
     # Plot options
     # plot original data
-    plot_data = True
+    plot_data = False
     # plot scaled data with artificial data
-    plot_scaled = True
+    plot_scaled = False
     # plot meshgrid data before predicting and after predicting
     plot_meshgrid = False
     # plot decision function volume
@@ -420,9 +417,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     # plot polynomial approximation (if postech=='poly')
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = True
+    plot_supports = False
     # plot resulting fire arrival time vs detections
-    plot_result = True
+    plot_result = False
 
     # Other options
     # number of horizontal nodes per observation
@@ -561,6 +558,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     # Finding better values for C and gamma (only once to observe what are the best values)
     t_1 = time()
     if search:
+        from sklearn.model_selection import GridSearchCV
         print '>> Searching for best value of C and gamma...'
         # Grid Search
         # Parameter Grid
