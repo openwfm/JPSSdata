@@ -99,7 +99,7 @@ F = SVM3(X,y,C=C,kgam=kgam)
 print ''
 print '>> Saving the results <<'
 # Creating the dictionary with the results
-svm = {'dxlon': LON, 'dxlat': LAT, 'U': U, 'L': L,
+svm = {'dxlon': lon, 'dxlat': lat, 'U': U, 'L': L,
         'fxlon': F[0], 'fxlat': F[1], 'fmc_g': F[2],
         'tscale': 24*3600, 'time_num_granules': time_num_granules,
         'time_scale_num': scale}
