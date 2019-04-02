@@ -32,7 +32,7 @@ def process_satellite_detections(data,fxlon,fxlat,time_num):
 	maxsize=400 # Max size of the fire mesh
 	ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
 	lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
-	mt=3 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
+	mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
 	dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
 	mm=5 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
 	pen=False # Creating heterogeneous penalty depending on the confidence level

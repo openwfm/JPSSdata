@@ -102,16 +102,19 @@ def search_archive(url,prod,time,grans):
     fold=np.unique(['%d/%03d' % (date.timetuple().tm_year,date.timetuple().tm_yday) for date in dates])
     urls=[url+'/'+prod+'/'+f for f in fold]
     for u in urls:
-        js=requests.get(u+'.json').json()
-        for j in js:
-            arg=np.argwhere(np.array(ids)=='.'.join(j['name'].split('.')[1:3]))
-            if arg.size!=0:
-                ar=arg[0][0]
-                g=Dict(j)
-                g.links=[{'href':u+'/'+g.name}]
-                g.time_start=grans[ar]["time_start"]
-                g.time_end=grans[ar]["time_end"]
-                granules.append(g)
+        try:
+            js=requests.get(u+'.json').json()
+            for j in js:
+                arg=np.argwhere(np.array(ids)=='.'.join(j['name'].split('.')[1:3]))
+                if arg.size!=0:
+                    ar=arg[0][0]
+                    g=Dict(j)
+                    g.links=[{'href':u+'/'+g.name}]
+                    g.time_start=grans[ar]["time_start"]
+                    g.time_end=grans[ar]["time_end"]
+                    granules.append(g)
+        except Exception as e:
+            "warning: some JSON request failed"
     print "%s gets %s hits in this range" % (prod.split('/')[-1],len(granules))
     return granules
 

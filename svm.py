@@ -16,7 +16,6 @@ import matplotlib.colors as colors
 import numpy as np
 import sys
 from time import time
-from shiftcmap import shiftedColorMap
 
 def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
     """
@@ -102,8 +101,7 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
 
     return X,y
 
-
-def make_fire_mesh(fxlon, fxlat, it, nt, course=50):
+def make_fire_mesh(fxlon, fxlat, it, nt, coarse=10):
     """
     Create a mesh of points to evaluate the decision function
 
@@ -111,14 +109,16 @@ def make_fire_mesh(fxlon, fxlat, it, nt, course=50):
     :param fxlat: data to base y-axis meshgrid on
     :param it: data to base z-axis meshgrid on
     :param nt: tuple of number of nodes at each direction, optional
+    :param coarse: coarsening of the fire mesh
     :return xx, yy, zz: ndarray
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2019-04-01
     """
 
-    x = fxlon[0][0::course]
-    y = fxlat[:,0][0::course]
+    coarse = int(coarse)
+    x = fxlon[0][0::coarse]
+    y = fxlat[:,0][0::coarse]
     xx, yy, zz = np.meshgrid(x,y,np.linspace(it[0],it[1],nt))
 
     return xx, yy, zz
@@ -168,7 +168,7 @@ def make_meshgrid(x, y, z, s=(50,50,50), exp=.1):
                              np.linspace(z_min, z_max, sz))
     return xx, yy, zz
 
-def frontier(clf, xx, yy, zz, bal=.5, postech='poly', poly='spline', plot_decision = False, plot_interp=False, plot_poly=False):
+def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
     """
     Compute the surface decision frontier for a classifier.
 
@@ -177,18 +177,8 @@ def frontier(clf, xx, yy, zz, bal=.5, postech='poly', poly='spline', plot_decisi
     :param yy: meshgrid ndarray
     :param zz: meshgrid ndarray
     :param bal: number between 0 and 1, balance between lower and upper bounds in decision function (in case not level 0)
-    :param postech: pos-processing technique, optional. Options:
-                'poly': polynomial approximation
-                'filter': filter by cases
-                'marching': marching cubes algorithm + normal filtering
-    :param poly: polynomial approximation, optional. Options:
-                'fit': polynomial approximation of degree 11 (least squares, more stable)
-                'polyfit': polynomial approximation of degree 11 (least squares)
-                'spline': picewise polynomial approximation (cubic spline)
-    :param plot_interp: boolean of plotting interpolation and filtering (if tech=='marching')
     :param plot_poly: boolean of plotting polynomial approximation (if tech=='poly')
     :return F: 2D meshes with xx, yy coordinates and the hyperplane z which gives decision functon 0
-    :return P: predicted labels for the 3D grid
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2019-02-20
@@ -205,47 +195,6 @@ def frontier(clf, xx, yy, zz, bal=.5, postech='poly', poly='spline', plot_decisi
     Z = clf.decision_function(XX)
     t_2 = time()
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
-
-    save_decision = False
-    if save_decision:
-        decision = {'Z': Z}
-        sio.savemat('decision.mat', mdict=decision)
-
-    if plot_decision or postech == 'marching':
-        from skimage import measure
-        # Finding the separating hyperplane by recreating the isosurface =0 if possible (if not the average value)
-        print '>> Finding isosurface = 0'
-        ZZ = Z.reshape(xx.shape)
-        verts, faces, normals, values = measure.marching_cubes_lewiner(np.swapaxes(ZZ,0,1), level=0, allow_degenerate=False)
-        # Scale and transform to actual size of the interesting volume
-        h = np.divide([xx.max()-xx.min(), yy.max() - yy.min(), zz.max() - zz.min()],np.array(xx.shape)-1)
-        verts = verts * h
-        verts = verts + [xx.min(), yy.min(), zz.min()]
-        mesh = Poly3DCollection(verts[faces], facecolor='orange', edgecolor='gray', alpha=.3)
-
-    # Plot decision function
-    if  plot_decision:
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        fig.suptitle("Decision volume")
-        if postech != 'marching':
-            ax.add_collection3d(mesh)
-        col = [(0, 0, 1), (.5, .5, .5), (1, 0, 0)]
-        cm = colors.LinearSegmentedColormap.from_list('BuRd',col,N=100)
-        midpoint = 1 - Z.max() / (Z.max() + abs(Z.min()))
-        shiftedcmap = shiftedColorMap(cm, midpoint=midpoint, name='shifted')
-        X = xx.ravel()
-        Y = yy.ravel()
-        T = zz.ravel()
-        p = ax.scatter(X, Y, T, c=Z, s=.1, alpha=.3, cmap=shiftedcmap)
-        cbar = fig.colorbar(p)
-        cbar.set_label('decision function value', rotation=270, labelpad=20)
-        ax.set_zlim([xx.min(),xx.max()])
-        ax.set_ylim([yy.min(),yy.max()])
-        ax.set_zlim([zz.min(),zz.max()])
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
     hist = np.histogram(Z)
     print 'counts: ', hist[0]
     print 'values: ', hist[1]
@@ -255,136 +204,57 @@ def frontier(clf, xx, yy, zz, bal=.5, postech='poly', poly='spline', plot_decisi
     Z = Z.reshape(xx.shape)
     print 'decision function shape: ', Z.shape
 
-    # Prediction labels
-    P = np.sign(Z)
-    if len(np.unique(P)) < 2:
-        print '>> WARNING <<'
-        print 'The algorithm classify everything in the same group: ', int(P[0])
+    if plot_poly:
+        fig = plt.figure()
+    # Computing fire arrival time from previous decision function
+    print '>> Computing fire arrival time...'
+    t_1 = time()
+    # xx 2-dimensional array
+    Fx = xx[:, :, 0]
+    # yy 2-dimensional array
+    Fy = yy[:, :, 0]
+    # zz 1-dimensional array
+    zr = zz[0, 0]
+    # Initializing fire arrival time
+    Fz = np.zeros(Fx.shape)
+    # For each x and y
+    for k1 in range(Fx.shape[0]):
+        for k2 in range(Fx.shape[1]):
+            # Approximate the vertical decision function by a piecewise polynomial (cubic spline interpolation)
+            pz = interpolate.CubicSpline(zr, Z[k1,k2])
+            # Compute the real roots of the the piecewise polynomial
+            rr = pz.roots()
+            # Just take the real roots between min(zz) and max(zz)
+            realr = rr.real[np.logical_and(abs(rr.imag) < 1e-5, np.logical_and(rr.real > zr.min(), rr.real < zr.max()))]
+            if len(realr) > 0:
+                # Take the minimum root
+                Fz[k1,k2] = realr.min()
+                # Plotting the approximated polynomial with the decision function
+                if plot_poly:
+                    plt.ion()
+                    plt.plot(pz(zr),zr)
+                    plt.plot(Z[k1,k2],zr,'+')
+                    plt.plot(np.zeros(len(realr)),realr,'o',c='g')
+                    plt.plot(0,Fz[k1,k2],'o',markersize=3,c='r')
+                    plt.title('Polynomial approximation of decision_function(%f,%f,z)' % (Fx[k1,k2],Fy[k1,k2]))
+                    plt.xlabel('decision function value')
+                    plt.ylabel('Z')
+                    plt.legend(['polynomial','decision values','roots','fire arrival time'])
+                    plt.xlim([Z.min(),Z.max()])
+                    plt.ylim([zz.min(),zz.max()])
+                    plt.show()
+                    plt.pause(.001)
+                    plt.cla()
+            else:
+                # If there is not a real root of the polynomial between zz.min() and zz.max(), just define as a Nan
+                Fz[k1,k2] = np.nan
+    t_2 = time()
+    print 'elapsed time: %ss.' % str(abs(t_2-t_1))
+    F = np.array([Fx,Fy,Fz.T])
 
-    if postech == 'marching':
-        # Ignore points with normal direction at z direction not very negative
-        nodes = verts[normals[:, 2] < -.15]
+    return F
 
-        # Plotting difference between before and after ignoring the points
-        if plot_interp:
-            fig = plt.figure()
-            ax = fig.gca(projection='3d')
-            fig.suptitle("Points after all the filters")
-            ax.scatter(nodes[:, 0], nodes[:, 1], nodes[:, 2], s=5, edgecolors='k', facecolor=None)
-            fig = plt.figure()
-            ax = fig.gca(projection='3d')
-            fig.suptitle("Initial resulting points")
-            ax.scatter(verts[:, 0], verts[:, 1], verts[:, 2], c='r')
-
-        # Computing fire arrival time from previous isosurface
-        print '>> Computing fire arrival time...'
-        t_1 = time()
-        try:
-            nxx, nyy = xx[:, :, 0], yy[:, :, 0]
-            points = np.array( (nodes[:, 0], nodes[:, 1]) ).T
-            values = nodes[:, 2]
-            nzz = interpolate.griddata(points,values,(nxx,nyy),method="cubic")
-            F = np.array([nxx,nyy,nzz])
-        except Exception:
-            print '>> WARNING <<'
-            print 'The result is not a function...'
-            F = np.empty(0)
-        t_2 = time()
-        print 'elapsed time: %ss.' % str(abs(t_2-t_1))
-    else:
-        if plot_poly:
-            fig = plt.figure()
-        # Computing fire arrival time from previous decision function
-        print '>> Computing fire arrival time...'
-        t_1 = time()
-        # xx 2-dimensional array
-        Fx = xx[:, :, 0]
-        # yy 2-dimensional array
-        Fy = yy[:, :, 0]
-        # zz 1-dimensional array
-        zr = zz[0, 0]
-        # Initializing fire arrival time
-        Fz = np.zeros(Fx.shape)
-        if postech == 'poly':
-            # For each x and y
-            for k1 in range(Fx.shape[0]):
-                for k2 in range(Fy.shape[0]):
-                    if poly == 'fit':
-                        # Approximate the vertical decision function by a polynomial of degree 11 (least squares)
-                        pz = np.polynomial.polynomial.Polynomial.fit(zr, Z[k1,k2], 11, domain=[zr.min(),zr.max()])
-                        # Compute the roots of the polynomial
-                        rr = pz.roots()
-                    elif poly == 'polyfit':
-                        # Approximate the vertical decision function by a polynomial of degree 11 (least squares)
-                        pp = np.polyfit(zr, Z[k1,k2], 11)
-                        # Create a 1D polygon from the previous polynomial
-                        pz = np.poly1d(pp)
-                        # Compute the roots of the polynomial
-                        rr = pz.roots
-                    elif poly == 'spline':
-                        # Approximate the vertical decision function by a piecewise polynomial (cubic spline interpolation)
-                        pz = interpolate.CubicSpline(zr, Z[k1,k2])
-                        # Compute the real roots of the the piecewise polynomial
-                        rr = pz.roots()
-                    else:
-                        print '>> FAILED <<'
-                        print 'Bad poly option: poly = ', poly
-                        sys.exit(1)
-                    # Just take the real roots between min(zz) and max(zz)
-                    realr = rr.real[np.logical_and(abs(rr.imag) < 1e-5, np.logical_and(rr.real > zr.min(), rr.real < zr.max()))]
-                    if len(realr) > 0:
-                        # Take the minimum root
-                        Fz[k1,k2] = realr.min()
-                        # Plotting the approximated polynomial with the decision function
-                        if plot_poly:
-                            plt.ion()
-                            plt.plot(pz(zr),zr)
-                            plt.plot(Z[k1,k2],zr,'+')
-                            plt.plot(np.zeros(len(realr)),realr,'o',c='g')
-                            plt.plot(0,Fz[k1,k2],'o',markersize=3,c='r')
-                            plt.title('Polynomial approximation of decision_function(%f,%f,z)' % (Fx[k1,k2],Fy[k1,k2]))
-                            plt.xlabel('decision function value')
-                            plt.ylabel('Z')
-                            plt.legend(['polynomial','decision values','roots','fire arrival time'])
-                            plt.xlim([Z.min(),Z.max()])
-                            plt.ylim([zz.min(),zz.max()])
-                            plt.show()
-                            plt.pause(.001)
-                            plt.cla()
-                    else:
-                        # If there is not a real root of the polynomial between zz.min() and zz.max(), just define as a Nan or -Nan
-                        if Z[k1,k2,-1] < 0:
-                            Fz[k1,k2] = 1000
-                        else:
-                            Fz[k1,k2] = -1000
-        elif postech == 'filter':
-            # For each x and y
-            for k1 in range(Fx.shape[0]):
-                for k2 in range(Fy.shape[0]):
-                    # Where negative values of the decision function?
-                    negz = Z[k1,k2] < 0
-                    if negz.sum() > 1:
-                        # Giving fire arrival time as the minimum z such that decision_function(x,y,z)<=0 and close to 0
-                        Fz[k1,k2] = zr[abs(Z[k1,k2,negz]).argsort()][0:2].min()
-                    elif negz.sum() > 0:
-                        # Giving fire arrival time as the only z such that decision_function(x,y,z)<=0 and close to 0
-                        Fz[k1,k2] = zr[abs(Z[k1,k2,negz]).argsort()]
-                    else:
-                        # Giving fire arrival time as the minimum z such that abs(decision_function(x,y,z)) close to 0
-                        Fz[k1,k2] = zr[abs(Z[k1,k2]).argsort()][0:4].min()
-        else:
-            print '>> FAILED <<'
-            print 'Bad post-processing technique specified: tech = ', tech
-            sys.exit(1)
-        t_2 = time()
-        print 'elapsed time: %ss.' % str(abs(t_2-t_1))
-        F = np.array([Fx,Fy,Fz])
-        # Not marching cubes algorithm used (no triangulation mesh produced)
-        mesh = None
-
-    return (F,P,mesh)
-
-def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
+def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     """
     3D SuperVector Machine analysis and plot
 
@@ -393,9 +263,8 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     :param C: Weight to not having outliers (argument of svm.SVC class), optional
     :param kgam: Scalar multiplier for gamma (capture more details increasing it)
     :param norm: Normalize the data in the interval (0,1) in all the directions, optional
-    :param svc: Support-vector machine technique, optional. Options:
-                    "SVC": classical support-vector classification
-                    "NuSVC": equivalent version controlling the number of supports
+    :param fire_grid: The longitud and latitude grid where to have the fire arrival time
+    :return F: tuple with (longitude grid, latitude grid, fire arrival time grid)
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2019-02-20
@@ -407,21 +276,15 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
 
     # Plot options
     # plot original data
-    plot_data = True
+    plot_data = False
     # plot scaled data with artificial data
-    plot_scaled = True
-    # plot meshgrid data before predicting and after predicting
-    plot_meshgrid = False
-    # plot decision function volume
-    plot_decision = True
-    # plot election of resulting nodes by normal direction (if postech=='marching')
-    plot_interp = False
+    plot_scaled = False
     # plot polynomial approximation (if postech=='poly')
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = True
+    plot_supports = False
     # plot resulting fire arrival time vs detections
-    plot_result = True
+    plot_result = False
 
     # Other options
     # number of horizontal nodes per observation
@@ -432,8 +295,6 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     hartil = .15
     # resolution of artificial lower bounds vertical to the ground detections
     hartiu = .05
-    # make a search of best C and gamma
-    search = False
     # creation of over and under artificial upper and lower bounds in the pre-processing
     arti = True
     # creation of an artifitial mesh of top upper bounds
@@ -441,17 +302,15 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     # creation of an artifitial mesh of down lower bounds
     downarti = True
     # proportion over max of z direction for upper bound artifitial creation
-    pmaxz = 1.1
+    dmaxz = 0.1
     # below min of z direction for lower bound artifitial creation
-    dz = 0.1
-    # post-processing method.
-    # options: 'marching': marching cubes algorithm and normal filter, 'filter': filter of the values, 'poly': polynomial approximation
-    postech = 'poly'
-    # if postech='poly', which polynomial approximation.
-    # options: 'fit': stable polynomial degree 11, 'polyfit': easy polynomial degree 11, 'spline': picewise polynomial
-    poly = 'spline'
+    dminz = 0.1
     # if not Nans in the data are wanted (all Nans are going to be replaced by the maximum value)
-    notnan = False
+    notnan = True
+    # coarsening of the fire mesh
+    coarse = 10
+    # interpolate in to the original fire mesh
+    interp = False
 
     # Data inputs
     X = np.array(X).astype(float)
@@ -510,14 +369,14 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
             xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
                                 np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
             # All the artificial new mesh are going to be over the data
-            znf = np.repeat(maxz*pmaxz,len(xn.ravel()))
+            znf = np.repeat(maxz+dmaxz,len(xn.ravel()))
             # Artifitial upper bounds
             Xfa = np.c_[(xn.ravel(),yn.ravel(),znf.ravel())]
             # Definition of new fire detections after top artificial upper detections
             Xfn = np.concatenate((Xf,Xfa))
             if downarti:
                 # All the artificial new mesh are going to be below the data
-                zng = np.repeat(minz-dz,len(xn.ravel()))
+                zng = np.repeat(minz-dminz,len(xn.ravel()))
                 # Artifitial lower bounds
                 Xga = np.c_[(xn.ravel(),yn.ravel(),zng.ravel())]
                 # Definition of new ground detections after down artificial lower detections
@@ -564,39 +423,17 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
 
     # Creating the SVM model
     print '>> Creating the SVM model...'
-    if svc=="SVC":
-        clf = svm.SVC(C=C, kernel="rbf", gamma=gamma, cache_size=1000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
-    elif svc=="NuSVC":
-        nu = (2.-1e-5) * min(n0,n1) / n_samples
-        clf = svm.NuSVC(nu=nu, kernel="rbf", gamma=gamma, cache_size=1000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
-    else:
-        print '>> FAILED <<'
-        print 'Bad Support-Vector Machine technique specified: svm = ', svm
-        sys.exit(1)
+    clf = svm.SVC(C=C, kernel="rbf", gamma=gamma, cache_size=1000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
     print clf
 
-    # Finding better values for C and gamma (only once to observe what are the best values)
+    # Fitting the data using Super Vector Machine technique
+    print '>> Fitting the SVM model...'
     t_1 = time()
-    if search:
-        from sklearn.model_selection import GridSearchCV
-        print '>> Searching for best value of C and gamma...'
-        # Grid Search
-        # Parameter Grid
-        param_grid = {'C': [0.1, 1, 10, 100], 'gamma': [1, 0.1, 0.01, 0.001, 0.00001, 10]}
-        # Make grid search classifier
-        clf = GridSearchCV(svm.SVC(cache_size=500,class_weight="balanced"), param_grid, verbose=1)
-        # Train the classifier
-        clf.fit(X, y)
-        print "Best Parameters:\n", clf.best_params_
-        print "Best Estimators:\n", clf.best_estimator_
-    else:
-        print '>> Fitting the SVM model...'
-        # Fitting the data using Super Vector Machine technique
-        clf.fit(X, y)
+    clf.fit(X, y)
     t_2 = time()
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
 
-    # Look if the classification failed
+    # Check if the classification failed
     if clf.fit_status_:
         print '>> FAILED <<'
         print 'Failed fitting the data'
@@ -625,54 +462,25 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
         it = (X2.min(),X2.max())
         vnodes = vN*nnodes
         sdim = (len(fxlon),len(fxlat),vnodes)
-        print 'grid_size = %dx%dx%d = %d' % (sdim[0],sdim[1],sdim[2],np.prod(sdim))
+        print 'fire_grid_size = %dx%dx%d = %d' % (sdim + (np.prod(sdim),))
         t_1 = time()
-        xx, yy, zz = make_fire_mesh(fxlon,fxlat,it,sdim[2])
+        xx, yy, zz = make_fire_mesh(fxlon, fxlat, it, sdim[2], coarse=coarse)
         t_2 = time()
+        print 'grid_created = %dx%dx%d = %d' % (zz.shape + (np.prod(zz.shape),))
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
 
-    # Plotting the mesh grid to evaluate
-    if plot_meshgrid:
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        fig.suptitle("Meshgrid to evaluate")
-        ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        ax.scatter(xx, yy, zz, c='g', s=1, edgecolors=None)
-        ax.set_xlim(xx.min(),xx.max())
-        ax.set_ylim(yy.min(),yy.max())
-        ax.set_zlim(zz.min(),zz.max())
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+    # Computing the 2D fire arrival time, F
+    print '>> Computing the 2D fire arrival time, F...'
+    F = frontier(clf, xx, yy, zz, plot_poly=plot_poly)
 
-    # Computing the fire arrival time (F), the labels of the mesh grid (P), and the Separating Hyperplane of the SVM classification (mesh)
-    (F,P,mesh) = frontier(clf, xx, yy, zz, postech=postech, poly=poly, plot_decision=plot_decision, plot_interp=plot_interp, plot_poly=plot_poly)
-
-    # Plotting the mesh grid evaluated
-    if plot_meshgrid:
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        fig.suptitle("Meshgrid evaluated")
-        ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        ax.scatter(xx, yy, zz, c=P.ravel(), cmap=plt.cm.coolwarm, s=.5, edgecolors=None, vmin=y.min(), vmax=y.max())
-        ax.set_xlim(xx.min(),xx.max())
-        ax.set_ylim(yy.min(),yy.max())
-        ax.set_zlim(zz.min(),zz.max())
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-
+    print '>> Creating final results...'
     # Plotting the Separating Hyperplane of the SVM classification with the support vectors
     if plot_supports:
-        print '>> Plotting the hyperplane with supports...'
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
         # plotting the separating hyperplane
-        if mesh is not None:
-            ax.add_collection3d(mesh)
-        else:
-            ax.plot_wireframe(F[0], F[1], F[2], color='orange')
+        ax.plot_wireframe(F[0], F[1], F[2], color='orange')
         # computing the indeces where no support vectors
         rr = np.array(range(len(y)))
         ms = np.isin(rr,clf.support_)
@@ -690,16 +498,16 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
 
     # Plot the fire arrival time resulting from the SVM classification normalized
     if plot_result and (F.size != 0):
-        Fx, Fy, Fz = F[0], F[1], F[2]
+        Fx, Fy, Fz = np.array(F[0]), np.array(F[1]), np.array(F[2])
+        with np.errstate(invalid='ignore'):
+            Fz[Fz > X2.max()] = np.nan
         if notnan:
-            with np.errstate(invalid='ignore'):
-                Fz[Fz > oX2.max()] = np.nan
-            Fz[np.isnan(Fz)] = oX2.max()
-            Fz = np.minimum(Fz, oX2.max())
+            Fz[np.isnan(Fz)] = X2.max()
+            Fz = np.minimum(Fz, X2.max())
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         # plotting fire arrival time
-        p = ax.plot_surface(F[0], F[1], F[2], cmap=plt.cm.coolwarm,
+        p = ax.plot_surface(Fx, Fy, Fz, cmap=plt.cm.coolwarm,
                        linewidth=0, antialiased=False)
         ax.set_xlim(xx.min(),xx.max())
         ax.set_ylim(yy.min(),yy.max())
@@ -714,27 +522,32 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
         f0 = F[0] * xlen + xmin
         f1 = F[1] * ylen + ymin
         f2 = F[2] * zlen + zmin
-        F[0] = f0
-        F[1] = f1
-        F[2] = f2
+        F = np.array([f0,f1,f2])
 
     # Set all the larger values at the end to be the same maximum value
     oX0, oX1, oX2 = oX[:, 0], oX[:, 1], oX[:, 2]
     Fx, Fy, Fz = F[0], F[1], F[2]
+    with np.errstate(invalid='ignore'):
+        Fz[Fz > oX2.max()] = np.nan
     if notnan:
-        with np.errstate(invalid='ignore'):
-            Fz[Fz > oX2.max()] = np.nan
         Fz[np.isnan(Fz)] = oX2.max()
         Fz = np.minimum(Fz, oX2.max())
 
+    if (not fire_grid is None) and (interp):
+        Flon = fire_grid[0]
+        Flat = fire_grid[1]
+        points = np.c_[Fx.ravel(),Fy.ravel()]
+        values = Fz.ravel()
+        Ffire = interpolate.griddata(points,values,(Flon,Flat))
+        F = np.array([Flon,Flat,Ffire])
+
     # Plot the fire arrival time resulting from the SVM classification
     if plot_result and (F.size != 0):
-        print '>> Plotting result to original scale...'
         # Plotting the result
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         fig.suptitle("Plotting the 3D graph function of a SVM")
-        oX0, oX1, oX2 = oX[:, 0], oX[:, 1], oX[:, 2]
+        Fx, Fy, Fz = F[0], F[1], F[2]
         # plotting original data
         ax.scatter(oX0, oX1, oX2, c=oy, cmap=plt.cm.coolwarm, s=2, vmin=y.min(), vmax=y.max())
         # plotting fire arrival time

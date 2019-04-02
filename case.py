@@ -3,9 +3,12 @@ from JPSSD import *
 from interpolation import sort_dates
 from setup import process_satellite_detections
 from svm import preprocess_data_svm, SVM3
+from contline import get_contour_verts
+from contour2kml import contour2kml
 import saveload as sl
 import datetime as dt
 import sys
+from time import time
 
 if len(sys.argv) != 4:
 	print 'Error: python %s wrfout start_time days' % sys.argv[0]
@@ -19,6 +22,8 @@ if len(sys.argv) != 4:
 	print '		SS - second'
 	print '	* days - float, number of days of simulation (can be less than a day)'
 	sys.exit(0)
+
+t_init = time()
 
 print ''
 print '>> Reading the fire mesh <<'
@@ -76,12 +81,15 @@ print '>> Saving satellite data file (data) <<'
 sys.stdout.flush()
 time_num=map(time_iso2num,time_iso)
 sl.save((data,fxlon,fxlat,time_num),'data')
+print 'data file saved correctly!'
 
 print ''
 print '>> Processing satellite data <<'
 sys.stdout.flush()
 result=process_satellite_detections(data,fxlon,fxlat,time_num)
 
+print ''
+print '>> Preprocessing the data <<'
 # Taking necessary variables from result dictionary
 scale = result['time_scale_num']
 time_num_granules = result['time_num_granules']
@@ -90,9 +98,6 @@ lat = result['fxlat']
 U = np.array(result['U']).astype(float)
 L = np.array(result['L']).astype(float)
 T = np.array(result['T']).astype(float)
-
-print ''
-print '>> Preprocessing the data <<'
 sys.stdout.flush()
 X,y=preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules)
 
@@ -115,6 +120,21 @@ svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
 # Save resulting file
 sio.savemat('svm.mat', mdict=svm)
 print 'The results are saved in svm.mat file'
-print 'To obtain the kml with the contour lines, run contlinesvm.py'
 
+print ''
+print '>> Computing contour lines of the fire arrival time <<'
+print 'Computing the contours...'
+# Scale fire arrival time
+fmc_g = F[2]*tscale+scale[0]
+# Granules numeric times
+data = get_contour_verts(F[0], F[1], fmc_g, time_num_granules, contour_dt_hours=.05, contour_dt_init=.05, contour_dt_final=.05)
+print 'Creating the KML file...'
+# Creating the KML file
+contour2kml(data,'perimeters_svm.kml')
+print 'The resulting contour lines are saved in perimeters_svm.kml file'
+
+print ''
+print '>> DONE <<'
+t_final = time()
+print 'Elapsed time for all the process: %ss.' % str(abs(t_final-t_init))
 sys.exit()
