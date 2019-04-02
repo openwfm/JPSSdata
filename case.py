@@ -22,6 +22,7 @@ if len(sys.argv) != 4:
 
 print ''
 print '>> Reading the fire mesh <<'
+sys.stdout.flush()
 fxlon,fxlat,bbox,time_esmf=read_fire_mesh(sys.argv[1])
 # converting times to ISO
 dti=dt.datetime.strptime(sys.argv[2],'%Y%m%d%H%M%S')
@@ -32,10 +33,12 @@ time_iso=(time_start_iso,time_final_iso)
 
 print ''
 print '>> Retrieving satellite data <<'
+sys.stdout.flush()
 data=retrieve_af_data(bbox,time_iso)
 
 print ''
 print '>> Generating KML of fire and ground detections<<'
+sys.stdout.flush()
 csv=False # CSV file of fire detections
 opt='granules' # KML folders sorted by (pixels, granules or dates)
 # sort the granules by dates
@@ -70,11 +73,13 @@ else:
 
 print ''
 print '>> Saving satellite data file (data) <<'
+sys.stdout.flush()
 time_num=map(time_iso2num,time_iso)
 sl.save((data,fxlon,fxlat,time_num),'data')
 
 print ''
 print '>> Processing satellite data <<'
+sys.stdout.flush()
 result=process_satellite_detections(data,fxlon,fxlat,time_num)
 
 # Taking necessary variables from result dictionary
@@ -88,16 +93,19 @@ T = np.array(result['T']).astype(float)
 
 print ''
 print '>> Preprocessing the data <<'
+sys.stdout.flush()
 X,y=preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules)
 
 print ''
 print '>> Running Support Vector Machine <<'
+sys.stdout.flush()
 C = 10.
 kgam = 10.
 F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(fxlon,fxlat))
 
 print ''
 print '>> Saving the results <<'
+sys.stdout.flush()
 tscale = 24*3600
 # Creating the dictionary with the results
 svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
