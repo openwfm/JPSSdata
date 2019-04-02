@@ -310,7 +310,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     # coarsening of the fire mesh
     coarse = 10
     # interpolate in to the original fire mesh
-    interp = False
+    interp = True
 
     # Data inputs
     X = np.array(X).astype(float)
