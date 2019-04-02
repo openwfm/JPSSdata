@@ -309,7 +309,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     notnan = True
     # coarsening of the fire mesh
     coarse = 10
-    # interpolate in to the original fire mesh
+    # interpolate into the original fire mesh
     interp = True
 
     # Data inputs

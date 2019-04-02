@@ -118,7 +118,7 @@ def search_archive(url,prod,time,grans):
     print "%s gets %s hits in this range" % (prod.split('/')[-1],len(granules))
     return granules
 
-def get_meta(bbox,time,maxg=50):
+def get_meta(bbox,time,maxg=50,burned=False):
     """
     Get all the meta data from the API for all the necessary products
 
@@ -149,10 +149,11 @@ def get_meta(bbox,time,maxg=50):
     granules.VNP03=search_api("VNP03MODLL",bbox,time,maxg)
     #VNP14hi: VIIRS fire data, res 375m
     #granules.VNP14hi=search_api("VNP14IMGTDL_NRT",bbox,time,maxg)
-    #VNP09: VIIRS Atmospherically corrected surface reflectance
-    url="https://ladsweb.modaps.eosdis.nasa.gov/archive/allData" # base url
-    prod="5000/VNP09" # product
-    granules.VNP09=search_archive(url,prod,time,granules.VNP03)
+    if burned:
+        #VNP09: VIIRS Atmospherically corrected surface reflectance
+        url="https://ladsweb.modaps.eosdis.nasa.gov/archive/allData" # base url
+        prod="5000/VNP09" # product
+        granules.VNP09=search_archive(url,prod,time,granules.VNP03)
     return granules
 
 def group_files(path,reg):
@@ -678,7 +679,7 @@ def download_GOES16(time):
             print 'download failed with error %s' % e
     return bucket
 
-def retrieve_af_data(bbox,time):
+def retrieve_af_data(bbox,time,burned=False):
     """
     Retrieve the data in a bounding box coordinates and time interval and save it in a Matlab structure inside the out.mat Matlab file
 
@@ -704,7 +705,7 @@ def retrieve_af_data(bbox,time):
     print maxg
 
     # Get data
-    granules=get_meta(bbox,time,maxg)
+    granules=get_meta(bbox,time,maxg,burned=burned)
     #print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': '))
 
     # Eliminating the NRT data (repeated always)
