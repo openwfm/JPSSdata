@@ -68,7 +68,7 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
     muu = nuu.max() # could be a different value like a mean value
     # Create a mask with lower bound less than the previous maximum upper bound value
     with np.errstate(invalid='ignore'):
-        low = (ll < muu)
+        low = (ll <= muu)
     if low.sum() > 10000:
         # Create a mask with all False of low size
         mask = np.repeat(False,len(low[low == True]))
@@ -103,7 +103,7 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
     return X,y
 
 
-def make_fire_mesh(fxlon, fxlat, it, nt):
+def make_fire_mesh(fxlon, fxlat, it, nt, course=50):
     """
     Create a mesh of points to evaluate the decision function
 
@@ -117,9 +117,8 @@ def make_fire_mesh(fxlon, fxlat, it, nt):
     Angel Farguell (angel.farguell@gmail.com), 2019-04-01
     """
 
-    x = fxlon[0]
-    y = fxlat[:,0]
-
+    x = fxlon[0][0::course]
+    y = fxlat[:,0][0::course]
     xx, yy, zz = np.meshgrid(x,y,np.linspace(it[0],it[1],nt))
 
     return xx, yy, zz
@@ -353,8 +352,11 @@ def frontier(clf, xx, yy, zz, bal=.5, postech='poly', poly='spline', plot_decisi
                             plt.pause(.001)
                             plt.cla()
                     else:
-                        # If there is not a real root of the polynomial between zz.min() and zz.max(), just define as a Nan
-                        Fz[k1,k2] = np.nan
+                        # If there is not a real root of the polynomial between zz.min() and zz.max(), just define as a Nan or -Nan
+                        if Z[k1,k2,-1] < 0:
+                            Fz[k1,k2] = 1000
+                        else:
+                            Fz[k1,k2] = -1000
         elif postech == 'filter':
             # For each x and y
             for k1 in range(Fx.shape[0]):
@@ -405,21 +407,21 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
 
     # Plot options
     # plot original data
-    plot_data = False
+    plot_data = True
     # plot scaled data with artificial data
-    plot_scaled = False
+    plot_scaled = True
     # plot meshgrid data before predicting and after predicting
     plot_meshgrid = False
     # plot decision function volume
-    plot_decision = False
+    plot_decision = True
     # plot election of resulting nodes by normal direction (if postech=='marching')
     plot_interp = False
     # plot polynomial approximation (if postech=='poly')
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = False
+    plot_supports = True
     # plot resulting fire arrival time vs detections
-    plot_result = False
+    plot_result = True
 
     # Other options
     # number of horizontal nodes per observation
@@ -436,8 +438,12 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     arti = True
     # creation of an artifitial mesh of top upper bounds
     toparti = True
+    # creation of an artifitial mesh of down lower bounds
+    downarti = True
     # proportion over max of z direction for upper bound artifitial creation
     pmaxz = 1.1
+    # below min of z direction for lower bound artifitial creation
+    dz = 0.1
     # post-processing method.
     # options: 'marching': marching cubes algorithm and normal filter, 'filter': filter of the values, 'poly': polynomial approximation
     postech = 'poly'
@@ -445,7 +451,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     # options: 'fit': stable polynomial degree 11, 'polyfit': easy polynomial degree 11, 'spline': picewise polynomial
     poly = 'spline'
     # if not Nans in the data are wanted (all Nans are going to be replaced by the maximum value)
-    notnan = True
+    notnan = False
 
     # Data inputs
     X = np.array(X).astype(float)
@@ -501,16 +507,30 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
         # Top artificial upper bounds
         if toparti:
             # Creation of the x,y new mesh of artificial upper bounds
-            xnf, ynf = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
+            xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
                                 np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
             # All the artificial new mesh are going to be over the data
-            znf = np.repeat(maxz*pmaxz,len(xnf.ravel()))
+            znf = np.repeat(maxz*pmaxz,len(xn.ravel()))
+            # Artifitial upper bounds
+            Xfa = np.c_[(xn.ravel(),yn.ravel(),znf.ravel())]
             # Definition of new fire detections after top artificial upper detections
-            Xfn = np.concatenate((Xf,np.c_[(xnf.ravel(),ynf.ravel(),znf.ravel())]))
-            # New definition of the training vectors
-            X = np.concatenate((Xg, Xfn))
-            # New definition of the target values
-            y = np.concatenate((np.repeat(np.unique(y)[0],len(Xg)),np.repeat(np.unique(y)[1],len(Xfn))))
+            Xfn = np.concatenate((Xf,Xfa))
+            if downarti:
+                # All the artificial new mesh are going to be below the data
+                zng = np.repeat(minz-dz,len(xn.ravel()))
+                # Artifitial lower bounds
+                Xga = np.c_[(xn.ravel(),yn.ravel(),zng.ravel())]
+                # Definition of new ground detections after down artificial lower detections
+                Xgn = np.concatenate((Xg,Xga))
+                # New definition of the training vectors
+                X = np.concatenate((Xgn, Xfn))
+                # New definition of the target values
+                y = np.concatenate((np.repeat(np.unique(y)[0],len(Xgn)),np.repeat(np.unique(y)[1],len(Xfn))))
+            else:
+                # New definition of the training vectors
+                X = np.concatenate((Xg, Xfn))
+                # New definition of the target values
+                y = np.concatenate((np.repeat(np.unique(y)[0],len(Xg)),np.repeat(np.unique(y)[1],len(Xfn))))
         else:
             # New definition of the training vectors
             X = np.concatenate((Xg, Xf))
@@ -586,9 +606,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
 
     # Creating the mesh grid to evaluate the classification
     print '>> Creating mesh grid to evaluate the classification...'
+    nnodes = np.ceil(np.power(n_samples,1./n_features))
     if fire_grid is None:
         # Number of necessary nodes
-        nnodes = np.ceil(np.power(n_samples,1./n_features))
         hnodes = hN*nnodes
         vnodes = vN*nnodes
         print 'number of horizontal nodes (%d meshgrid nodes for each observation): %d' % (hN,hnodes)
@@ -603,8 +623,11 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
         fxlon = np.divide(fire_grid[0] - xmin, xlen)
         fxlat = np.divide(fire_grid[1] - ymin, ylen)
         it = (X2.min(),X2.max())
+        vnodes = vN*nnodes
+        sdim = (len(fxlon),len(fxlat),vnodes)
+        print 'grid_size = %dx%dx%d = %d' % (sdim[0],sdim[1],sdim[2],np.prod(sdim))
         t_1 = time()
-        xx, yy, zz = make_fire_mesh(fxlon,fxlat,it,vnodes)
+        xx, yy, zz = make_fire_mesh(fxlon,fxlat,it,sdim[2])
         t_2 = time()
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
 
@@ -668,11 +691,11 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     # Plot the fire arrival time resulting from the SVM classification normalized
     if plot_result and (F.size != 0):
         Fx, Fy, Fz = F[0], F[1], F[2]
-        with np.errstate(invalid='ignore'):
-            Fz[Fz > X2.max()] = np.nan
         if notnan:
-            Fz[np.isnan(Fz)] = X2.max()
-            Fz = np.minimum(Fz, X2.max())
+            with np.errstate(invalid='ignore'):
+                Fz[Fz > oX2.max()] = np.nan
+            Fz[np.isnan(Fz)] = oX2.max()
+            Fz = np.minimum(Fz, oX2.max())
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         # plotting fire arrival time
@@ -698,9 +721,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, svc="SVC", fire_grid=None):
     # Set all the larger values at the end to be the same maximum value
     oX0, oX1, oX2 = oX[:, 0], oX[:, 1], oX[:, 2]
     Fx, Fy, Fz = F[0], F[1], F[2]
-    with np.errstate(invalid='ignore'):
-        Fz[Fz > oX2.max()] = np.nan
     if notnan:
+        with np.errstate(invalid='ignore'):
+            Fz[Fz > oX2.max()] = np.nan
         Fz[np.isnan(Fz)] = oX2.max()
         Fz = np.minimum(Fz, oX2.max())
 

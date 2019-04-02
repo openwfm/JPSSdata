@@ -94,14 +94,15 @@ print ''
 print '>> Running Support Vector Machine <<'
 C = 10.
 kgam = 10.
-F = SVM3(X,y,C=C,kgam=kgam)
+F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(fxlon,fxlat))
 
 print ''
 print '>> Saving the results <<'
+tscale = 24*3600
 # Creating the dictionary with the results
-svm = {'dxlon': lon, 'dxlat': lat, 'U': U, 'L': L,
+svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
         'fxlon': F[0], 'fxlat': F[1], 'fmc_g': F[2],
-        'tscale': 24*3600, 'time_num_granules': time_num_granules,
+        'tscale': tscale, 'time_num_granules': time_num_granules,
         'time_scale_num': scale}
 # Save resulting file
 sio.savemat('svm.mat', mdict=svm)
