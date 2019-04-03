@@ -287,30 +287,32 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     plot_result = False
 
     # Other options
-    # number of horizontal nodes per observation
-    hN = 5
     # number of vertical nodes per observation
     vN = 1
-    # resolution of artificial upper bounds vertical to the fire detections
-    hartil = .15
-    # resolution of artificial lower bounds vertical to the ground detections
-    hartiu = .05
-    # creation of over and under artificial upper and lower bounds in the pre-processing
-    arti = True
-    # creation of an artifitial mesh of top upper bounds
-    toparti = True
-    # creation of an artifitial mesh of down lower bounds
-    downarti = True
-    # proportion over max of z direction for upper bound artifitial creation
-    dmaxz = 0.1
-    # below min of z direction for lower bound artifitial creation
-    dminz = 0.1
-    # if not Nans in the data are wanted (all Nans are going to be replaced by the maximum value)
-    notnan = True
     # coarsening of the fire mesh
     coarse = 1
     # interpolate into the original fire mesh
     interp = False
+    # if not Nans in the data are wanted (all Nans are going to be replaced by the maximum value)
+    notnan = True
+
+    # Options better to not change
+    # number of horizontal nodes per observation (if fire_grid==None)
+    hN = 5
+    # creation of over and under artificial upper and lower bounds in the pre-processing
+    arti = True
+    # resolution of artificial upper bounds vertical to the fire detections
+    hartil = .15
+    # resolution of artificial lower bounds vertical to the ground detections
+    hartiu = .05
+    # creation of an artifitial mesh of top upper bounds
+    toparti = True
+    # proportion over max of z direction for upper bound artifitial creation
+    dmaxz = 0.1
+    # creation of an artifitial mesh of down lower bounds
+    downarti = True
+    # below min of z direction for lower bound artifitial creation
+    dminz = 0.1
 
     # Data inputs
     X = np.array(X).astype(float)

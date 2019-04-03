@@ -96,6 +96,7 @@ else:
 		json=sdata2json(sdata,keys,dkeys,N)
 		json2kml(json,fire_file,bbox,prods)
 	if gfile:
+		print ''
 		print '>> File %s already created! <<' % ground_file
 	else:
 		# writting ground detections file
