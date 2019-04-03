@@ -131,7 +131,7 @@ print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 C = 10.
 kgam = 10.
-F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(fxlon,fxlat))
+F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat))
 
 print ''
 print '>> Saving the results <<'
@@ -152,7 +152,7 @@ print 'Computing the contours...'
 # Scale fire arrival time
 fmc_g = F[2]*tscale+scale[0]
 # Granules numeric times
-data = get_contour_verts(F[0], F[1], fmc_g, time_num_granules, contour_dt_hours=3, contour_dt_init=3, contour_dt_final=3)
+data = get_contour_verts(F[0], F[1], fmc_g, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
 print 'Creating the KML file...'
 # Creating the KML file
 contour2kml(data,'perimeters_svm.kml')

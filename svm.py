@@ -308,9 +308,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     # if not Nans in the data are wanted (all Nans are going to be replaced by the maximum value)
     notnan = True
     # coarsening of the fire mesh
-    coarse = 10
+    coarse = 1
     # interpolate into the original fire mesh
-    interp = True
+    interp = False
 
     # Data inputs
     X = np.array(X).astype(float)
