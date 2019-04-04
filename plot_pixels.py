@@ -5,33 +5,36 @@ from matplotlib.patches import Rectangle
 from matplotlib.collections import PatchCollection
 from matplotlib.transforms import Affine2D
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.colors import LinearSegmentedColormap
+from mpl_toolkits.basemap import Basemap
 import saveload as sl
 from interpolation import sort_dates
+import StringIO
 import sys
 
 def create_pixels(lons,lats,widths,heights,alphas,color,label):
 	"""
-    Plot of pixels using centers (lons,lats), with sizes (widhts,heights), angle alphas, and color color.
-    
-    :param lons: array of longitude coordinates at the center of the pixels
-    :param lats: array of latitude coordinates at the center of the pixels
-    :param widths: array of widhts of the pixels
-    :param heights: array of heights of the pixels
-    :param alphas: array of angles of the pixels
-    :param color: tuple with RGB color values
-    :return col: collection of rectangles with the pixels
-                 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
-    Angel Farguell (angel.farguell@gmail.com) 2018-12-28
-    """
+	Plot of pixels using centers (lons,lats), with sizes (widhts,heights), angle alphas, and color color.
+
+	:param lons: array of longitude coordinates at the center of the pixels
+	:param lats: array of latitude coordinates at the center of the pixels
+	:param widths: array of widhts of the pixels
+	:param heights: array of heights of the pixels
+	:param alphas: array of angles of the pixels
+	:param color: tuple with RGB color values
+	:return col: collection of rectangles with the pixels
+
+	Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+	Angel Farguell (angel.farguell@gmail.com) 2018-12-28
+	"""
 
 	# Create pixels
 	pixels=[]
 	for x, y, h, w, a in zip(lons, lats, heights, widths, alphas):
-	    xpos = x - w/2 # The x position will be half the width from the center
-	    ypos = y - h/2 # same for the y position, but with height
-	    rect = Rectangle( (xpos, ypos), w, h, a) # Create a rectangle
-	    pixels.append(rect) # Add the rectangle patch to our list
+		xpos = x - w/2 # The x position will be half the width from the center
+		ypos = y - h/2 # same for the y position, but with height
+		rect = Rectangle( (xpos, ypos), w, h, a) # Create a rectangle
+		pixels.append(rect) # Add the rectangle patch to our list
 
 	# Create a collection from the rectangles
 	col = PatchCollection(pixels)
@@ -44,50 +47,88 @@ def create_pixels(lons,lats,widths,heights,alphas,color,label):
 
 	return col
 
+def basemap_scatter_mercator(g,bounds,map):
+	size = 30
+	# Satellite pixels
+	flon = g.lon.ravel()
+	flat = g.lat.ravel()
+	fire=g.fire.ravel()
+	fil=np.logical_and(np.logical_and(np.logical_and(flon>bounds[0],flon<bounds[1]),flat>bounds[2]),flat<bounds[3])
+	fi=np.array(fire[fil] > 6)
+	lon_fire = flon[fil][fi]
+	lat_fire = flat[fil][fi]
+	mask_fire = fire[fil][fi]
+	lons=np.concatenate((g.lon_nofire,lon_fire))
+	lats=np.concatenate((g.lat_nofire,lat_fire))
+	conf=np.concatenate((np.zeros(g.lon_nofire.shape),mask_fire - 6))
+
+	fig = plt.figure(frameon=False,figsize=(12,8),dpi=72*2)
+	plt.axis('off')
+	colors = [(0,0.5,0),(1, 1, 0), (1, 0.65, 0), (0.5,0,0)]
+	cmap = LinearSegmentedColormap.from_list('fire_detections', colors, N=4)
+	m.scatter(lons,lats,size,c=conf,latlon=True,marker='.',cmap=cmap,vmin=-0.5,vmax=3.5)
+
+	str_io = StringIO.StringIO()
+	plt.savefig(str_io,bbox_inches='tight',format='png',pad_inches=0,transparent=True)
+
+	'''
+	#colorbar
+	cb = plt.colorbar(ticks=range(0,4))
+	cb.ax.tick_params(length=0)
+	cb.ax.set_yticklabels(['Ground','Fire low','Fire nominal','Fire high'])
+	'''
+
+	plt.close()
+
+	numpy_bounds = [ (bounds[0],bounds[2]),(bounds[1],bounds[2]),(bounds[1],bounds[3]),(bounds[0],bounds[3]) ]
+	float_bounds = [ (float(x), float(y)) for x,y in numpy_bounds ]
+	return str_io.getvalue(), float_bounds
+
+
 def center_pixels_plot(g,bounds):
 	"""
-    Center pixels plot: generates a plot of the center of the pixels.
-    
-    :param g: granule dictionary from read_*_files functions in JPSSD.py
-    :param bounds: array with the coordinates of the bounding box of the case
-    :return: 2D plot of the center of the pixels
-                 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
-    Angel Farguell (angel.farguell@gmail.com) 2018-12-28
-    """
+	Center pixels plot: generates a plot of the center of the pixels.
+
+	:param g: granule dictionary from read_*_files functions in JPSSD.py
+	:param bounds: array with the coordinates of the bounding box of the case
+	:return: 2D plot of the center of the pixels
+
+	Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+	Angel Farguell (angel.farguell@gmail.com) 2018-12-28
+	"""
 
 	fig=plt.figure()
 	ax=fig.add_subplot(111)
 
-    # Size of the center of the pixels
-	size=100
+	# Size of the center of the pixels
+	size=80
 
 	# Ground pixels
 	lons=np.array(g.lon_nofire)
 	lats=np.array(g.lat_nofire)
 	color=(0,0.59765625,0)
-	plt.scatter(lons,lats,size,marker='.',color=color)
+	plt.scatter(lons,lats,size,marker='.',color=color,edgecolors='k')
+
+	plt.colorbar()
 
 	# Fire pixels
-	lons=np.array(g.lon_fire)
-	lats=np.array(g.lat_fire)
 	color=(0.59765625,0,0)
-	plt.scatter(lons,lats,size,marker='.',color=color)
+	plt.scatter(lons,lats,size,marker='.',color=color,edgecolors='k')
 
 	ax.set_xlim(bounds[0],bounds[1])
 	ax.set_ylim(bounds[2],bounds[3])
 
 def pixels_plot(g,bounds):
 	"""
-    Regular pixels plot: generates a plot of the pixels using a regular grid by distances.
-    
-    :param g: granule dictionary from read_*_files functions in JPSSD.py
-    :param bounds: array with the coordinates of the bounding box of the case
-    :return: 2D plot of the pixels
-                 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
-    Angel Farguell (angel.farguell@gmail.com) 2018-12-28
-    """
+	Regular pixels plot: generates a plot of the pixels using a regular grid by distances.
+
+	:param g: granule dictionary from read_*_files functions in JPSSD.py
+	:param bounds: array with the coordinates of the bounding box of the case
+	:return: 2D plot of the pixels
+
+	Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+	Angel Farguell (angel.farguell@gmail.com) 2018-12-28
+	"""
 
 	lon=g.lon
 	lat=g.lat
@@ -191,9 +232,10 @@ def pixels_plot(g,bounds):
 	#cb.set_ticklabels(colors)
 
 def perror():
-	print "Error: python %s pixel_plot_type" % sys.argv[0] 
-	print "  - Center pixels plot: 0."
-	print "  - Regular pixels plot: 1."
+	print "Error: python %s pixel_plot_type" % sys.argv[0]
+	print "  - Center pixels in basemap: 0"
+	print "  - Center pixels plot: 1"
+	print "  - Regular pixels plot: 2"
 
 if __name__ == "__main__":
 	if len(sys.argv)!=2:
@@ -219,12 +261,20 @@ if __name__ == "__main__":
 	print 'Plotting data...'
 	# Plot pixels
 	if sys.argv[1] is '0':
+		m = Basemap(projection='merc',llcrnrlat=bounds[2], urcrnrlat=bounds[3], llcrnrlon=bounds[0], urcrnrlon=bounds[1])
+		for g in granules:
+			raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bounds,m)
+			plt.title('Granule %s' % g[0])
+			with open(g[0]+'.png', 'w') as f:
+				f.write(raster_png_data)
+			print '> File %s saved.' % g[0]
+	elif sys.argv[1] is '1':
 		for g in granules:
 			center_pixels_plot(g[1],bounds)
 			plt.title('Granule %s' % g[0])
+		plt.show()
 	else:
 		for g in granules:
 			pixels_plot(g[1],bounds)
 			plt.title('Granule %s' % g[0])
-
-	plt.show()
+		plt.show()
