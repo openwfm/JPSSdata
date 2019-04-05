@@ -11,6 +11,7 @@ import saveload as sl
 from interpolation import sort_dates
 import StringIO
 import sys
+import os
 
 def create_pixels(lons,lats,widths,heights,alphas,color,label):
 	"""
@@ -231,6 +232,49 @@ def pixels_plot(g,bounds):
 
 	#cb.set_ticklabels(colors)
 
+def create_kml(kml_data,kml_path):
+	with open(kml_path,'w') as kml:
+		kml.write("""<?xml version="1.0" encoding="UTF-8"?>\n""")
+		kml.write("""<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">\n""")
+		kml.write("""<Document><name>Satellite Data</name>""")
+		kml.write("""
+		<Folder>
+			<name>granules</name>""")
+		for idx,data in enumerate(kml_data):
+			name = data['name']
+			time = data['time']
+			png = data['png_file']
+			bounds = data['bounds']
+			coord = (str(bounds[0]),str(bounds[2]),
+				str(bounds[1]),str(bounds[2]),
+				str(bounds[1]),str(bounds[3]),
+				str(bounds[0]),str(bounds[3]),
+				str(bounds[0]),str(bounds[2]))
+			kml.write("""
+			<GroundOverlay>
+				<name>%s</name>
+				<Icon><href>%s</href></Icon>
+				<gx:TimeStamp><when>%s</when></gx:TimeStamp>""" % (
+			   	name, png, time))
+			kml.write("""
+				<gx:LatLonQuad>
+    				<coordinates>
+    					%s,%s,0
+    					%s,%s,0
+	    				%s,%s,0
+	    				%s,%s,0
+	    				%s,%s,0
+    				</coordinates>
+  				</gx:LatLonQuad>""" % coord)
+			kml.write("""
+			</GroundOverlay>""")
+		kml.write("""
+		</Folder>""")
+		kml.write("""</Document>\n</kml>\n""")
+
+	print 'Created file %s' % kml_path
+
+
 def perror():
 	print "Error: python %s pixel_plot_type" % sys.argv[0]
 	print "  - Center pixels in basemap: 0"
@@ -262,12 +306,22 @@ if __name__ == "__main__":
 	# Plot pixels
 	if sys.argv[1] is '0':
 		m = Basemap(projection='merc',llcrnrlat=bounds[2], urcrnrlat=bounds[3], llcrnrlon=bounds[0], urcrnrlon=bounds[1])
-		for g in granules:
+		kmld = []
+		for idx, g in enumerate(granules):
 			raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bounds,m)
-			plt.title('Granule %s' % g[0])
-			with open(g[0]+'.png', 'w') as f:
+			print corner_coords
+			bounds = (corner_coords[0][0],corner_coords[1][0],corner_coords[0][1],corner_coords[2][1])
+			print bounds
+			pngfile = g[0]+'.png'
+			timestamp = g[1].acq_date + 'T' + g[1].acq_time[0:2] + ':' + g[1].acq_time[2:4] + 'Z'
+			print timestamp
+			with open(pngfile, 'w') as f:
 				f.write(raster_png_data)
 			print '> File %s saved.' % g[0]
+			kmld.append(Dict({'name': g[0], 'png_file': pngfile, 'bounds': bounds, 'time': timestamp}))
+		create_kml(kmld,'./doc.kml')
+		os.system('zip -r granules.kmz doc.kml *.png')
+		print 'Created file granules.kmz'
 	elif sys.argv[1] is '1':
 		for g in granules:
 			center_pixels_plot(g[1],bounds)
