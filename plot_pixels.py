@@ -309,12 +309,9 @@ if __name__ == "__main__":
 		kmld = []
 		for idx, g in enumerate(granules):
 			raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bounds,m)
-			print corner_coords
 			bounds = (corner_coords[0][0],corner_coords[1][0],corner_coords[0][1],corner_coords[2][1])
-			print bounds
 			pngfile = g[0]+'.png'
 			timestamp = g[1].acq_date + 'T' + g[1].acq_time[0:2] + ':' + g[1].acq_time[2:4] + 'Z'
-			print timestamp
 			with open(pngfile, 'w') as f:
 				f.write(raster_png_data)
 			print '> File %s saved.' % g[0]
