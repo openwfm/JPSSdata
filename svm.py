@@ -117,9 +117,10 @@ def make_fire_mesh(fxlon, fxlat, it, nt, coarse=10):
     """
 
     coarse = int(coarse)
-    x = fxlon[0][0::coarse]
-    y = fxlat[:,0][0::coarse]
-    xx, yy, zz = np.meshgrid(x,y,np.linspace(it[0],it[1],nt))
+    xx = np.repeat(fxlon[:, :, np.newaxis], nt, axis=2)
+    yy = np.repeat(fxlat[:, :, np.newaxis], nt, axis=2)
+    tt = np.linspace(it[0],it[1],nt)
+    zz = np.swapaxes(np.swapaxes(np.array([np.ones(fxlon.shape)*t for t in tt]),0,1),1,2)
 
     return xx, yy, zz
 
@@ -163,8 +164,8 @@ def make_meshgrid(x, y, z, s=(50,50,50), exp=.1):
     y_min, y_max = y.min() - bry * hy, y.max() + bry * hy
     z_min, z_max = z.min() - brz * hz, z.max() + brz * hz
     # generating the mesh grid
-    xx, yy, zz = np.meshgrid(np.linspace(x_min, x_max, sx),
-                             np.linspace(y_min, y_max, sy),
+    xx, yy, zz = np.meshgrid(np.linspace(y_min, y_max, sy),
+                             np.linspace(x_min, x_max, sx),
                              np.linspace(z_min, z_max, sz))
     return xx, yy, zz
 
@@ -250,7 +251,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
                 Fz[k1,k2] = np.nan
     t_2 = time()
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
-    F = np.array([Fx,Fy,Fz.T])
+    F = np.array([Fx,Fy,Fz])
 
     return F
 

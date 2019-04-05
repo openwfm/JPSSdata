@@ -35,11 +35,11 @@ contour_file = 'perimeters_svm.kml'
 
 print ''
 if os.path.isfile(bounds_file) and os.access(bounds_file,os.R_OK):
-	print '>> Reading the fire mesh <<'
-	sys.stdout.flush()
-	fxlon,fxlat,bbox,time_esmf=read_fire_mesh(sys.argv[1])
+	#print '>> Reading the fire mesh <<'
+	#sys.stdout.flush()
+	#fxlon,fxlat,bbox,time_esmf=read_fire_mesh(sys.argv[1])
 
-	print ''
+	#print ''
 	print '>> File %s already created! Skipping all satellite processing <<' % bounds_file
 	print 'Loading from %s...' % bounds_file
 	result = loadmat(bounds_file)
