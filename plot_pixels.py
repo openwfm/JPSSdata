@@ -48,6 +48,7 @@ def create_pixels(lons,lats,widths,heights,alphas,color,label):
 
 	return col
 
+
 def basemap_scatter_mercator(g,bounds,map):
 	"""
 	Scatter plot of fire and ground pixels in a png file using a basemap with mercator projection
@@ -125,14 +126,15 @@ def center_pixels_plot(g,bounds):
 	color=(0,0.59765625,0)
 	plt.scatter(lons,lats,size,marker='.',color=color,edgecolors='k')
 
-	plt.colorbar()
-
 	# Fire pixels
+	lons=np.array(g.lon_fire)
+	lats=np.array(g.lat_fire)
 	color=(0.59765625,0,0)
 	plt.scatter(lons,lats,size,marker='.',color=color,edgecolors='k')
 
 	ax.set_xlim(bounds[0],bounds[1])
 	ax.set_ylim(bounds[2],bounds[3])
+
 
 def pixels_plot(g,bounds):
 	"""
@@ -241,11 +243,6 @@ def pixels_plot(g,bounds):
 	ax.set_xlim(bounds[0],bounds[1])
 	ax.set_ylim(bounds[2],bounds[3])
 
-	# Color map
-	#colors=[(0,0.59765625,0),(0.59765625,0,0)]
-	#cmap=mp.colors.ListedColormap(colors)
-
-	#cb.set_ticklabels(colors)
 
 def create_kml(kml_data,kml_path):
 	"""
@@ -311,7 +308,7 @@ if __name__ == "__main__":
 		perror()
 		sys.exit(1)
 	else:
-		if sys.argv[1] not in ['0','1']:
+		if sys.argv[1] not in ['0','1','2']:
 			perror()
 			print "Invalid value given: %s" % sys.argv[1]
 			sys.exit(1)
