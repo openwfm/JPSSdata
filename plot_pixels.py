@@ -49,19 +49,32 @@ def create_pixels(lons,lats,widths,heights,alphas,color,label):
 	return col
 
 def basemap_scatter_mercator(g,bounds,map):
+	"""
+	Scatter plot of fire and ground pixels in a png file using a basemap with mercator projection
+
+	:param g: granule dictionary from read_*_files functions in JPSSD.py
+	:param bounds: array with the coordinates of the bounding box of the case
+	:param map: basemap mercator map where to plot the center of the pixels
+	:return png: string with png plot
+	:return float_bounds: coordinates of the borders of the png file
+
+	Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+	Angel Farguell (angel.farguell@gmail.com) 2018-04-05
+	"""
+
 	size = 30
 	# Satellite pixels
 	flon = g.lon.ravel()
 	flat = g.lat.ravel()
-	fire=g.fire.ravel()
-	fil=np.logical_and(np.logical_and(np.logical_and(flon>bounds[0],flon<bounds[1]),flat>bounds[2]),flat<bounds[3])
-	fi=np.array(fire[fil] > 6)
+	fire = g.fire.ravel()
+	fil = np.logical_and(np.logical_and(np.logical_and(flon>bounds[0],flon<bounds[1]),flat>bounds[2]),flat<bounds[3])
+	fi = np.array(fire[fil] > 6)
 	lon_fire = flon[fil][fi]
 	lat_fire = flat[fil][fi]
 	mask_fire = fire[fil][fi]
-	lons=np.concatenate((g.lon_nofire,lon_fire))
-	lats=np.concatenate((g.lat_nofire,lat_fire))
-	conf=np.concatenate((np.zeros(g.lon_nofire.shape),mask_fire - 6))
+	lons = np.concatenate((g.lon_nofire,lon_fire))
+	lats = np.concatenate((g.lat_nofire,lat_fire))
+	conf = np.concatenate((np.zeros(g.lon_nofire.shape),mask_fire - 6))
 
 	fig = plt.figure(frameon=False,figsize=(12,8),dpi=72*2)
 	plt.axis('off')
@@ -81,9 +94,11 @@ def basemap_scatter_mercator(g,bounds,map):
 
 	plt.close()
 
+	png = str_io.getvalue()
+
 	numpy_bounds = [ (bounds[0],bounds[2]),(bounds[1],bounds[2]),(bounds[1],bounds[3]),(bounds[0],bounds[3]) ]
 	float_bounds = [ (float(x), float(y)) for x,y in numpy_bounds ]
-	return str_io.getvalue(), float_bounds
+	return png, float_bounds
 
 
 def center_pixels_plot(g,bounds):
@@ -233,6 +248,16 @@ def pixels_plot(g,bounds):
 	#cb.set_ticklabels(colors)
 
 def create_kml(kml_data,kml_path):
+	"""
+	Creation of KML file with png files from basemap_scatter_mercator function
+
+	:param kml_data: dictionary with granules to plot information: name, png_file, bounds, time
+	:param kml_path: path to kml to generate
+
+	Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+	Angel Farguell (angel.farguell@gmail.com) 2018-04-05
+	"""
+
 	with open(kml_path,'w') as kml:
 		kml.write("""<?xml version="1.0" encoding="UTF-8"?>\n""")
 		kml.write("""<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">\n""")
