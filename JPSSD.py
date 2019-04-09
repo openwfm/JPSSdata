@@ -872,31 +872,31 @@ def plot_3D(xx,yy,zz):
 
 def time_iso2num(time_iso):
     """
-    Transform an iso time string to a time integer number of seconds since January 1, 1970
+    Transform an iso time string to a time integer number of seconds since December 31 1969 at 17:00:00
 
     :param time_iso: string iso date
-    :return s: integer number of seconds since January 1, 1970
+    :return s: integer number of seconds since December 31 1969 at 17:00:00
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
     time_datetime=datetime.datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
-    # seconds since January 1, 1970
+    # seconds since December 31 1969 at 17:00:00
     s=time.mktime(time_datetime.timetuple())
     return s
 
 def time_num2iso(time_num):
     """
-    Transform a time integer number of seconds since January 1, 1970 to an iso time string
+    Transform a time integer number of seconds since December 31 1969 at 17:00:00 to an iso time string
 
-    :param time_num: integer number of seconds since January 1, 1970
+    :param time_num: integer number of seconds since December 31 1969 at 17:00:00
     :return date: time string in ISO date
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com) 2018-10-01
     """
     dt=datetime.datetime.fromtimestamp(time_num)
-    # seconds since January 1, 1970
+    # seconds since December 31 1969 at 17:00:00
     date='%02d-%02d-%02dT%02d:%02d:%02dZ' % (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second)
     return date
 
