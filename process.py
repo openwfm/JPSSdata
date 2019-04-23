@@ -118,6 +118,7 @@ else:
 
 lon = result['fxlon']
 lat = result['fxlat']
+time_num_interval = result['time_num']
 U = np.array(result['U']).astype(float)
 L = np.array(result['L']).astype(float)
 T = np.array(result['T']).astype(float)
@@ -140,9 +141,9 @@ sys.stdout.flush()
 tscale = 24*3600
 # Creating the dictionary with the results
 svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
-        'fxlon': F[0], 'fxlat': F[1], 'fmc_g': F[2],
+        'fxlon': F[0], 'fxlat': F[1], 'tign_g': F[2]*tscale+scale[0]-time_num_interval[0],
         'tscale': tscale, 'time_num_granules': time_num_granules,
-        'time_scale_num': scale}
+        'time_scale_num': scale, 'time_num': time_num_interval}
 # Save resulting file
 sio.savemat('svm.mat', mdict=svm)
 print 'The results are saved in svm.mat file'
@@ -151,9 +152,9 @@ print ''
 print '>> Computing contour lines of the fire arrival time <<'
 print 'Computing the contours...'
 # Scale fire arrival time
-fmc_g = F[2]*tscale+scale[0]
+tign_g = F[2]*tscale+scale[0]
 # Granules numeric times
-data = get_contour_verts(F[0], F[1], fmc_g, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
+data = get_contour_verts(F[0], F[1], tign_g, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
 print 'Creating the KML file...'
 # Creating the KML file
 contour2kml(data,'perimeters_svm.kml')
