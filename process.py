@@ -141,7 +141,8 @@ sys.stdout.flush()
 tscale = 24*3600
 # Creating the dictionary with the results
 svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
-        'fxlon': F[0], 'fxlat': F[1], 'tign_g': F[2]*tscale+scale[0]-time_num_interval[0],
+        'fxlon': F[0], 'fxlat': F[1], 'Z': F[2],
+        'tign_g': F[2]*tscale+scale[0]-time_num_interval[0],
         'tscale': tscale, 'time_num_granules': time_num_granules,
         'time_scale_num': scale, 'time_num': time_num_interval}
 # Save resulting file
