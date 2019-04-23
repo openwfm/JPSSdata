@@ -1,5 +1,6 @@
 from utils import *
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.collections import PatchCollection
@@ -63,36 +64,70 @@ def basemap_scatter_mercator(g,bounds,map):
 	Angel Farguell (angel.farguell@gmail.com) 2018-04-05
 	"""
 
-	size = 30
+	size = 50
 	# Satellite pixels
 	flon = g.lon.ravel()
 	flat = g.lat.ravel()
-	fire = g.fire.ravel()
-	fil = np.logical_and(np.logical_and(np.logical_and(flon>bounds[0],flon<bounds[1]),flat>bounds[2]),flat<bounds[3])
-	fi = np.array(fire[fil] > 6)
-	lon_fire = flon[fil][fi]
-	lat_fire = flat[fil][fi]
-	mask_fire = fire[fil][fi]
-	lons = np.concatenate((g.lon_nofire,lon_fire))
-	lats = np.concatenate((g.lat_nofire,lat_fire))
-	conf = np.concatenate((np.zeros(g.lon_nofire.shape),mask_fire - 6))
+	mask = g.fire.ravel()
 
+	fil = np.logical_and(np.logical_and(np.logical_and(flon>bounds[0],flon<bounds[1]),flat>bounds[2]),flat<bounds[3])
+
+	categories = (np.array(mask[fil] == 3), np.array(mask[fil] == 5),
+				np.array(mask[fil] == 7), np.array(mask[fil] == 8),
+				np.array(mask[fil] == 9))
+	alphas = (.2,.2,.4,.5,.6)
+	labels = ('Water','Ground','Fire low','Fire nominal','Fire high')
+
+	lon = []
+	lat = []
+	val = []
+	for i,cat in enumerate(categories):
+		lon.append(flon[fil][cat])
+		lat.append(flat[fil][cat])
+		val.append(np.ones(lon[i].shape)*i)
+
+	N = len(categories)
 	fig = plt.figure(frameon=False,figsize=(12,8),dpi=72*2)
 	plt.axis('off')
-	colors = [(0,0.5,0),(1, 1, 0), (1, 0.65, 0), (0.5,0,0)]
-	cmap = LinearSegmentedColormap.from_list('fire_detections', colors, N=4)
-	m.scatter(lons,lats,size,c=conf,latlon=True,marker='.',cmap=cmap,vmin=-0.5,vmax=3.5)
+	colors = [(0,0,.5),(0,.5,0),(1,1,0),(1,.65,0),(.5,0,0)]
+	cmap = LinearSegmentedColormap.from_list('fire_detections', colors, N=N)
+	for i in range(N):
+		m.scatter(lon[i],lat[i],size,c=val[i],latlon=True,marker='.',cmap=cmap,vmin=-.5,vmax=N-.5,alpha=alphas[i],linewidths=0)
 
 	str_io = StringIO.StringIO()
 	plt.savefig(str_io,bbox_inches='tight',format='png',pad_inches=0,transparent=True)
 
-	'''
 	#colorbar
-	cb = plt.colorbar(ticks=range(0,4))
-	cb.ax.tick_params(length=0)
-	cb.ax.set_yticklabels(['Ground','Fire low','Fire nominal','Fire high'])
-	'''
+	orientation = 'vertical'
+	size_in = 2
+	cb_label = ''
 
+	kwargs = { 'norm': mpl.colors.Normalize(-.5,N-.5),
+			   'orientation': orientation,
+			   'spacing': 'proportional',
+			   'ticks': range(0,N),
+			   'cmap': cmap}
+
+	# build figure according to requested orientation
+	hsize, wsize = (size_in,size_in*0.5) if orientation == 'vertical' else (size_in*0.5,size_in)
+	fig = plt.figure(figsize=(wsize,hsize))
+
+	# proportions that work with axis title (horizontal not tested)
+	ax = fig.add_axes([.5,.03,.12,.8]) if orientation=='vertical' else fig.add_axes([0.03,.4,.8,.12])
+
+	# construct the colorbar and modify properties
+	cb = mpl.colorbar.ColorbarBase(ax,**kwargs)
+	cb.ax.tick_params(length=0)
+	cb.ax.set_yticklabels(labels)
+	cb.set_label(cb_label,color='0',fontsize=8,labelpad=-50)
+
+	# move ticks to left side
+	ax.yaxis.set_ticks_position('left')
+	for tick_lbl in ax.get_yticklabels():
+		tick_lbl.set_color('0')
+		tick_lbl.set_fontsize(5)
+
+	#plt.show()
 	plt.close()
 
 	png = str_io.getvalue()
@@ -277,17 +312,17 @@ def create_kml(kml_data,kml_path):
 				<name>%s</name>
 				<Icon><href>%s</href></Icon>
 				<gx:TimeStamp><when>%s</when></gx:TimeStamp>""" % (
-			   	name, png, time))
+				name, png, time))
 			kml.write("""
 				<gx:LatLonQuad>
-    				<coordinates>
-    					%s,%s,0
-    					%s,%s,0
-	    				%s,%s,0
-	    				%s,%s,0
-	    				%s,%s,0
-    				</coordinates>
-  				</gx:LatLonQuad>""" % coord)
+					<coordinates>
+						%s,%s,0
+						%s,%s,0
+						%s,%s,0
+						%s,%s,0
+						%s,%s,0
+					</coordinates>
+				</gx:LatLonQuad>""" % coord)
 			kml.write("""
 			</GroundOverlay>""")
 		kml.write("""
