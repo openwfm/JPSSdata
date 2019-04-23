@@ -46,6 +46,7 @@ if os.path.isfile(bounds_file) and os.access(bounds_file,os.R_OK):
 	# Taking necessary variables from result dictionary
 	scale = result['time_scale_num'][0]
 	time_num_granules = result['time_num_granules'][0]
+	time_num_interval = result['time_num'][0]
 else:
 	if os.path.isfile(satellite_file) and os.access(satellite_file,os.R_OK):
 		print '>> File %s already created! Skipping satellite retrieval <<' % satellite_file
@@ -115,10 +116,10 @@ else:
 	# Taking necessary variables from result dictionary
 	scale = result['time_scale_num']
 	time_num_granules = result['time_num_granules']
+	time_num_interval = result['time_num']
 
 lon = result['fxlon']
 lat = result['fxlat']
-time_num_interval = result['time_num']
 U = np.array(result['U']).astype(float)
 L = np.array(result['L']).astype(float)
 T = np.array(result['T']).astype(float)
