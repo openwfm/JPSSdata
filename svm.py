@@ -191,6 +191,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
 
     # Evaluating the decision function
     print '>> Evaluating the decision function...'
+    sys.stdout.flush()
     t_1 = time()
     ZZ = clf.decision_function(XX)
     t_2 = time()
@@ -208,6 +209,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
         fig = plt.figure()
     # Computing fire arrival time from previous decision function
     print '>> Computing fire arrival time...'
+    sys.stdout.flush()
     t_1 = time()
     # xx 2-dimensional array
     Fx = xx[:, :, 0]
@@ -276,15 +278,15 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
 
     # Plot options
     # plot original data
-    plot_data = True
+    plot_data = False
     # plot scaled data with artificial data
-    plot_scaled = True
+    plot_scaled = False
     # plot polynomial approximation (if postech=='poly')
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = True
+    plot_supports = False
     # plot resulting fire arrival time vs detections
-    plot_result = True
+    plot_result = False
 
     # Other options
     # number of vertical nodes per observation
@@ -423,11 +425,13 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
 
     # Creating the SVM model
     print '>> Creating the SVM model...'
+    sys.stdout.flush()
     clf = svm.SVC(C=C, kernel="rbf", gamma=gamma, cache_size=1000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
     print clf
 
     # Fitting the data using Super Vector Machine technique
     print '>> Fitting the SVM model...'
+    sys.stdout.flush()
     t_1 = time()
     clf.fit(X, y)
     t_2 = time()
@@ -471,9 +475,11 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
 
     # Computing the 2D fire arrival time, F
     print '>> Computing the 2D fire arrival time, F...'
+    sys.stdout.flush()
     F = frontier(clf, xx, yy, zz, plot_poly=plot_poly)
 
     print '>> Creating final results...'
+    sys.stdout.flush()
     # Plotting the Separating Hyperplane of the SVM classification with the support vectors
     if plot_supports:
         fig = plt.figure()
