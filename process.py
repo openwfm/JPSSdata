@@ -1,15 +1,24 @@
 # General python for any case
-from JPSSD import *
+from JPSSD import read_fire_mesh, retrieve_af_data, sdata2json, json2kml
 from interpolation import sort_dates
 from setup import process_satellite_detections
 from svm import preprocess_data_svm, SVM3
 from contline import get_contour_verts
 from contour2kml import contour2kml
 import saveload as sl
-from scipy.io import loadmat
+from scipy.io import loadmat, savemat
+import numpy as np
 import datetime as dt
 import sys
+import os
 from time import time
+
+satellite_file = 'data'
+fire_file = 'fire_detections.kml'
+ground_file = 'nofire.kml'
+bounds_file = 'result.mat'
+svm_file = 'svm.mat'
+contour_file = 'perimeters_svm.kml'
 
 if len(sys.argv) != 4:
 	print 'Error: python %s wrfout start_time days' % sys.argv[0]
@@ -26,20 +35,8 @@ if len(sys.argv) != 4:
 
 t_init = time()
 
-satellite_file = 'data'
-fire_file = 'fire_detections.kml'
-ground_file = 'nofire.kml'
-bounds_file = 'result.mat'
-svm_file = 'svm.mat'
-contour_file = 'perimeters_svm.kml'
-
 print ''
 if os.path.isfile(bounds_file) and os.access(bounds_file,os.R_OK):
-	#print '>> Reading the fire mesh <<'
-	#sys.stdout.flush()
-	#fxlon,fxlat,bbox,time_esmf=read_fire_mesh(sys.argv[1])
-
-	#print ''
 	print '>> File %s already created! Skipping all satellite processing <<' % bounds_file
 	print 'Loading from %s...' % bounds_file
 	result = loadmat(bounds_file)
@@ -140,26 +137,28 @@ print ''
 print '>> Saving the results <<'
 sys.stdout.flush()
 tscale = 24*3600
+# Fire arrival time in seconds from the begining of the simulation
+tign_g = F[2]*float(tscale)+scale[0]-time_num_interval[0]
 # Creating the dictionary with the results
 svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
         'fxlon': F[0], 'fxlat': F[1], 'Z': F[2],
-        'tign_g': F[2]*tscale+scale[0]-time_num_interval[0],
+        'tign_g': tign_g,
         'tscale': tscale, 'time_num_granules': time_num_granules,
         'time_scale_num': scale, 'time_num': time_num_interval}
 # Save resulting file
-sio.savemat('svm.mat', mdict=svm)
+savemat('svm.mat', mdict=svm)
 print 'The results are saved in svm.mat file'
 
 print ''
 print '>> Computing contour lines of the fire arrival time <<'
 print 'Computing the contours...'
-# Scale fire arrival time
-tign_g = F[2]*tscale+scale[0]
+# Fire arrival time in seconds from an old date
+Z = F[2]*tscale+scale[0]
 # Granules numeric times
-data = get_contour_verts(F[0], F[1], tign_g, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
+contour_data = get_contour_verts(F[0], F[1], Z, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
 print 'Creating the KML file...'
 # Creating the KML file
-contour2kml(data,'perimeters_svm.kml')
+contour2kml(contour_data,'perimeters_svm.kml')
 print 'The resulting contour lines are saved in perimeters_svm.kml file'
 
 print ''
