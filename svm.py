@@ -306,7 +306,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     # resolution of artificial lower bounds vertical to the ground detections
     hartiu = .05
     # creation of an artifitial mesh of top upper bounds
-    toparti = True
+    toparti = False
     # proportion over max of z direction for upper bound artifitial creation
     dmaxz = 0.1
     # creation of an artifitial mesh of down lower bounds
@@ -365,40 +365,41 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         Xg = np.concatenate([ np.c_[(np.repeat(fl[k][0],len(flz[k])),np.repeat(fl[k][1],len(flz[k])),flz[k])] for k in range(len(flz)) ])
         # Definition of new fire detections after artificial detections added
         Xf = np.concatenate([ np.c_[(np.repeat(fu[k][0],len(fuz[k])),np.repeat(fu[k][1],len(fuz[k])),fuz[k])] for k in range(len(fuz)) ])
+
         # Top artificial upper bounds
         if toparti:
             # Creation of the x,y new mesh of artificial upper bounds
             xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
-                                np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
+                np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
             # All the artificial new mesh are going to be over the data
             znf = np.repeat(maxz+dmaxz,len(xn.ravel()))
             # Artifitial upper bounds
             Xfa = np.c_[(xn.ravel(),yn.ravel(),znf.ravel())]
             # Definition of new fire detections after top artificial upper detections
             Xfn = np.concatenate((Xf,Xfa))
-            if downarti:
-                # All the artificial new mesh are going to be below the data
-                zng = np.repeat(minz-dminz,len(xn.ravel()))
-                # Artifitial lower bounds
-                Xga = np.c_[(xn.ravel(),yn.ravel(),zng.ravel())]
-                # Definition of new ground detections after down artificial lower detections
-                Xgn = np.concatenate((Xg,Xga))
-                # New definition of the training vectors
-                X = np.concatenate((Xgn, Xfn))
-                # New definition of the target values
-                y = np.concatenate((np.repeat(np.unique(y)[0],len(Xgn)),np.repeat(np.unique(y)[1],len(Xfn))))
-            else:
-                # New definition of the training vectors
-                X = np.concatenate((Xg, Xfn))
-                # New definition of the target values
-                y = np.concatenate((np.repeat(np.unique(y)[0],len(Xg)),np.repeat(np.unique(y)[1],len(Xfn))))
         else:
-            # New definition of the training vectors
-            X = np.concatenate((Xg, Xf))
-            # New definition of the target values
-            y = np.concatenate((np.repeat(np.unique(y)[0],len(Xg)),np.repeat(np.unique(y)[1],len(Xf))))
-        # New definition of each feature vector
-        X0, X1, X2 = X[:, 0], X[:, 1], X[:, 2]
+            Xfn = Xf
+
+        # Bottom artificial lower bounds
+        if downarti:
+            # Creation of the x,y new mesh of artificial lower bounds
+            xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
+                np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
+            # All the artificial new mesh are going to be below the data
+            zng = np.repeat(minz-dminz,len(xn.ravel()))
+            # Artifitial lower bounds
+            Xga = np.c_[(xn.ravel(),yn.ravel(),zng.ravel())]
+            # Definition of new ground detections after down artificial lower detections
+            Xgn = np.concatenate((Xg,Xga))
+        else:
+            Xgn = Xg
+
+        # New definition of the training vectors
+        X = np.concatenate((Xgn, Xfn))
+        # New definition of the target values
+        y = np.concatenate((np.repeat(np.unique(y)[0],len(Xgn)),np.repeat(np.unique(y)[1],len(Xfn))))
+    	# New definition of each feature vector
+    	X0, X1, X2 = X[:, 0], X[:, 1], X[:, 2]
 
     # Printing number of samples and features
     n0 = (y==np.unique(y)[0]).sum().astype(float)

@@ -39,6 +39,7 @@ if len(sys.argv) != 4 and (not bounds_exists) and (not satellite_exists):
 	print '		MM - minute'
 	print '		SS - second'
 	print '	* days - float, number of days of simulation (can be less than a day)'
+	print 'or link an existent file %s or %s' % (satellite_file,bounds_file)
 	sys.exit(0)
 
 t_init = time()
