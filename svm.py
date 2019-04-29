@@ -101,7 +101,7 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
 
     return X,y
 
-def make_fire_mesh(fxlon, fxlat, it, nt, coarse=10):
+def make_fire_mesh(fxlon, fxlat, it, nt):
     """
     Create a mesh of points to evaluate the decision function
 
@@ -116,7 +116,6 @@ def make_fire_mesh(fxlon, fxlat, it, nt, coarse=10):
     Angel Farguell (angel.farguell@gmail.com), 2019-04-01
     """
 
-    coarse = int(coarse)
     xx = np.repeat(fxlon[:, :, np.newaxis], nt, axis=2)
     yy = np.repeat(fxlat[:, :, np.newaxis], nt, axis=2)
     tt = np.linspace(it[0],it[1],nt)
@@ -192,23 +191,25 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
 
     # Evaluating the decision function
     print '>> Evaluating the decision function...'
+    sys.stdout.flush()
     t_1 = time()
-    Z = clf.decision_function(XX)
+    ZZ = clf.decision_function(XX)
     t_2 = time()
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
-    hist = np.histogram(Z)
+    hist = np.histogram(ZZ)
     print 'counts: ', hist[0]
     print 'values: ', hist[1]
-    print 'decision function range: ', Z.min(), '~', Z.max()
+    print 'decision function range: ', ZZ.min(), '~', ZZ.max()
 
     # Reshaping decision function volume
-    Z = Z.reshape(xx.shape)
+    Z = ZZ.reshape(xx.shape)
     print 'decision function shape: ', Z.shape
 
     if plot_poly:
         fig = plt.figure()
     # Computing fire arrival time from previous decision function
     print '>> Computing fire arrival time...'
+    sys.stdout.flush()
     t_1 = time()
     # xx 2-dimensional array
     Fx = xx[:, :, 0]
@@ -251,7 +252,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
                 Fz[k1,k2] = np.nan
     t_2 = time()
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
-    F = np.array([Fx,Fy,Fz])
+    F = [Fx,Fy,Fz]
 
     return F
 
@@ -290,8 +291,6 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     # Other options
     # number of vertical nodes per observation
     vN = 1
-    # coarsening of the fire mesh
-    coarse = 1
     # interpolate into the original fire mesh
     interp = False
     # if not Nans in the data are wanted (all Nans are going to be replaced by the maximum value)
@@ -307,7 +306,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     # resolution of artificial lower bounds vertical to the ground detections
     hartiu = .05
     # creation of an artifitial mesh of top upper bounds
-    toparti = True
+    toparti = False
     # proportion over max of z direction for upper bound artifitial creation
     dmaxz = 0.1
     # creation of an artifitial mesh of down lower bounds
@@ -366,40 +365,41 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         Xg = np.concatenate([ np.c_[(np.repeat(fl[k][0],len(flz[k])),np.repeat(fl[k][1],len(flz[k])),flz[k])] for k in range(len(flz)) ])
         # Definition of new fire detections after artificial detections added
         Xf = np.concatenate([ np.c_[(np.repeat(fu[k][0],len(fuz[k])),np.repeat(fu[k][1],len(fuz[k])),fuz[k])] for k in range(len(fuz)) ])
+
         # Top artificial upper bounds
         if toparti:
             # Creation of the x,y new mesh of artificial upper bounds
             xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
-                                np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
+                np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
             # All the artificial new mesh are going to be over the data
             znf = np.repeat(maxz+dmaxz,len(xn.ravel()))
             # Artifitial upper bounds
             Xfa = np.c_[(xn.ravel(),yn.ravel(),znf.ravel())]
             # Definition of new fire detections after top artificial upper detections
             Xfn = np.concatenate((Xf,Xfa))
-            if downarti:
-                # All the artificial new mesh are going to be below the data
-                zng = np.repeat(minz-dminz,len(xn.ravel()))
-                # Artifitial lower bounds
-                Xga = np.c_[(xn.ravel(),yn.ravel(),zng.ravel())]
-                # Definition of new ground detections after down artificial lower detections
-                Xgn = np.concatenate((Xg,Xga))
-                # New definition of the training vectors
-                X = np.concatenate((Xgn, Xfn))
-                # New definition of the target values
-                y = np.concatenate((np.repeat(np.unique(y)[0],len(Xgn)),np.repeat(np.unique(y)[1],len(Xfn))))
-            else:
-                # New definition of the training vectors
-                X = np.concatenate((Xg, Xfn))
-                # New definition of the target values
-                y = np.concatenate((np.repeat(np.unique(y)[0],len(Xg)),np.repeat(np.unique(y)[1],len(Xfn))))
         else:
-            # New definition of the training vectors
-            X = np.concatenate((Xg, Xf))
-            # New definition of the target values
-            y = np.concatenate((np.repeat(np.unique(y)[0],len(Xg)),np.repeat(np.unique(y)[1],len(Xf))))
-        # New definition of each feature vector
-        X0, X1, X2 = X[:, 0], X[:, 1], X[:, 2]
+            Xfn = Xf
+
+        # Bottom artificial lower bounds
+        if downarti:
+            # Creation of the x,y new mesh of artificial lower bounds
+            xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
+                np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
+            # All the artificial new mesh are going to be below the data
+            zng = np.repeat(minz-dminz,len(xn.ravel()))
+            # Artifitial lower bounds
+            Xga = np.c_[(xn.ravel(),yn.ravel(),zng.ravel())]
+            # Definition of new ground detections after down artificial lower detections
+            Xgn = np.concatenate((Xg,Xga))
+        else:
+            Xgn = Xg
+
+        # New definition of the training vectors
+        X = np.concatenate((Xgn, Xfn))
+        # New definition of the target values
+        y = np.concatenate((np.repeat(np.unique(y)[0],len(Xgn)),np.repeat(np.unique(y)[1],len(Xfn))))
+    	# New definition of each feature vector
+    	X0, X1, X2 = X[:, 0], X[:, 1], X[:, 2]
 
     # Printing number of samples and features
     n0 = (y==np.unique(y)[0]).sum().astype(float)
@@ -426,11 +426,13 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
 
     # Creating the SVM model
     print '>> Creating the SVM model...'
+    sys.stdout.flush()
     clf = svm.SVC(C=C, kernel="rbf", gamma=gamma, cache_size=1000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
     print clf
 
     # Fitting the data using Super Vector Machine technique
     print '>> Fitting the SVM model...'
+    sys.stdout.flush()
     t_1 = time()
     clf.fit(X, y)
     t_2 = time()
@@ -464,19 +466,21 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         fxlat = np.divide(fire_grid[1] - ymin, ylen)
         it = (X2.min(),X2.max())
         vnodes = vN*nnodes
-        sdim = (len(fxlon),len(fxlat),vnodes)
+        sdim = (fxlon.shape[0],fxlon.shape[1],vnodes)
         print 'fire_grid_size = %dx%dx%d = %d' % (sdim + (np.prod(sdim),))
         t_1 = time()
-        xx, yy, zz = make_fire_mesh(fxlon, fxlat, it, sdim[2], coarse=coarse)
+        xx, yy, zz = make_fire_mesh(fxlon, fxlat, it, sdim[2])
         t_2 = time()
         print 'grid_created = %dx%dx%d = %d' % (zz.shape + (np.prod(zz.shape),))
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
 
     # Computing the 2D fire arrival time, F
     print '>> Computing the 2D fire arrival time, F...'
+    sys.stdout.flush()
     F = frontier(clf, xx, yy, zz, plot_poly=plot_poly)
 
     print '>> Creating final results...'
+    sys.stdout.flush()
     # Plotting the Separating Hyperplane of the SVM classification with the support vectors
     if plot_supports:
         fig = plt.figure()
@@ -500,7 +504,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         ax.set_zlabel("Z")
 
     # Plot the fire arrival time resulting from the SVM classification normalized
-    if plot_result and (F.size != 0):
+    if plot_result:
         Fx, Fy, Fz = np.array(F[0]), np.array(F[1]), np.array(F[2])
         with np.errstate(invalid='ignore'):
             Fz[Fz > X2.max()] = np.nan
@@ -525,36 +529,41 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         f0 = F[0] * xlen + xmin
         f1 = F[1] * ylen + ymin
         f2 = F[2] * zlen + zmin
-        F = np.array([f0,f1,f2])
+        FF = [f0,f1,f2]
 
     # Set all the larger values at the end to be the same maximum value
     oX0, oX1, oX2 = oX[:, 0], oX[:, 1], oX[:, 2]
-    Fx, Fy, Fz = F[0], F[1], F[2]
+    FFx, FFy, FFz = FF[0], FF[1], FF[2]
+
     with np.errstate(invalid='ignore'):
-        Fz[Fz > oX2.max()] = np.nan
-    if notnan:
-        Fz[np.isnan(Fz)] = oX2.max()
-        Fz = np.minimum(Fz, oX2.max())
+    	FFz[FFz > oX2.max()] = np.nan
+
+	if notnan:
+	    FFz[np.isnan(FFz)] = oX2.max()
+	    FFz = np.minimum(FFz, oX2.max())
 
     if (not fire_grid is None) and (interp):
+        print '>> Interpolating the results in the fire mesh'
         Flon = fire_grid[0]
         Flat = fire_grid[1]
         points = np.c_[Fx.ravel(),Fy.ravel()]
         values = Fz.ravel()
         Ffire = interpolate.griddata(points,values,(Flon,Flat))
-        F = np.array([Flon,Flat,Ffire])
+        FF = [Flon,Flat,Ffire]
+    else:
+        FF = [FFx,FFy,FFz]
 
     # Plot the fire arrival time resulting from the SVM classification
-    if plot_result and (F.size != 0):
+    if plot_result:
         # Plotting the result
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         fig.suptitle("Plotting the 3D graph function of a SVM")
-        Fx, Fy, Fz = F[0], F[1], F[2]
+        FFx, FFy, FFz = np.array(FF[0]), np.array(FF[1]), np.array(FF[2])
         # plotting original data
         ax.scatter(oX0, oX1, oX2, c=oy, cmap=plt.cm.coolwarm, s=2, vmin=y.min(), vmax=y.max())
         # plotting fire arrival time
-        ax.plot_wireframe(Fx, Fy, Fz, color='orange')
+        ax.plot_wireframe(FFx, FFy, FFz, color='orange')
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.set_zlabel("Z")
@@ -565,7 +574,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
 
     plt.show()
 
-    return F
+    return FF
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ xx=np.array(svm['fxlon'])
 yy=np.array(svm['fxlat'])
 tscale=svm['tscale'][0]
 time_scale_num=svm['time_scale_num'][0]
-zz=svm['fmc_g']*tscale+time_scale_num[0]
+zz=svm['Z']*tscale+time_scale_num[0]
 
 print 'Computing the contours...'
 # Granules numeric times
