@@ -1,4 +1,48 @@
-# General python for any case
+# process.py
+#
+# DESCRIPTION
+# Driver python code to estimate fire arrival time using Active Fire Satellite Data
+#
+# INPUTS
+# In the existence of a 'data' satellite granules file and/or 'results.mat' bounds file, any input is necessary.
+# Otherwise:
+# 	wrfout - path to a simulation wrfout file (containing FXLON and FXLAT coordinates).
+#	start_time - date string with format: YYYYMMDDHHMMSS
+# 	days - length of the simulation in decimal days
+#
+# OVERFLOW
+# 	1) Methods from JPSSD.py file:
+# 		*) Find granules overlaping fire domain and time interval.
+#		*) Download Active Satellite Data.
+#		*) Read Active Satellite Data files.
+#		*) Save satellite granule information in 'data' file.
+#	2) Methods from interpolation.py and JPSSD.py files:
+#		*) Write KML file 'fire_detections.kml' with fire detection pixels.
+#		*) Write KML file 'nofire.kml' with saved ground detection pixels.
+#	3) Method process_satellite_detections from setup.py file:
+#		*) Sort all the granules from all the sources in time order.
+#		*) Construct upper and lower bounds using a mask to prevent ground after fire.
+#		*) Save results in 'results.mat' file.
+#	4) Methods preprocess_data_svm and SVM3 from svm.py file:
+#		*) Preprocess bounds as an input of Support Vector Machine method.
+#		*) Run Support Vector Machine method.
+#		*) Save results in svm.mat file.
+#	5) Methods from contline.py and contour2kml.py files:
+#		*) Construct a smooth contour line representation of the fire arrival time.
+#		*) Write the contour lines in a KML file called 'perimeters_svm.kml'.
+#
+# OUTPUTS
+#	- 'data': binary file containing satellite granules information.
+#	- 'result.mat': matlab file containing upper and lower bounds (U and L) from satellite data.
+# 	- 'svm.mat': matlab file containing the solution to the Support Vector Machine execution.
+#				 Contains estimation of the fire arrival time in tign_g variable.
+#	- 'fire_detections.kml': KML file with fire satellite detection pixels.
+#	- 'nofire.kml': KML file with saved ground satellite detection pixels.
+#	- 'perimeters_svm.kml': KML file with perimeters from estimation of the fire arrival time using SVM.
+#
+# Developed in Python 2.7.15 :: Anaconda, Inc.
+# Angel Farguell (angel.farguell@gmail.com), 2019-04-29
+#---------------------------------------------------------------------------------------------------------------------
 from JPSSD import read_fire_mesh, retrieve_af_data, sdata2json, json2kml, time_iso2num
 from interpolation import sort_dates
 from setup import process_satellite_detections
