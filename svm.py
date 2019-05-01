@@ -21,13 +21,13 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
     """
     Preprocess satellite data from JPSSD and setup to use in Support Vector Machine
 
-    :param lon:
-    :param lat:
-    :param U:
-    :param L:
-    :param T:
-    :param scale:
-    :param time_num_granules:
+    :param lons: longitud grid
+    :param lats: latitde grid
+    :param U: upper bound grid
+    :param L: lower bound grid
+    :param T: mask grid
+    :param scale: time scales
+    :param time_num_granules: times of the granules
     :return X: matrix of features for SVM
     :return y: vector of labels for SVM
 

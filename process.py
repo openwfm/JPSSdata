@@ -97,6 +97,8 @@ if bounds_exists:
 	scale = result['time_scale_num'][0]
 	time_num_granules = result['time_num_granules'][0]
 	time_num_interval = result['time_num'][0]
+	lon = np.array(result['fxlon']).astype(float)
+	lat = np.array(result['fxlat']).astype(float)
 else:
 	if satellite_exists:
 		print '>> File %s already created! Skipping satellite retrieval <<' % satellite_file
@@ -165,9 +167,9 @@ else:
 	scale = result['time_scale_num']
 	time_num_granules = result['time_num_granules']
 	time_num_interval = result['time_num']
+	lon = np.array(result['fxlon']).astype(float).T
+	lat = np.array(result['fxlat']).astype(float).T
 
-lon = result['fxlon']
-lat = result['fxlat']
 U = np.array(result['U']).astype(float)
 L = np.array(result['L']).astype(float)
 T = np.array(result['T']).astype(float)
