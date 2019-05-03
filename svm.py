@@ -298,15 +298,15 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
 
     # Plot options
     # plot original data
-    plot_data = True
+    plot_data = False
     # plot scaled data with artificial data
-    plot_scaled = True
+    plot_scaled = False
     # plot polynomial approximation (if postech=='poly')
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = True
+    plot_supports = False
     # plot resulting fire arrival time vs detections
-    plot_result = True
+    plot_result = False
 
     # Other options
     # number of vertical nodes per observation
@@ -347,11 +347,8 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     if plot_data:
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        #fig.suptitle("Plotting the original data to fit")
+        fig.suptitle("Plotting the original data to fit")
         ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        #ax.set_xlabel("X")
-        #ax.set_ylabel("Y")
-        #ax.set_zlabel("Z")
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
         ax.set_zlabel("Time (days)")
@@ -437,11 +434,8 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     if plot_scaled:
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        #fig.suptitle("Plotting the data scaled to fit")
+        fig.suptitle("Plotting the data scaled to fit")
         ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        #ax.set_xlabel("X")
-        #ax.set_ylabel("Y")
-        #ax.set_zlabel("Z")
         ax.set_xlabel("Longitude normalized")
         ax.set_ylabel("Latitude normalized")
         ax.set_zlabel("Time normalized")
@@ -511,7 +505,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     if plot_supports:
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        #fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
+        fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
         # plotting the separating hyperplane
         ax.plot_wireframe(F[0], F[1], F[2], color='orange')
         # computing the indeces where no support vectors
@@ -525,12 +519,10 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         ax.set_xlim(xx.min(),xx.max())
         ax.set_ylim(yy.min(),yy.max())
         ax.set_zlim(zz.min(),zz.max())
-        #ax.set_xlabel("X")
-        #ax.set_ylabel("Y")
-        #ax.set_zlabel("Z")
         ax.set_xlabel("Longitude normalized")
         ax.set_ylabel("Latitude normalized")
         ax.set_zlabel("Time normalized")
+
     # Plot the fire arrival time resulting from the SVM classification normalized
     if plot_result:
         Fx, Fy, Fz = np.array(F[0]), np.array(F[1]), np.array(F[2])
@@ -541,6 +533,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
             Fz = np.minimum(Fz, X2.max())
         fig = plt.figure()
         ax = fig.gca(projection='3d')
+        fig.suptitle("Fire arrival time normalized")
         # plotting fire arrival time
         p = ax.plot_surface(Fx, Fy, Fz, cmap=plt.cm.coolwarm,
                        linewidth=0, antialiased=False)
@@ -549,9 +542,6 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         ax.set_zlim(zz.min(),zz.max())
         cbar = fig.colorbar(p)
         cbar.set_label('Fire arrival time normalized', labelpad=20, rotation=270)
-        #ax.set_xlabel("X")
-        #ax.set_ylabel("Y")
-        #ax.set_zlabel("Z")
         ax.set_xlabel("Longitude normalized")
         ax.set_ylabel("Latitude normalized")
         ax.set_zlabel("Time normalized")
@@ -590,15 +580,12 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         # Plotting the result
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        #fig.suptitle("Plotting the 3D graph function of a SVM")
+        fig.suptitle("Plotting the 3D graph function of a SVM")
         FFx, FFy, FFz = np.array(FF[0]), np.array(FF[1]), np.array(FF[2])
         # plotting original data
         ax.scatter(oX0, oX1, oX2, c=oy, cmap=plt.cm.coolwarm, s=2, vmin=y.min(), vmax=y.max())
         # plotting fire arrival time
         ax.plot_wireframe(FFx, FFy, FFz, color='orange')
-        #ax.set_xlabel("X")
-        #ax.set_ylabel("Y")
-        #ax.set_zlabel("Z")
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
         ax.set_zlabel("Time (days)")
