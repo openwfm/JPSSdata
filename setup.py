@@ -1,18 +1,13 @@
 import warnings
 warnings.filterwarnings("ignore")
 import scipy.io as sio
-import pdb
-import saveload as sl
-from interpolation import *
-import time
 import numpy as np
-import sys
 from scipy import spatial
-import itertools
-from utils import *
 import matplotlib.pyplot as plt
-import os
-import sys
+import saveload as sl
+from utils import Dict
+from interpolation import sort_dates, nearest_scipy, neighbor_indices_ball, neighbor_indices_pixel, neighbor_indices_ellipse
+import os, sys, time, itertools
 
 def process_satellite_detections(data,fxlon,fxlat,time_num):
 	"""

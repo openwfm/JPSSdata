@@ -46,6 +46,7 @@
 from JPSSD import read_fire_mesh, retrieve_af_data, sdata2json, json2kml, time_iso2num
 from interpolation import sort_dates
 from setup import process_satellite_detections
+from infrared_perimeters import process_infrared_perimeters
 from svm import preprocess_data_svm, SVM3
 from contline import get_contour_verts
 from contour2kml import contour2kml
@@ -56,6 +57,9 @@ import datetime as dt
 import sys
 import os
 from time import time
+
+ign = None # if ignition is known: (lon,lat,date) where lon and lat in degrees and date in ESMF format
+perim_path = '' # if infrared perimeters: path to KML files
 
 satellite_file = 'data'
 fire_file = 'fire_detections.kml'
@@ -177,7 +181,9 @@ T = np.array(result['T']).astype(float)
 print ''
 print '>> Preprocessing the data <<'
 sys.stdout.flush()
-X,y = preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules)
+if ign:
+	ign[2] = time_iso2num(ign[2]) - scale[0]
+X,y = preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules,ign,perim_path)
 
 print ''
 print '>> Running Support Vector Machine <<'
@@ -189,7 +195,7 @@ F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat))
 print ''
 print '>> Saving the results <<'
 sys.stdout.flush()
-tscale = 24*3600
+tscale = 24*3600 # scale from seconds to days
 # Fire arrival time in seconds from the begining of the simulation
 tign_g = F[2]*float(tscale)+scale[0]-time_num_interval[0]
 # Creating the dictionary with the results

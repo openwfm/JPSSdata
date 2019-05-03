@@ -14,10 +14,11 @@ import matplotlib.font_manager
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
-import sys
 from time import time
+from infrared_perimeters import process_infrared_perimeters
+import sys
 
-def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
+def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, ign=None, perim_path=''):
     """
     Preprocess satellite data from JPSSD and setup to use in Support Vector Machine
 
@@ -98,6 +99,25 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
     # Print the shape of the data
     print 'shape X: ', X.shape
     print 'shape y: ', y.shape
+
+    if ign:
+        X = np.concatenate((X,[ign[0],ign[1],ign[2]/tscale]))
+        y = np.concatenate((y,1))
+
+    if perim_path:
+        Xp = process_infrared_perimeters(perim_path)
+        Xp[:,2] = (Xp[:,2] - scale[0])/tscale
+        X = np.concatenate((X,Xp))
+        y = np.concatenate((y,np.ones(len(Xp))))
+
+    # Clean data if not in bounding box
+    bbox = (lon.min(),lon.max(),lat.min(),lat.max(),time_num_granules)
+    geo_mask = np.logical_and(np.logical_and(np.logical_and(X[:,0] > bbox[0],X[:,0] < bbox[1]), X[:,1] > bbox[2]), X[:,1] < bbox[3])
+    btime = (0,(scale[1]-scale[0])/tscale)
+    time_mask = np.logical_and(X[:,2] > btime[0], X[:,2] < btime[1])
+    whole_mask = np.logical_and(geo_mask,time_mask)
+    X = X[whole_mask,:]
+    y = y[whole_mask]
 
     return X,y
 
@@ -278,15 +298,15 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
 
     # Plot options
     # plot original data
-    plot_data = False
+    plot_data = True
     # plot scaled data with artificial data
-    plot_scaled = False
+    plot_scaled = True
     # plot polynomial approximation (if postech=='poly')
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = False
+    plot_supports = True
     # plot resulting fire arrival time vs detections
-    plot_result = False
+    plot_result = True
 
     # Other options
     # number of vertical nodes per observation
@@ -327,11 +347,14 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     if plot_data:
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        fig.suptitle("Plotting the original data to fit")
+        #fig.suptitle("Plotting the original data to fit")
         ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        #ax.set_xlabel("X")
+        #ax.set_ylabel("Y")
+        #ax.set_zlabel("Z")
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_zlabel("Time (days)")
 
     # Normalization of the data into [0,1]^3
     if norm:
@@ -414,11 +437,14 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     if plot_scaled:
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        fig.suptitle("Plotting the data scaled to fit")
+        #fig.suptitle("Plotting the data scaled to fit")
         ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        #ax.set_xlabel("X")
+        #ax.set_ylabel("Y")
+        #ax.set_zlabel("Z")
+        ax.set_xlabel("Longitude normalized")
+        ax.set_ylabel("Latitude normalized")
+        ax.set_zlabel("Time normalized")
 
     # Reescaling gamma to include more detailed results
     gamma = kgam / (n_features * X.std())
@@ -485,7 +511,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     if plot_supports:
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
+        #fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
         # plotting the separating hyperplane
         ax.plot_wireframe(F[0], F[1], F[2], color='orange')
         # computing the indeces where no support vectors
@@ -499,10 +525,12 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         ax.set_xlim(xx.min(),xx.max())
         ax.set_ylim(yy.min(),yy.max())
         ax.set_zlim(zz.min(),zz.max())
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-
+        #ax.set_xlabel("X")
+        #ax.set_ylabel("Y")
+        #ax.set_zlabel("Z")
+        ax.set_xlabel("Longitude normalized")
+        ax.set_ylabel("Latitude normalized")
+        ax.set_zlabel("Time normalized")
     # Plot the fire arrival time resulting from the SVM classification normalized
     if plot_result:
         Fx, Fy, Fz = np.array(F[0]), np.array(F[1]), np.array(F[2])
@@ -519,10 +547,14 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         ax.set_xlim(xx.min(),xx.max())
         ax.set_ylim(yy.min(),yy.max())
         ax.set_zlim(zz.min(),zz.max())
-        fig.colorbar(p)
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        cbar = fig.colorbar(p)
+        cbar.set_label('Fire arrival time normalized', labelpad=20, rotation=270)
+        #ax.set_xlabel("X")
+        #ax.set_ylabel("Y")
+        #ax.set_zlabel("Z")
+        ax.set_xlabel("Longitude normalized")
+        ax.set_ylabel("Latitude normalized")
+        ax.set_zlabel("Time normalized")
 
     # Translate the result again into initial data scale
     if norm:
@@ -558,15 +590,18 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         # Plotting the result
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        fig.suptitle("Plotting the 3D graph function of a SVM")
+        #fig.suptitle("Plotting the 3D graph function of a SVM")
         FFx, FFy, FFz = np.array(FF[0]), np.array(FF[1]), np.array(FF[2])
         # plotting original data
         ax.scatter(oX0, oX1, oX2, c=oy, cmap=plt.cm.coolwarm, s=2, vmin=y.min(), vmax=y.max())
         # plotting fire arrival time
         ax.plot_wireframe(FFx, FFy, FFz, color='orange')
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        #ax.set_xlabel("X")
+        #ax.set_ylabel("Y")
+        #ax.set_zlabel("Z")
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_zlabel("Time (days)")
 
     print '>> SUCCESS <<'
     t_final = time()
