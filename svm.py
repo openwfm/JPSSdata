@@ -18,7 +18,7 @@ from time import time
 from infrared_perimeters import process_infrared_perimeters
 import sys
 
-def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, ign=None, perim_path=''):
+def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None, ign=None, perim_path=''):
     """
     Preprocess satellite data from JPSSD and setup to use in Support Vector Machine
 
@@ -35,6 +35,9 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, ign=None,
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2019-04-01
     """
+
+    # Confidence of nofire detections
+    nofire_conf = 10
 
     # Flatten coordinates
     lon = np.reshape(lons,np.prod(lons.shape)).astype(float)
@@ -100,15 +103,10 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, ign=None,
     print 'shape X: ', X.shape
     print 'shape y: ', y.shape
 
-    if ign:
-        X = np.concatenate((X,[ign[0],ign[1],ign[2]/tscale]))
-        y = np.concatenate((y,1))
-
-    if perim_path:
-        Xp = process_infrared_perimeters(perim_path)
-        Xp[:,2] = (Xp[:,2] - scale[0])/tscale
-        X = np.concatenate((X,Xp))
-        y = np.concatenate((y,np.ones(len(Xp))))
+    if C is None:
+        c = 80*np.ones(y.shape)
+    else:
+        c = np.concatenate((nofire_conf*np.ones(len(lx)),np.reshape(C,np.prod(C.shape))[um]))
 
     # Clean data if not in bounding box
     bbox = (lon.min(),lon.max(),lat.min(),lat.max(),time_num_granules)
@@ -118,8 +116,9 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, ign=None,
     whole_mask = np.logical_and(geo_mask,time_mask)
     X = X[whole_mask,:]
     y = y[whole_mask]
+    c = c[whole_mask]
 
-    return X,y
+    return X,y,c
 
 def make_fire_mesh(fxlon, fxlat, it, nt):
     """
@@ -276,7 +275,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
 
     return F
 
-def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
+def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     """
     3D SuperVector Machine analysis and plot
 
