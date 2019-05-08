@@ -133,12 +133,17 @@ else:
 		if perim_path:
 			data.update(process_infrared_perimeters(perim_path))
 
-		print ''
-		print '>> Saving satellite data file (data) <<'
-		sys.stdout.flush()
-		time_num = map(time_iso2num,time_iso)
-		sl.save((data,fxlon,fxlat,time_num),satellite_file)
-		print 'data file saved correctly!'
+		if data:
+			print ''
+			print '>> Saving satellite data file (data) <<'
+			sys.stdout.flush()
+			time_num = map(time_iso2num,time_iso)
+			sl.save((data,fxlon,fxlat,time_num),satellite_file)
+			print 'data file saved correctly!'
+		else:
+			print ''
+			print 'ERROR: No data obtained...'
+			sys.exit(1)
 
 	print ''
 	if (not fire_exists) or (not ground_exists):
