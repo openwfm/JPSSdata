@@ -1019,8 +1019,8 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                 copyto('kmls/partial2.kml',kml)
 
             for t in range(len(d['latitude'])):
-                lats=np.array(d['latitude'][t])
-                lons=np.array(d['longitude'][t])
+                lats=np.array(d['latitude'][t]).astype(float)
+                lons=np.array(d['longitude'][t]).astype(float)
                 ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
                 latitude=lats[ll]
                 longitude=lons[ll]
@@ -1036,25 +1036,25 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                 except:
                     instrument=np.array(['Not available']*NN)
                 try:
-                    confidence=np.array(d['confidence'][t])[ll]
+                    confidence=np.array(d['confidence'][t])[ll].astype(float)
                 except:
-                    confidence=np.array(np.zeros(NN))
+                    confidence=np.array(np.zeros(NN)).astype(float)
                 try:
-                    frps=np.array(d['frp'][t])[ll]
+                    frps=np.array(d['frp'][t])[ll].astype(float)
                 except:
-                    frps=np.array(np.zeros(NN))
+                    frps=np.array(np.zeros(NN)).astype(float)
                 try:
-                    angles=np.array(d['scan_angle'][t])[ll]
+                    angles=np.array(d['scan_angle'][t])[ll].astype(float)
                 except:
                     angles=np.array(['Not available']*NN)
                 try:
-                    scans=np.array(d['scan'][t])[ll]
+                    scans=np.array(d['scan'][t])[ll].astype(float)
                 except:
-                    scans=np.ones(NN)
+                    scans=np.ones(NN).astype(float)
                 try:
-                    tracks=np.array(d['track'][t])[ll]
+                    tracks=np.array(d['track'][t])[ll].astype(float)
                 except:
-                    tracks=np.ones(NN)
+                    tracks=np.ones(NN).astype(float)
 
                 kml.write('<Folder>\n')
                 if opt=='date':
@@ -1065,13 +1065,13 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                     kml.write('<name>Pixels</name>\n')
 
                 for p in range(NN):
-                    lat=float(latitude[p])
-                    lon=float(longitude[p])
-                    conf=float(confidence[p])
-                    frp=float(frps[p])
-                    angle=float(angles[p])
-                    scan=float(scans[p])
-                    track=float(tracks[p])
+                    lat=latitude[p]
+                    lon=longitude[p]
+                    conf=confidence[p]
+                    frp=frps[p]
+                    angle=angles[p]
+                    scan=scans[p]
+                    track=tracks[p]
                     timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
                     timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
 
