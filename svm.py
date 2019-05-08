@@ -18,7 +18,7 @@ from time import time
 from infrared_perimeters import process_infrared_perimeters
 import sys
 
-def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None, ign=None, perim_path=''):
+def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     """
     Preprocess satellite data from JPSSD and setup to use in Support Vector Machine
 
