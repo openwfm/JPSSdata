@@ -6,15 +6,18 @@ from utils import Dict
 import saveload as sl
 import re, glob, sys, os
 
-def process_ignitions(igns):
+def process_ignitions(igns,bounds=None):
     prefix = "IGN"
     ignitions = dict({})
     scan = .5
     track = .5
     for lon, lat, time_iso in zip(igns[0],igns[1],igns[2]):
         try:
-            lons = np.array(lon)
-            lats = np.array(lat)
+            lon = np.array(lon)
+            lat = np.array(lat)
+            mask = np.logical_and(np.logical_and(np.logical_and(lon>bounds[0],lon<bounds[1]),lat>bounds[2]),lat<bounds[3])
+            lons = lon[mask]
+            lats = lat[mask]
             time_num = time_iso2num(time_iso)
             time_datetime = time_iso2datetime(time_iso)
             time_data = '_A%04d%03d_%02d%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
@@ -32,7 +35,7 @@ def process_ignitions(igns):
                                 'acq_date': acq_date, 'acq_time': acq_time})})
     return ignitions
 
-def process_infrared_perimeters(dst,plot=False):
+def process_infrared_perimeters(dst,bounds=None,plot=False):
     files = glob.glob(osp.join(dst, '*.kml'))
     prefix = "PER"
     perimeters = Dict({})
@@ -65,8 +68,11 @@ def process_infrared_perimeters(dst,plot=False):
                 print 'Error: file %s has not proper structure.' % file
                 print 'Exception: %s.' % e
                 sys.exit(1)
-            lons = np.array([coord[0] for coord in coordinates])
-            lats = np.array([coord[1] for coord in coordinates])
+            lon = np.array([coord[0] for coord in coordinates])
+            lat = np.array([coord[1] for coord in coordinates])
+            mask = np.logical_and(np.logical_and(np.logical_and(lon>bounds[0],lon<bounds[1]),lat>bounds[2]),lat<bounds[3])
+            lons = lon[mask]
+            lats = lat[mask]
             if plot:
                 plt.plot(lons,lats,'*')
             perimeters.update({prefix + time_data: Dict({'file': file, 'lon': lons, 'lat': lats,

@@ -129,9 +129,9 @@ else:
 		sys.stdout.flush()
 		data = retrieve_af_data(bbox,time_iso)
 		if igns:
-			data.update(process_ignitions(igns))
+			data.update(process_ignitions(igns,bounds=bbox))
 		if perim_path:
-			data.update(process_infrared_perimeters(perim_path))
+			data.update(process_infrared_perimeters(perim_path,bounds=bbox))
 
 		if data:
 			print ''
