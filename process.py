@@ -151,7 +151,6 @@ else:
 		sys.stdout.flush()
 		# sort the granules by dates
 		sdata=sort_dates(data)
-		tt = [ dd[1]['time_num'] for dd in sdata ]  # array of times
 	if fire_exists:
 		print '>> File %s already created! <<' % fire_file
 	else:
