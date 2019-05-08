@@ -27,9 +27,9 @@ def process_ignitions(igns):
             sys.exit(1)
         ignitions.update({prefix + time_data: Dict({'lon': lons, 'lat': lats,
                                 'fire': np.array(9*np.ones(lons.shape)), 'conf_fire': np.array(100*np.ones(lons.shape)),
-                                'lon_fire': lons, 'lat_fire': lats, 'scan_fire': scan*np.ones(lons.shape),
-                                'track_fire': track*np.ones(lons.shape), 'time_iso': time_iso, 'time_num': time_num,
-                                'acq_date': acq_date, 'acq_time': acq_time})})
+                                'lon_fire': lons, 'lat_fire': lats, 'lon_nofire': np.array([]), 'lat_nofire': np.array([]),
+                                'scan_fire': scan*np.ones(lons.shape), 'track_fire': track*np.ones(lons.shape),
+                                'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
     return ignitions
 
 def process_infrared_perimeters(dst,plot=False):
@@ -71,9 +71,9 @@ def process_infrared_perimeters(dst,plot=False):
                 plt.plot(lons,lats,'*')
             perimeters.update({prefix + time_data: Dict({'file': file, 'lon': lons, 'lat': lats,
                             'fire': np.array(9*np.ones(lons.shape)), 'conf_fire': np.array(100*np.ones(lons.shape)),
-                            'lon_fire': lons, 'lat_fire': lats, 'scan_fire': scan*np.ones(lons.shape),
-                            'track_fire': track*np.ones(lons.shape), 'time_iso': time_iso, 'time_num': time_num,
-                            'acq_date': acq_date, 'acq_time': acq_time})})
+                            'lon_fire': lons, 'lat_fire': lats, 'lon_nofire': np.array([]), 'lat_nofire': np.array([]),
+                            'scan_fire': scan*np.ones(lons.shape), 'track_fire': track*np.ones(lons.shape),
+                            'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
         if plot:
             plt.show()
     else:
