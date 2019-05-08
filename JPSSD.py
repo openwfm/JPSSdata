@@ -826,10 +826,10 @@ def sdata2json(sdata,keys,dkeys,N):
     ret=Dict({'granules': [d[0] for d in sdata]})
     for i,k in enumerate(keys):
         if isinstance(sdata[0][1][dkeys[i]],(list, tuple, np.ndarray)):
-            dd=[d[1][dkeys[i]] for d in sdata]
+            dd=[d[1][dkeys[i]] for d in sdata if dkeys[i] in d[1]]
             ret.update({k : dd})
         else:
-            dd=[[d[1][1][dkeys[i]]]*N[d[0]] for d in enumerate(sdata)]
+            dd=[[d[1][1][dkeys[i]]]*N[d[0]] for d in enumerate(sdata) if dkeys[i] in d[1][1]]
             ret.update({k : dd})
 
     return ret
