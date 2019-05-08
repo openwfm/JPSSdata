@@ -1,3 +1,7 @@
+'''
+Developed in Python 2.7.15 :: Anaconda 4.5.10, on Windows
+Lauren Hearn (lauren@robotlauren.com) 2018-10
+'''
 from netCDF4 import Dataset
 from datetime import datetime, timedelta
 import numpy as np
@@ -58,7 +62,7 @@ sat_sweep=ncf.variables['goes_imager_projection'].sweep_angle_axis
 print 'sat_sweep = '
 print sat_sweep
 # The projection x and y coordinates equals 
-# the scanning angle (in radians) multiplied by the satellite height (http://proj4.org/projections/geos.html)
+# the scanning angle (in radians) multiplied by the satellite height (https://proj4.org/operations/projections/geos.html)
 X=ncf.variables['x'][:] * sat_h
 Y=ncf.variables['y'][:] * sat_h
 print 'X ='
@@ -66,7 +70,11 @@ print X
 print 'Y ='
 print Y
 
-# Visualize the way Brian Blaylock does
+# dig in and find def of X,Y from GOES people - does it take into account terrain height (this could account for multi-km error)?
+# find what assumptions PyProj is making with geostat. projection.
+# do all this in Overleaf
+
+# Visualize using pyproj (https://github.com/pyproj4/pyproj/blob/master/pyproj/proj.py)
 p=Proj(proj='geos', h=sat_h, lon_0=sat_lon, sweep=sat_sweep)
 # Convert map points to latitude and longitude with the magic provided by Pyproj
 XX, YY=np.meshgrid(X, Y)

@@ -1,6 +1,7 @@
-#GOES16 via AWS
 '''
-Lauren Hearn, 10.2018
+Developed in Python 2.7.15 :: Anaconda 4.5.10, on Windows
+Lauren Hearn (lauren@robotlauren.com) 2018-10
+
 Requirements:
 - must have rclone installed
 - configure new remote via rclone titled 'goes16aws'
@@ -36,7 +37,7 @@ C_file = './' + args[0] + "/" + raw_input("What file would you like to see? ") #
 C = Dataset(C_file, 'r')
 
 #will add mapping from https://github.com/blaylockbk/pyBKB_v2/blob/master/BB_GOES16/mapping_GOES16_FireTemperature.ipynb
-'''
+
 Notes:
 -may need "shell=True" only for Windows environment.
 -call still not working, properly. Will adjust in the next couple days
