@@ -159,7 +159,7 @@ else:
 		keys = ['latitude','longitude','brightness','scan','track','acq_date','acq_time','satellite','instrument','confidence','bright_t31','frp','scan_angle']
 		dkeys = ['lat_fire','lon_fire','brig_fire','scan_fire','track_fire','acq_date','acq_time','sat_fire','instrument','conf_fire','t31_fire','frp_fire','scan_angle_fire']
 		prods = {'AF':'Active Fires','FRP':'Fire Radiative Power'}
-		N = [len(d[1]['lat_fire']) for d in sdata]
+		N = [len(d[1]['lat_fire']) if 'lat_fire' in d[1] else 0 for d in sdata]
 		json = sdata2json(sdata,keys,dkeys,N)
 		json2kml(json,fire_file,bbox,prods)
 	if ground_exists:
@@ -171,7 +171,7 @@ else:
 		keys = ['latitude','longitude','scan','track','acq_date','acq_time','satellite','instrument','scan_angle']
 		dkeys = ['lat_nofire','lon_nofire','scan_nofire','track_nofire','acq_date','acq_time','sat_fire','instrument','scan_angle_nofire']
 		prods = {'NF':'No Fire'}
-		N = [len(d[1]['lat_nofire']) for d in sdata]
+		N = [len(d[1]['lat_nofire']) if 'lat_nofire' in d[1] else 0 for d in sdata]
 		json = sdata2json(sdata,keys,dkeys,N)
 		json2kml(json,ground_file,bbox,prods)
 
