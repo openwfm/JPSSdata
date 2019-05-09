@@ -28,11 +28,13 @@ def process_ignitions(igns,bounds=None):
             print 'Error: bad ignition %s specified.' % igns
             print 'Exception: %s.' % e
             sys.exit(1)
+        lon_nofire = np.array([])
+        lat_nofire = np.array([])
         ignitions.update({prefix + time_data: Dict({'lon': lons, 'lat': lats,
                                 'fire': np.array(9*np.ones(lons.shape)), 'conf_fire': np.array(100*np.ones(lons.shape)),
-                                'lon_fire': lons, 'lat_fire': lats, 'scan_fire': scan*np.ones(lons.shape),
-                                'track_fire': track*np.ones(lons.shape), 'time_iso': time_iso, 'time_num': time_num,
-                                'acq_date': acq_date, 'acq_time': acq_time})})
+                                'lon_fire': lons, 'lat_fire': lats, 'lon_nofire': lon_nofire, 'lat_nofire': lat_nofire,
+                                'scan_fire': scan*np.ones(lons.shape), 'track_fire': track*np.ones(lons.shape),
+                                'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
     return ignitions
 
 def process_infrared_perimeters(dst,bounds=None,maxp=1000,plot=False):
@@ -77,13 +79,15 @@ def process_infrared_perimeters(dst,bounds=None,maxp=1000,plot=False):
             mask = np.logical_and(np.logical_and(np.logical_and(lon>bounds[0],lon<bounds[1]),lat>bounds[2]),lat<bounds[3])
             lons = lon[mask]
             lats = lat[mask]
+            lon_nofire = np.array([])
+            lat_nofire = np.array([])
             if plot:
                 plt.plot(lons,lats,'*')
             perimeters.update({prefix + time_data: Dict({'file': file, 'lon': lons, 'lat': lats,
                             'fire': np.array(9*np.ones(lons.shape)), 'conf_fire': np.array(100*np.ones(lons.shape)),
-                            'lon_fire': lons, 'lat_fire': lats, 'scan_fire': scan*np.ones(lons.shape),
-                            'track_fire': track*np.ones(lons.shape), 'time_iso': time_iso, 'time_num': time_num,
-                            'acq_date': acq_date, 'acq_time': acq_time})})
+                            'lon_fire': lons, 'lat_fire': lats, 'lon_nofire': lon_nofire, 'lat_nofire': lat_nofire,
+                            'scan_fire': scan*np.ones(lons.shape), 'track_fire': track*np.ones(lons.shape),
+                            'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
         if plot:
             plt.show()
     else:
