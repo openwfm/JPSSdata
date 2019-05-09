@@ -321,17 +321,17 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # creation of over and under artificial upper and lower bounds in the pre-processing
     arti = True
     # resolution of artificial upper bounds vertical to the fire detections
-    hartil = .15
+    hartil = .2
     # resolution of artificial lower bounds vertical to the ground detections
-    hartiu = .05
+    hartiu = .1
     # creation of an artifitial mesh of top upper bounds
     toparti = False
     # proportion over max of z direction for upper bound artifitial creation
-    dmaxz = 0.1
+    dmaxz = .1
     # creation of an artifitial mesh of down lower bounds
     downarti = True
     # below min of z direction for lower bound artifitial creation
-    dminz = 0.1
+    dminz = .1
 
     # Data inputs
     X = np.array(X).astype(float)
@@ -351,6 +351,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
         ax.set_zlabel("Time (days)")
+        plt.show()
 
     # Normalization of the data into [0,1]^3
     if norm:
@@ -438,6 +439,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude normalized")
         ax.set_ylabel("Latitude normalized")
         ax.set_zlabel("Time normalized")
+        plt.show()
 
     # Reescaling gamma to include more detailed results
     gamma = kgam / (n_features * X.std())
@@ -521,6 +523,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude normalized")
         ax.set_ylabel("Latitude normalized")
         ax.set_zlabel("Time normalized")
+        plt.show()
 
     # Plot the fire arrival time resulting from the SVM classification normalized
     if plot_result:
@@ -544,6 +547,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude normalized")
         ax.set_ylabel("Latitude normalized")
         ax.set_zlabel("Time normalized")
+        plt.show()
 
     # Translate the result again into initial data scale
     if norm:
@@ -588,6 +592,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
         ax.set_zlabel("Time (days)")
+        plt.show()
 
     print '>> SUCCESS <<'
     t_final = time()
