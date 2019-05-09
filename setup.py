@@ -138,20 +138,19 @@ def process_detections(data,fxlon,fxlat,time_num):
 			# Set mask
 			if mt==1:
 				# creating the indices for all the pixel neighbours of the upper bound indices
-				kk=neighbor_indices_ball(itree,ffi[flc][mu],fxlon.shape,dist)
+				kk=neighbor_indices_ball(itree,ffi[flc],fxlon.shape,dist)
 				im=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
 			elif mt==2:
 				# creating the indices for all the pixel neighbours of the upper bound indices
-				im=neighbor_indices_pixel(vfxlon,vfxlat,lon[mu],lat[mu],scan[mu],track[mu])
+				im=neighbor_indices_pixel(vfxlon,vfxlat,lon,lat,scan,track)
 			elif mt==3:
 				# creating the indices for all the pixel neighbours of the upper bound indices
-				im=neighbor_indices_ellipse(vfxlon,vfxlat,lon[mu],lat[mu],scan[mu],track[mu],mm)
+				im=neighbor_indices_ellipse(vfxlon,vfxlat,lon,lat,scan,track,mm)
 			else:
 				print 'ERROR: invalid mt option.'
 				sys.exit()
-			#mmt = T[im] > ti # only mask did not set yet
-			#T[im[mmt]]=ti # update mask T
-			T[im]=ti # update mask T
+			mmt = T[im] > ti # only mask did not set yet
+			T[im[mmt]]=ti # update mask T
 
 		# Set mask from burned scar data
 		if burn:
