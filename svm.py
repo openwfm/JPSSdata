@@ -6,6 +6,8 @@
 #       conda install scikit-learn
 #       conda install scikit-image
 
+import matplotlib
+matplotlib.use('Agg')
 from sklearn import svm
 from scipy import interpolate, spatial
 from mpl_toolkits.mplot3d import axes3d
