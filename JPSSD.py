@@ -825,7 +825,7 @@ def sdata2json(sdata,keys,dkeys,N):
     """
     ret=Dict({'granules': [d[0] for d in sdata]})
     for i,k in enumerate(keys):
-        dd = [d[1][dkeys[i]] for d in sdata if dkeys[i] in d[1]]
+        dd = [d[1][dkeys[i]] if dkeys[i] in d[1] else [] for d in sdata]
         if dd:
             if isinstance(dd[0],(list, tuple, np.ndarray)):
                 ret.update({k : dd})
@@ -1023,8 +1023,8 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                     ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
                     latitude=lats[ll]
                     longitude=lons[ll]
-                    if len(latitude) > 0:
-                        NN=len(latitude)
+                    NN=len(latitude)
+                    if NN > 0:
                         acq_date=np.array(d['acq_date'][t])[ll]
                         acq_time=np.array(d['acq_time'][t])[ll]
                         try:
