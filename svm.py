@@ -8,8 +8,6 @@
 
 from sklearn import svm
 from scipy import interpolate, spatial
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.font_manager
 import matplotlib.colors as colors
