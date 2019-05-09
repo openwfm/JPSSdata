@@ -9,8 +9,8 @@ import re, glob, sys, os
 def process_ignitions(igns,bounds=None):
     prefix = "IGN"
     ignitions = dict({})
-    scan = .5
-    track = .5
+    scan = 1.
+    track = 1.
     for lon, lat, time_iso in zip(igns[0],igns[1],igns[2]):
         try:
             lon = np.array(lon)
@@ -39,8 +39,8 @@ def process_infrared_perimeters(dst,bounds=None,plot=False):
     files = glob.glob(osp.join(dst, '*.kml'))
     prefix = "PER"
     perimeters = Dict({})
-    scan = .5
-    track = .5
+    scan = .01
+    track = .01
     if files:
         for file in files:
             print 'Retrieving perimeters from %s' % file
@@ -63,7 +63,7 @@ def process_infrared_perimeters(dst,bounds=None,plot=False):
                 acq_time = '%02d%02d' % (time_datetime.hour, time_datetime.minute)
                 polygons = re.findall(r'<Polygon>(.*?)</Polygon>',f_str,re.DOTALL)
                 buckets = [re.split('\r\n\s+',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in polygons]
-                coordinates = [np.array(re.split(',',b)[0:2]).astype(float) for bucket in buckets for b in bucket]
+                coordinates = [np.array(re.split(',',b)[0:2]).astype(float) for bucket in buckets for b in bucket][1::10]
             except Exception as e:
                 print 'Error: file %s has not proper structure.' % file
                 print 'Exception: %s.' % e

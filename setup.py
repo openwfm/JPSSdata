@@ -131,7 +131,7 @@ def process_detections(data,fxlon,fxlat,time_num):
 			else:
 				print 'ERROR: invalid ut option.'
 				sys.exit()
-			U[iu]=ti # set U to granule time where fire detected
+			U[iu][U[iu] > ti]=ti # set U to granule time where fire detected and not detected before
 
 			# Set mask
 			if mt==1:
