@@ -1023,7 +1023,7 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                     ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
                     latitude=lats[ll]
                     longitude=lons[ll]
-                    if latitude:
+                    if len(latitude) > 0:
                         NN=len(latitude)
                         acq_date=np.array(d['acq_date'][t])[ll]
                         acq_time=np.array(d['acq_time'][t])[ll]

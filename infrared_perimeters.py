@@ -35,7 +35,7 @@ def process_ignitions(igns,bounds=None):
                                 'acq_date': acq_date, 'acq_time': acq_time})})
     return ignitions
 
-def process_infrared_perimeters(dst,bounds=None,maxp=500,plot=False):
+def process_infrared_perimeters(dst,bounds=None,maxp=1000,plot=False):
     files = glob.glob(osp.join(dst, '*.kml'))
     prefix = "PER"
     perimeters = Dict({})
