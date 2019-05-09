@@ -6,15 +6,15 @@
 #       conda install scikit-learn
 #       conda install scikit-image
 
-import matplotlib
-matplotlib.use('Agg')
 from sklearn import svm
 from scipy import interpolate, spatial
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.font_manager
+import matplotlib.colors as colors
 from mpl_toolkits.mplot3d import axes3d
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-import matplotlib.font_manager
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 import numpy as np
 from time import time
 from infrared_perimeters import process_infrared_perimeters

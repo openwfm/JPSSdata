@@ -1,8 +1,8 @@
 # following https://stackoverflow.com/questions/18304722/python-find-contour-lines-from-matplotlib-pyplot-contour
 import matplotlib
 matplotlib.use('Agg')
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.io import loadmat
 from utils import *
 import datetime

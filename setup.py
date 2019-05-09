@@ -192,6 +192,15 @@ def process_detections(data,fxlon,fxlat,time_num):
 	print "average U-L %s" % ((U-L).sum()/np.prod(U.shape))
 	print np.histogram((U-L)/(24*3600))
 
+	if (L>U).sum() > 0:
+		print "Inconsistency in the data, removing lower bounds..."
+		L[L>U]=time_scale_num[0]
+		print "L<U: %s" % (L<U).sum()
+		print "L=U: %s" % (L==U).sum()
+		print "L>U: %s" % (L>U).sum()
+		print "average U-L %s" % ((U-L).sum()/np.prod(U.shape))
+		print np.histogram((U-L)/(24*3600))
+
 	print 'Confidence analysis'
 	if confa:
 		plt.subplot(1,3,1)
