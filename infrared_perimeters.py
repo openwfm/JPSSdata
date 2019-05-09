@@ -22,7 +22,7 @@ def process_ignitions(igns,bounds=None):
             time_datetime = time_iso2datetime(time_iso)
             time_data = '_A%04d%03d_%02d%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
                                         time_datetime.hour, time_datetime.minute)
-            acq_date = '%04d%02d%02d' % (time_datetime.year, time_datetime.month, time_datetime.day)
+            acq_date = '%04d-%02d-%02d' % (time_datetime.year, time_datetime.month, time_datetime.day)
             acq_time = '%02d%02d' % (time_datetime.hour, time_datetime.minute)
         except Exception as e:
             print 'Error: bad ignition %s specified.' % igns
@@ -59,7 +59,7 @@ def process_infrared_perimeters(dst,bounds=None,maxp=500,plot=False):
                 time_datetime = time_iso2datetime(time_iso)
                 time_data = '_A%04d%03d_%02d%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
                                                     time_datetime.hour, time_datetime.minute)
-                acq_date = '%04d%02d%02d' % (time_datetime.year, time_datetime.month, time_datetime.day)
+                acq_date = '%04d-%02d-%02d' % (time_datetime.year, time_datetime.month, time_datetime.day)
                 acq_time = '%02d%02d' % (time_datetime.hour, time_datetime.minute)
                 polygons = re.findall(r'<Polygon>(.*?)</Polygon>',f_str,re.DOTALL)
                 buckets = [re.split('\r\n\s+',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in polygons]
