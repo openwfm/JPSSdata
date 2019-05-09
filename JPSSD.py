@@ -983,157 +983,160 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
 
-    if not isinstance(d['latitude'][0],(list, tuple, np.ndarray)):
-        if opt=='dates':
-            ind=[i[0] for i in sorted(enumerate(d.acq_date), key=lambda x:x[1])]
-            L=[len(list(grp)) for k, grp in groupby(d['acq_date'][ind])]
-            L.insert(0,0)
-            ll=[sum(L[0:k+1]) for k in range(len(L))]
-            for v in list(d):
-                sort=[d[v][i] for i in ind]
-                d[v]=[sort[ll[k]:ll[k+1]] for k in range(len(ll)-1)]
-        else:
-            for v in list(d):
-                d[v]=[d[v]]
-                opt='pixels'
+    if 'latitude' in d:
+        if not isinstance(d['latitude'][0],(list, tuple, np.ndarray)):
+            if opt=='dates':
+                ind=[i[0] for i in sorted(enumerate(d.acq_date), key=lambda x:x[1])]
+                L=[len(list(grp)) for k, grp in groupby(d['acq_date'][ind])]
+                L.insert(0,0)
+                ll=[sum(L[0:k+1]) for k in range(len(L))]
+                for v in list(d):
+                    sort=[d[v][i] for i in ind]
+                    d[v]=[sort[ll[k]:ll[k+1]] for k in range(len(ll)-1)]
+            else:
+                for v in list(d):
+                    d[v]=[d[v]]
+                    opt='pixels'
 
-    frp_style={-1:'modis_frp_no_data',40:'modis_frp_gt_400'}
-    for i in range(0,40):
-        frp_style[i]='modis_frp_%s_to_%s' % (i*10, i*10+10)
+        frp_style={-1:'modis_frp_no_data',40:'modis_frp_gt_400'}
+        for i in range(0,40):
+            frp_style[i]='modis_frp_%s_to_%s' % (i*10, i*10+10)
 
-    with open(kml_path,'w') as kml:
+        with open(kml_path,'w') as kml:
 
-        copyto('kmls/partial1.kml',kml)
+            copyto('kmls/partial1.kml',kml)
 
-        r = 6378   # Earth radius
-        km_lat = 180/(np.pi*r)  # 1km in degrees latitude
+            r = 6378   # Earth radius
+            km_lat = 180/(np.pi*r)  # 1km in degrees latitude
 
-        for prod in prods:
-
-            kml.write('<Folder>\n')
-            kml.write('<name>%s</name>\n' % prods[prod])
-
-            if prod == 'FRP':
-                copyto('kmls/partial2.kml',kml)
-
-            for t in range(len(d['latitude'])):
-                lats=np.array(d['latitude'][t]).astype(float)
-                lons=np.array(d['longitude'][t]).astype(float)
-                ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
-                latitude=lats[ll]
-                longitude=lons[ll]
-                NN=len(latitude)
-                acq_date=np.array(d['acq_date'][t])[ll]
-                acq_time=np.array(d['acq_time'][t])[ll]
-                try:
-                    satellite=np.array(d['satellite'][t])[ll]
-                except:
-                    satellite=np.array(['Not available']*NN)
-                try:
-                    instrument=np.array(d['instrument'][t])[ll]
-                except:
-                    instrument=np.array(['Not available']*NN)
-                try:
-                    confidence=np.array(d['confidence'][t])[ll].astype(float)
-                except:
-                    confidence=np.array(np.zeros(NN)).astype(float)
-                try:
-                    frps=np.array(d['frp'][t])[ll].astype(float)
-                except:
-                    frps=np.array(np.zeros(NN)).astype(float)
-                try:
-                    angles=np.array(d['scan_angle'][t])[ll].astype(float)
-                except:
-                    angles=np.array(['Not available']*NN)
-                try:
-                    scans=np.array(d['scan'][t])[ll].astype(float)
-                except:
-                    scans=np.ones(NN).astype(float)
-                try:
-                    tracks=np.array(d['track'][t])[ll].astype(float)
-                except:
-                    tracks=np.ones(NN).astype(float)
+            for prod in prods:
 
                 kml.write('<Folder>\n')
-                if opt=='date':
-                    kml.write('<name>%s</name>\n' % acq_date[0])
-                elif opt=='granule':
-                    kml.write('<name>%s</name>\n' % d['granules'][t])
-                else:
-                    kml.write('<name>Pixels</name>\n')
+                kml.write('<name>%s</name>\n' % prods[prod])
 
-                for p in range(NN):
-                    lat=latitude[p]
-                    lon=longitude[p]
-                    conf=confidence[p]
-                    frp=frps[p]
-                    angle=angles[p]
-                    scan=scans[p]
-                    track=tracks[p]
-                    timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
-                    timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
+                if prod == 'FRP':
+                    copyto('kmls/partial2.kml',kml)
 
-                    if prod == 'NF':
-                        kml.write('<Placemark>\n<name>Ground detection square</name>\n')
-                        kml.write('<description>\nlongitude:   %s\n' % lon
-                                              +  'latitude:    %s\n' % lat
-                                              +  'time:        %s\n' % timedescr
-                                              +  'satellite:   %s\n' % satellite[p]
-                                              +  'instrument:  %s\n' % instrument[p]
-                                              +  'scan angle:  %s\n' % angle
-                                              +  'along-scan:  %s\n' % scan
-                                              +  'along-track: %s\n' % track
-                                + '</description>\n')
+                for t in range(len(d['latitude'])):
+                    lats=np.array(d['latitude'][t]).astype(float)
+                    lons=np.array(d['longitude'][t]).astype(float)
+                    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
+                    latitude=lats[ll]
+                    longitude=lons[ll]
+                    NN=len(latitude)
+                    acq_date=np.array(d['acq_date'][t])[ll]
+                    acq_time=np.array(d['acq_time'][t])[ll]
+                    try:
+                        satellite=np.array(d['satellite'][t])[ll]
+                    except:
+                        satellite=np.array(['Not available']*NN)
+                    try:
+                        instrument=np.array(d['instrument'][t])[ll]
+                    except:
+                        instrument=np.array(['Not available']*NN)
+                    try:
+                        confidence=np.array(d['confidence'][t])[ll].astype(float)
+                    except:
+                        confidence=np.array(np.zeros(NN)).astype(float)
+                    try:
+                        frps=np.array(d['frp'][t])[ll].astype(float)
+                    except:
+                        frps=np.array(np.zeros(NN)).astype(float)
+                    try:
+                        angles=np.array(d['scan_angle'][t])[ll].astype(float)
+                    except:
+                        angles=np.array(['Not available']*NN)
+                    try:
+                        scans=np.array(d['scan'][t])[ll].astype(float)
+                    except:
+                        scans=np.ones(NN).astype(float)
+                    try:
+                        tracks=np.array(d['track'][t])[ll].astype(float)
+                    except:
+                        tracks=np.ones(NN).astype(float)
+
+                    kml.write('<Folder>\n')
+                    if opt=='date':
+                        kml.write('<name>%s</name>\n' % acq_date[0])
+                    elif opt=='granule':
+                        kml.write('<name>%s</name>\n' % d['granules'][t])
                     else:
-                        kml.write('<Placemark>\n<name>Fire detection square</name>\n')
-                        kml.write('<description>\nlongitude:   %s\n' % lon
-                                              +  'latitude:    %s\n' % lat
-                                              +  'time:        %s\n' % timedescr
-                                              +  'satellite:   %s\n' % satellite[p]
-                                              +  'instrument:  %s\n' % instrument[p]
-                                              +  'confidence:  %s\n' % conf
-                                              +  'FRP:         %s\n' % frp
-                                              +  'scan angle:  %s\n' % angle
-                                              +  'along-scan:  %s\n' % scan
-                                              +  'along-track: %s\n' % track
-                                + '</description>\n')
-                    kml.write('<TimeStamp><when>%s</when></TimeStamp>\n' % timestamp)
-                    if prod == 'AF':
-                        if conf < 30:
-                            kml.write('<styleUrl> modis_conf_low </styleUrl>\n')
-                        elif conf < 80:
-                            kml.write('<styleUrl> modis_conf_med </styleUrl>\n')
+                        kml.write('<name>Pixels</name>\n')
+
+                    for p in range(NN):
+                        lat=latitude[p]
+                        lon=longitude[p]
+                        conf=confidence[p]
+                        frp=frps[p]
+                        angle=angles[p]
+                        scan=scans[p]
+                        track=tracks[p]
+                        timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
+                        timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
+
+                        if prod == 'NF':
+                            kml.write('<Placemark>\n<name>Ground detection square</name>\n')
+                            kml.write('<description>\nlongitude:   %s\n' % lon
+                                                  +  'latitude:    %s\n' % lat
+                                                  +  'time:        %s\n' % timedescr
+                                                  +  'satellite:   %s\n' % satellite[p]
+                                                  +  'instrument:  %s\n' % instrument[p]
+                                                  +  'scan angle:  %s\n' % angle
+                                                  +  'along-scan:  %s\n' % scan
+                                                  +  'along-track: %s\n' % track
+                                    + '</description>\n')
                         else:
-                            kml.write('<styleUrl> modis_conf_high </styleUrl>\n')
-                    elif prod == 'FRP':
-                        frpx = min(40,np.ceil(frp/10.)-1)
-                        kml.write('<styleUrl> %s </styleUrl>\n' % frp_style[frpx] )
-                    elif prod == 'NF':
-                        kml.write('<styleUrl> no_fire </styleUrl>\n')
+                            kml.write('<Placemark>\n<name>Fire detection square</name>\n')
+                            kml.write('<description>\nlongitude:   %s\n' % lon
+                                                  +  'latitude:    %s\n' % lat
+                                                  +  'time:        %s\n' % timedescr
+                                                  +  'satellite:   %s\n' % satellite[p]
+                                                  +  'instrument:  %s\n' % instrument[p]
+                                                  +  'confidence:  %s\n' % conf
+                                                  +  'FRP:         %s\n' % frp
+                                                  +  'scan angle:  %s\n' % angle
+                                                  +  'along-scan:  %s\n' % scan
+                                                  +  'along-track: %s\n' % track
+                                    + '</description>\n')
+                        kml.write('<TimeStamp><when>%s</when></TimeStamp>\n' % timestamp)
+                        if prod == 'AF':
+                            if conf < 30:
+                                kml.write('<styleUrl> modis_conf_low </styleUrl>\n')
+                            elif conf < 80:
+                                kml.write('<styleUrl> modis_conf_med </styleUrl>\n')
+                            else:
+                                kml.write('<styleUrl> modis_conf_high </styleUrl>\n')
+                        elif prod == 'FRP':
+                            frpx = min(40,np.ceil(frp/10.)-1)
+                            kml.write('<styleUrl> %s </styleUrl>\n' % frp_style[frpx] )
+                        elif prod == 'NF':
+                            kml.write('<styleUrl> no_fire </styleUrl>\n')
 
-                    kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
+                        kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
 
-                    km_lon=km_lat/np.cos(lat*np.pi/180)  # 1 km in longitude
+                        km_lon=km_lat/np.cos(lat*np.pi/180)  # 1 km in longitude
 
-                    sq_track_size_km=track
-                    sq2_lat=km_lat * sq_track_size_km/2
-                    sq_scan_size_km=scan
-                    sq2_lon=km_lon * sq_scan_size_km/2
+                        sq_track_size_km=track
+                        sq2_lat=km_lat * sq_track_size_km/2
+                        sq_scan_size_km=scan
+                        sq2_lon=km_lon * sq_scan_size_km/2
 
-                    kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
-                    kml.write('%s,%s,0\n' % (lon - sq2_lon, lat + sq2_lat))
-                    kml.write('%s,%s,0\n' % (lon + sq2_lon, lat + sq2_lat))
-                    kml.write('%s,%s,0\n' % (lon + sq2_lon, lat - sq2_lat))
-                    kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
+                        kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
+                        kml.write('%s,%s,0\n' % (lon - sq2_lon, lat + sq2_lat))
+                        kml.write('%s,%s,0\n' % (lon + sq2_lon, lat + sq2_lat))
+                        kml.write('%s,%s,0\n' % (lon + sq2_lon, lat - sq2_lat))
+                        kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
 
-                    kml.write('</coordinates>\n</LinearRing>\n</outerBoundaryIs>\n</Polygon>\n</Placemark>\n')
+                        kml.write('</coordinates>\n</LinearRing>\n</outerBoundaryIs>\n</Polygon>\n</Placemark>\n')
+                    kml.write('</Folder>\n')
+
                 kml.write('</Folder>\n')
 
-            kml.write('</Folder>\n')
+            kml.write('</Document>\n</kml>\n')
 
-        kml.write('</Document>\n</kml>\n')
-
-    print 'Created file %s' % kml_path
+        print 'Created file %s' % kml_path
+    else:
+        print 'Any detections to be saved as %s' % kml_path
 
 def burned_algorithm(data):
     """
