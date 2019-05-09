@@ -139,8 +139,9 @@ def neighbor_indices_pixel(lons,lats,lon,lat,scan,track):
 	bounds=[[lon[k]-sqlon[k],lon[k]+sqlon[k],lat[k]-sqlat[k],lat[k]+sqlat[k]] for k in range(len(lat))]
 	# creating a logical array of indices in the fire mesh with the intersection of all the cases
 	ll=np.sum([np.array(np.logical_and(np.logical_and(np.logical_and(lons>b[0],lons<b[1]),lats>b[2]),lats<b[3])) for b in bounds],axis=0).astype(bool)
-	if ll is False:
-		ll = [False]*len(lons)
+	if np.all(ll==False):
+		fll = np.array([False]*len(lons))
+		return fll
 	return ll
 
 def neighbor_indices_ellipse(lons,lats,lon,lat,scan,track,mm=1):
@@ -169,8 +170,9 @@ def neighbor_indices_ellipse(lons,lats,lon,lat,scan,track,mm=1):
 	C=[[(np.array(lons)-lon[k])/sqlon[k],(np.array(lats)-lat[k])/sqlat[k]] for k in range(len(lat))]
 	# creating a logical array of indices in the fire mesh with the intersection of all the cases
 	ll=np.sum([np.array((np.square(c[0])+np.square(c[1]))<=mm) for c in C],axis=0).astype(bool)
-	if ll is False:
-		ll = [False]*len(lons)
+	if np.all(ll==False):
+		fll = np.array([False]*len(lons))
+		return fll
 	return ll
 
 def neighbor_indices_ball(tree,indices,shape,d=2):
