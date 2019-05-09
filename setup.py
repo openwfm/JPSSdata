@@ -130,15 +130,15 @@ def process_detections(data,fxlon,fxlat,time_num):
 
 			if ut>1 or mt>1:
 				# taking lon, lat, scan and track of the fire detections which fire large confidence indexes
-				lon=sdata[gran][1]['lon_fire'][flc[mu]]
-				lat=sdata[gran][1]['lat_fire'][flc[mu]]
-				scan=sdata[gran][1]['scan_fire'][flc[mu]]
-				track=sdata[gran][1]['track_fire'][flc[mu]]
+				lon=sdata[gran][1]['lon_fire'][flc][mu]
+				lat=sdata[gran][1]['lat_fire'][flc][mu]
+				scan=sdata[gran][1]['scan_fire'][flc][mu]
+				track=sdata[gran][1]['track_fire'][flc][mu]
 
 			# Set mask
 			if mt==1:
 				# creating the indices for all the pixel neighbours of the upper bound indices
-				kk=neighbor_indices_ball(itree,ffi[flc[mu]],fxlon.shape,dist)
+				kk=neighbor_indices_ball(itree,ffi[flc][mu],fxlon.shape,dist)
 				im=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
 			elif mt==2:
 				# creating the indices for all the pixel neighbours of the upper bound indices
