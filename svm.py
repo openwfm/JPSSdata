@@ -297,15 +297,15 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
 
     # Plot options
     # plot original data
-    plot_data = False
+    plot_data = True
     # plot scaled data with artificial data
-    plot_scaled = False
+    plot_scaled = True
     # plot polynomial approximation (if postech=='poly')
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = False
+    plot_supports = True
     # plot resulting fire arrival time vs detections
-    plot_result = False
+    plot_result = True
 
     # Other options
     # number of vertical nodes per observation
@@ -351,7 +351,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
         ax.set_zlabel("Time (days)")
-        plt.show()
+        plt.savefig('original_data.png')
 
     # Normalization of the data into [0,1]^3
     if norm:
@@ -439,7 +439,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude normalized")
         ax.set_ylabel("Latitude normalized")
         ax.set_zlabel("Time normalized")
-        plt.show()
+        plt.savefig('scaled_data.png')
 
     # Reescaling gamma to include more detailed results
     gamma = kgam / (n_features * X.std())
@@ -523,7 +523,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude normalized")
         ax.set_ylabel("Latitude normalized")
         ax.set_zlabel("Time normalized")
-        plt.show()
+        plt.savefig('support.png')
 
     # Plot the fire arrival time resulting from the SVM classification normalized
     if plot_result:
@@ -547,7 +547,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude normalized")
         ax.set_ylabel("Latitude normalized")
         ax.set_zlabel("Time normalized")
-        plt.show()
+        plt.savefig('tign_g.png')
 
     # Translate the result again into initial data scale
     if norm:
@@ -592,13 +592,11 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
         ax.set_zlabel("Time (days)")
-        plt.show()
+        plt.savefig('result.png')
 
     print '>> SUCCESS <<'
     t_final = time()
     print 'TOTAL elapsed time: %ss.' % str(abs(t_final-t_init))
-
-    plt.show()
 
     return FF
 
