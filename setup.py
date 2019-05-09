@@ -150,7 +150,7 @@ def process_detections(data,fxlon,fxlat,time_num):
 				print 'ERROR: invalid mt option.'
 				sys.exit()
 			mmt = T[im] > ti # only mask did not set yet
-			T[im[mmt]]=ti # update mask T
+			T[im][mmt]=ti # update mask T
 
 		# Set mask from burned scar data
 		if burn:
