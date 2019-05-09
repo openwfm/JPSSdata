@@ -36,12 +36,12 @@ G=np.maximum(G, 0)
 G=np.minimum(G, 1)
 B=np.maximum(B, 0)
 B=np.minimum(B, .75)
-# Normalize each channel by the appropriate range of values (again, mostly important for Red channel)
+# Normalize each channel by the appropriate range of values
 R=(R-273)/(333-273)
 G=(G-0)/(1-0)
 B=(B-0)/(.75-0)
 # Apply the gamma correction to Red channel.
-#   I was told gamma=0.4, but I get the right answer with gamma=2.5 (the reciprocal of 0.4)
+#gamma=2.5
 R=np.power(R, 2.5)
 # The final RGB array :)
 RGB=np.dstack([R, G, B])
@@ -69,10 +69,6 @@ print 'X ='
 print X
 print 'Y ='
 print Y
-
-# dig in and find def of X,Y from GOES people - does it take into account terrain height (this could account for multi-km error)?
-# find what assumptions PyProj is making with geostat. projection.
-# do all this in Overleaf
 
 # Visualize using pyproj (https://github.com/pyproj4/pyproj/blob/master/pyproj/proj.py)
 p=Proj(proj='geos', h=sat_h, lon_0=sat_lon, sweep=sat_sweep)
