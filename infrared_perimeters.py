@@ -35,7 +35,7 @@ def process_ignitions(igns,bounds=None):
                                 'acq_date': acq_date, 'acq_time': acq_time})})
     return ignitions
 
-def process_infrared_perimeters(dst,bounds=None,plot=False):
+def process_infrared_perimeters(dst,bounds=None,maxp=500,plot=False):
     files = glob.glob(osp.join(dst, '*.kml'))
     prefix = "PER"
     perimeters = Dict({})
@@ -63,7 +63,11 @@ def process_infrared_perimeters(dst,bounds=None,plot=False):
                 acq_time = '%02d%02d' % (time_datetime.hour, time_datetime.minute)
                 polygons = re.findall(r'<Polygon>(.*?)</Polygon>',f_str,re.DOTALL)
                 buckets = [re.split('\r\n\s+',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in polygons]
-                coordinates = [np.array(re.split(',',b)[0:2]).astype(float) for bucket in buckets for b in bucket][1::10]
+                coordinates = [np.array(re.split(',',b)[0:2]).astype(float) for bucket in buckets for b in bucket]
+                if len(coordinates) > maxp:
+                    coarse = len(coordinates)/maxp
+                    if coarse > 0:
+                        coordinates = coordinates[1::coarse]
             except Exception as e:
                 print 'Error: file %s has not proper structure.' % file
                 print 'Exception: %s.' % e

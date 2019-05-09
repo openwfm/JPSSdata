@@ -62,7 +62,7 @@ from time import time
 # examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
 igns = None
 # if infrared perimeters: path to KML files
-# examples: perim_path = './pioneer_perim'
+# examples: perim_path = './pioneer/perim'
 perim_path = ''
 
 satellite_file = 'data'
