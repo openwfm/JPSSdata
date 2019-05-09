@@ -117,15 +117,15 @@ def process_detections(data,fxlon,fxlat,time_num):
 			if ut==1:
 				# indices with high confidence
 				iu=ffi[flc]
-				if confm:
-					C[iu]=conf[flc]
 			elif ut==2:
 				# creating the indices for all the pixel neighbours of the upper bound
 				iu=neighbor_indices_ellipse(vfxlon,vfxlat,lon,lat,scan,track)
 			else:
 				print 'ERROR: invalid ut option.'
 				sys.exit()
-			mu = U[iu] > ti
+			mu = U[iu] > ti # only upper bounds did not set yet
+			if ut==1 and confm:
+				C[iu[mu]]=conf[flc][mu]
 			U[iu[mu]]=ti # set U to granule time where fire detected and not detected before
 
 			if ut>1 or mt>1:
