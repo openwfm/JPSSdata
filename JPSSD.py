@@ -832,8 +832,6 @@ def sdata2json(sdata,keys,dkeys,N):
             else:
                 ddn=[[d[1][1][dkeys[i]]]*N[d[0]] for d in enumerate(sdata) if dkeys[i] in d[1][1]]
                 ret.update({k : ddn})
-        else:
-                ret.update({k : []})
 
     return ret
 
