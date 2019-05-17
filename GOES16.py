@@ -6,6 +6,7 @@ Requirements:
 - must have rclone installed
 - configure new remote via rclone titled 'goes16aws'
 - must have subdirectory with rclone in path
+'''
 
 from subprocess import call, PIPE, STDOUT
 from netCDF4 import Dataset
@@ -36,8 +37,8 @@ download = call([args[0], 'copyto', path, './'], cwd=args[4])
 C_file = './' + args[0] + "/" + raw_input("What file would you like to see? ") # allow a moment for download to complete
 C = Dataset(C_file, 'r')
 
-#will add mapping from https://github.com/blaylockbk/pyBKB_v2/blob/master/BB_GOES16/mapping_GOES16_FireTemperature.ipynb
-
+# add mapping from https://github.com/blaylockbk/pyBKB_v2/blob/master/BB_GOES16/mapping_GOES16_FireTemperature.ipynb
+'''
 Notes:
 -may need "shell=True" only for Windows environment.
 -call still not working, properly. Will adjust in the next couple days
