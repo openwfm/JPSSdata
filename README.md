@@ -64,6 +64,8 @@ University of Colorado Denver
 ### Contains:
 - JPPSD.py gather data from MODIS/VIIRS for a given time window and bounding box 
 - get_af_data.py a test driver for JPSSD.py to download all data for a given window
+- GOES16.py filters and downloads GOES satellite files from AWS
+- read_goes.py parses netCDF files for relevant fire info in given bounding box/time
 - interpolation.py not just interpolation but various utilities of more general nature
 - saveload.py a convenience utility to save and load Python objects
 - setup.py reads data and makes into input for statistical interpolation to estimate fire arrival time
@@ -75,4 +77,3 @@ University of Colorado Denver
 ### External links:
 - Tools for searching the CMR API https://cmr.earthdata.nasa.gov
 - VIIRS Active Fires users guide https://lpdaac.usgs.gov/sites/default/files/public/product_documentation/vnp14_user_guide_v1.3.pdf
-- GOES16.py filters and downloads GOES satellite files from AWS.
