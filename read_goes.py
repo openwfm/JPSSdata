@@ -77,6 +77,34 @@ XX, YY=np.meshgrid(X, Y)
 lons, lats=p(XX, YY, inverse=True)
 lats[np.isnan(R)]=np.nan
 lons[np.isnan(R)]=np.nan
+
+# create new netCDF file with lat/lon info
+newfile = "appended" + file
+w_ncf = Dataset(newfile, 'w')
+with Dataset(file) as src, w_ncf as dst:
+    # copy attributes
+    for name in src.ncattrs():
+        dst.setncattr(name, src.getncattr(name))
+    # copy dimensions
+    for name, dimension in src.dimensions.iteritems():
+        dst.createDimension(
+            name, (len(dimension) if not dimension.isunlimited else None))
+    # copy all file data from source file
+    for name, variable in src.variables.iteritems():
+        x = dst.createVariable(name, variable.datatype, variable.dimensions)
+        dst.variables[name][:] = src.variables[name][:]
+        
+    # add new lat/lon info
+    dst.createDimension('longitude', None)
+    dst.createDimension('lattitude', None)
+    # Assign the dimension data to the new NetCDF file.
+    dst.createVariable('longitude', X.dtype, ('longitude',))
+    dst.createVariable('lattitude', Y.dtype, ('lattitude',))
+    dst.variables['longitude'][:] = lons
+    dst.variables['lattitude'][:] = lats
+    # close the new file
+    dst.close()
+
 # Make a new map object for the HRRR model domain map projection
 mH = Basemap(resolution='l', projection='lcc', area_thresh=5000, \
              width=1800*3000, height=1060*3000, \
