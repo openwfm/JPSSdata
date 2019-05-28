@@ -1,6 +1,6 @@
 import warnings
 warnings.filterwarnings("ignore")
-import numpy as np 
+import numpy as np
 from time import time
 from datetime import datetime
 from scipy import spatial
@@ -8,21 +8,21 @@ import itertools
 from random import randint
 
 def sort_dates(data):
-	""" 
+	"""
     Sorting a dictionary depending on the time number in seconds from January 1, 1970
-    
+
     :param data: dictionary of granules where each granule has a time_num key
     :return: an array of dictionaries ordered by time_num key (seconds from January 1, 1970)
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
 	return sorted(data.iteritems(), key=lambda x: x[1]['time_num'])
 
 def nearest_euclidean(lon,lat,lons,lats,bounds):
-	""" 
+	"""
     Returns the longitude and latitude arrays interpolated using Euclidean distance
-    
+
     :param lon: 2D array of longitudes to look the nearest neighbours
     :param lat: 2D array of latitudes to look the nearest neighbours
     :param lons: 2D array of longitudes interpolating to
@@ -30,7 +30,7 @@ def nearest_euclidean(lon,lat,lons,lats,bounds):
     :param bounds: array of 4 bounding boundaries where to interpolate: [minlon maxlon minlat maxlat]
     :return ret: tuple with a 2D array of longitudes and 2D array of latitudes interpolated from (lon,lat) to (lons,lats)
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
 	vlon=np.reshape(lon,np.prod(lon.shape))
@@ -45,15 +45,15 @@ def nearest_euclidean(lon,lat,lons,lats,bounds):
 			rlat[k]=lats[ii,jj]
 		else:
 			rlon[k]=np.nan;
-			rlat[k]=np.nan;	
+			rlat[k]=np.nan;
 	ret=(np.reshape(rlon,lon.shape),np.reshape(rlat,lat.shape))
 	return ret
-	
+
 
 def nearest_scipy(lon,lat,stree,bounds):
-	""" 
+	"""
     Returns the coordinates interpolated from (lon,lat) to (lons,lats) and the value of the indices where NaN values
-    
+
     :param lon:	2D array of longitudes to look the nearest neighbours
     :param lat:	2D array of latitudes to look the nearest neighbours
     :param lons: 2D array of longitudes interpolating to
@@ -61,7 +61,7 @@ def nearest_scipy(lon,lat,stree,bounds):
     :param dub: optional, distance upper bound to look for the nearest neighbours
     :return ret: A tuple with a 2D array of coordinates interpolated from (lon,lat) to (lons,lats) and the value of the indices where NaN values
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
 	vlon=np.reshape(lon,np.prod(lon.shape))
@@ -74,14 +74,14 @@ def nearest_scipy(lon,lat,stree,bounds):
 	return ret
 
 def distance_upper_bound(dx,dy):
-	""" 
+	"""
     Computes the distance upper bound
 
     :param dx: array of two elements with fire mesh grid resolutions
     :param dy: array of two elements with satellite grid resolutions
     :return d: distance upper bound to look for the nearest neighbours
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
 	rx=np.sqrt(dx[0]**2+dx[1]**2)
@@ -90,7 +90,7 @@ def distance_upper_bound(dx,dy):
 	return d
 
 def neighbor_indices(indices,shape,d=2):
-	""" 
+	"""
     Computes all the neighbor indices from an indice list
 
     :param indices: list of coordinates in a 1D array
@@ -98,7 +98,7 @@ def neighbor_indices(indices,shape,d=2):
     :param d: optional, distance of the neighbours
     :return ind: Returns a numpy array with the indices and the neighbor indices in 1D array
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
     # Width and Length of the 2D grid
@@ -115,7 +115,7 @@ def neighbor_indices(indices,shape,d=2):
 	return ind
 
 def neighbor_indices_pixel(lons,lats,lon,lat,scan,track):
-	""" 
+	"""
     Computes all the neighbor indices depending on the size of the pixel
 
     :param lons: one dimensional array of the fire mesh longitud coordinates
@@ -126,7 +126,7 @@ def neighbor_indices_pixel(lons,lats,lon,lat,scan,track):
     :param track: one dimensional array of the fire detection along-track sizes
     :return ll: returns a one dimensional logical array with the indices in the fire mesh including pixel neighbours
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-10-16
     """
 	R=6378   # Earth radius
@@ -139,10 +139,13 @@ def neighbor_indices_pixel(lons,lats,lon,lat,scan,track):
 	bounds=[[lon[k]-sqlon[k],lon[k]+sqlon[k],lat[k]-sqlat[k],lat[k]+sqlat[k]] for k in range(len(lat))]
 	# creating a logical array of indices in the fire mesh with the intersection of all the cases
 	ll=np.sum([np.array(np.logical_and(np.logical_and(np.logical_and(lons>b[0],lons<b[1]),lats>b[2]),lats<b[3])) for b in bounds],axis=0).astype(bool)
+	if np.all(ll==False):
+		fll = np.array([False]*len(lons))
+		return fll
 	return ll
 
 def neighbor_indices_ellipse(lons,lats,lon,lat,scan,track,mm=1):
-	""" 
+	"""
     Computes all the neighbor indices in an ellipse of radius the size of the pixel
 
     :param lons: one dimensional array of the fire mesh longitud coordinates
@@ -154,7 +157,7 @@ def neighbor_indices_ellipse(lons,lats,lon,lat,scan,track,mm=1):
     :param mm: constant of magnitude of the ellipse, default mm=1 (ellipse inscribed in the pixel)
     :return ll: returns a one dimensional logical array with the indices in the fire mesh including pixel neighbours
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-10-18
     """
 	R=6378   # Earth radius
@@ -167,18 +170,21 @@ def neighbor_indices_ellipse(lons,lats,lon,lat,scan,track,mm=1):
 	C=[[(np.array(lons)-lon[k])/sqlon[k],(np.array(lats)-lat[k])/sqlat[k]] for k in range(len(lat))]
 	# creating a logical array of indices in the fire mesh with the intersection of all the cases
 	ll=np.sum([np.array((np.square(c[0])+np.square(c[1]))<=mm) for c in C],axis=0).astype(bool)
+	if np.all(ll==False):
+		fll = np.array([False]*len(lons))
+		return fll
 	return ll
 
 def neighbor_indices_ball(tree,indices,shape,d=2):
-	""" 
+	"""
     Computes all the neighbor indices from an indice list in a grid of indices defined through a cKDTree
-    
+
     :param indices: list of coordinates in a 1D array
     :param shape: array of two elements with satellite grid size
     :param d: optional, distance of the neighbours computed as: sqrt(2*d**2)
     :return ind: returns a numpy array with the indices and the neighbor indices in 1D array respect to the grid used in the tree
 
-    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH. 
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
     # Width of the 2D grid
@@ -265,4 +271,4 @@ if __name__ == "__main__":
 	print 'elapsed time: %ss.' % str(t_final-t_init)
 	print 'Difference'
 	print np.setdiff1d(ne,nse)
-	print np.setdiff1d(nse,ne) 
+	print np.setdiff1d(nse,ne)

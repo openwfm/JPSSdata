@@ -8,16 +8,17 @@
 
 from sklearn import svm
 from scipy import interpolate, spatial
+import matplotlib.pyplot as plt
+import matplotlib.font_manager
+import matplotlib.colors as colors
 from mpl_toolkits.mplot3d import axes3d
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-import matplotlib.font_manager
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 import numpy as np
-import sys
 from time import time
+from infrared_perimeters import process_infrared_perimeters
+import sys
 
-def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
+def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     """
     Preprocess satellite data from JPSSD and setup to use in Support Vector Machine
 
@@ -34,6 +35,9 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2019-04-01
     """
+
+    # Confidence of nofire detections
+    nofire_conf = 10
 
     # Flatten coordinates
     lon = np.reshape(lons,np.prod(lons.shape)).astype(float)
@@ -99,7 +103,22 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules):
     print 'shape X: ', X.shape
     print 'shape y: ', y.shape
 
-    return X,y
+    if C is None:
+        c = 80*np.ones(y.shape)
+    else:
+        c = np.concatenate((nofire_conf*np.ones(len(lx)),np.reshape(C,np.prod(C.shape))[um]))
+
+    # Clean data if not in bounding box
+    bbox = (lon.min(),lon.max(),lat.min(),lat.max(),time_num_granules)
+    geo_mask = np.logical_and(np.logical_and(np.logical_and(X[:,0] > bbox[0],X[:,0] < bbox[1]), X[:,1] > bbox[2]), X[:,1] < bbox[3])
+    btime = (0,(scale[1]-scale[0])/tscale)
+    time_mask = np.logical_and(X[:,2] > btime[0], X[:,2] < btime[1])
+    whole_mask = np.logical_and(geo_mask,time_mask)
+    X = X[whole_mask,:]
+    y = y[whole_mask]
+    c = c[whole_mask]
+
+    return X,y,c
 
 def make_fire_mesh(fxlon, fxlat, it, nt):
     """
@@ -256,7 +275,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
 
     return F
 
-def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
+def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     """
     3D SuperVector Machine analysis and plot
 
@@ -278,15 +297,15 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
 
     # Plot options
     # plot original data
-    plot_data = False
+    plot_data = True
     # plot scaled data with artificial data
-    plot_scaled = False
+    plot_scaled = True
     # plot polynomial approximation (if postech=='poly')
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = False
+    plot_supports = True
     # plot resulting fire arrival time vs detections
-    plot_result = False
+    plot_result = True
 
     # Other options
     # number of vertical nodes per observation
@@ -302,17 +321,17 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
     # creation of over and under artificial upper and lower bounds in the pre-processing
     arti = True
     # resolution of artificial upper bounds vertical to the fire detections
-    hartil = .15
+    hartil = .2
     # resolution of artificial lower bounds vertical to the ground detections
-    hartiu = .05
+    hartiu = .1
     # creation of an artifitial mesh of top upper bounds
     toparti = False
     # proportion over max of z direction for upper bound artifitial creation
-    dmaxz = 0.1
+    dmaxz = .1
     # creation of an artifitial mesh of down lower bounds
     downarti = True
     # below min of z direction for lower bound artifitial creation
-    dminz = 0.1
+    dminz = .1
 
     # Data inputs
     X = np.array(X).astype(float)
@@ -329,9 +348,10 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         ax = fig.gca(projection='3d')
         fig.suptitle("Plotting the original data to fit")
         ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_zlabel("Time (days)")
+        plt.savefig('original_data.png')
 
     # Normalization of the data into [0,1]^3
     if norm:
@@ -416,9 +436,10 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         ax = fig.gca(projection='3d')
         fig.suptitle("Plotting the data scaled to fit")
         ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        ax.set_xlabel("Longitude normalized")
+        ax.set_ylabel("Latitude normalized")
+        ax.set_zlabel("Time normalized")
+        plt.savefig('scaled_data.png')
 
     # Reescaling gamma to include more detailed results
     gamma = kgam / (n_features * X.std())
@@ -499,9 +520,10 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         ax.set_xlim(xx.min(),xx.max())
         ax.set_ylim(yy.min(),yy.max())
         ax.set_zlim(zz.min(),zz.max())
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        ax.set_xlabel("Longitude normalized")
+        ax.set_ylabel("Latitude normalized")
+        ax.set_zlabel("Time normalized")
+        plt.savefig('support.png')
 
     # Plot the fire arrival time resulting from the SVM classification normalized
     if plot_result:
@@ -513,16 +535,19 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
             Fz = np.minimum(Fz, X2.max())
         fig = plt.figure()
         ax = fig.gca(projection='3d')
+        fig.suptitle("Fire arrival time normalized")
         # plotting fire arrival time
         p = ax.plot_surface(Fx, Fy, Fz, cmap=plt.cm.coolwarm,
                        linewidth=0, antialiased=False)
         ax.set_xlim(xx.min(),xx.max())
         ax.set_ylim(yy.min(),yy.max())
         ax.set_zlim(zz.min(),zz.max())
-        fig.colorbar(p)
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        cbar = fig.colorbar(p)
+        cbar.set_label('Fire arrival time normalized', labelpad=20, rotation=270)
+        ax.set_xlabel("Longitude normalized")
+        ax.set_ylabel("Latitude normalized")
+        ax.set_zlabel("Time normalized")
+        plt.savefig('tign_g.png')
 
     # Translate the result again into initial data scale
     if norm:
@@ -564,15 +589,14 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None):
         ax.scatter(oX0, oX1, oX2, c=oy, cmap=plt.cm.coolwarm, s=2, vmin=y.min(), vmax=y.max())
         # plotting fire arrival time
         ax.plot_wireframe(FFx, FFy, FFz, color='orange')
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_zlabel("Time (days)")
+        plt.savefig('result.png')
 
     print '>> SUCCESS <<'
     t_final = time()
     print 'TOTAL elapsed time: %ss.' % str(abs(t_final-t_init))
-
-    plt.show()
 
     return FF
 

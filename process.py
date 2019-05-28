@@ -19,7 +19,7 @@
 #	2) Methods from interpolation.py and JPSSD.py files:
 #		*) Write KML file 'fire_detections.kml' with fire detection pixels.
 #		*) Write KML file 'nofire.kml' with saved ground detection pixels.
-#	3) Method process_satellite_detections from setup.py file:
+#	3) Method process_detections from setup.py file:
 #		*) Sort all the granules from all the sources in time order.
 #		*) Construct upper and lower bounds using a mask to prevent ground after fire.
 #		*) Save results in 'results.mat' file.
@@ -45,7 +45,8 @@
 #---------------------------------------------------------------------------------------------------------------------
 from JPSSD import read_fire_mesh, retrieve_af_data, sdata2json, json2kml, time_iso2num
 from interpolation import sort_dates
-from setup import process_satellite_detections
+from setup import process_detections
+from infrared_perimeters import process_ignitions, process_infrared_perimeters
 from svm import preprocess_data_svm, SVM3
 from contline import get_contour_verts
 from contour2kml import contour2kml
@@ -56,6 +57,13 @@ import datetime as dt
 import sys
 import os
 from time import time
+
+# if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
+# examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
+igns = None
+# if infrared perimeters: path to KML files
+# examples: perim_path = './pioneer/perim'
+perim_path = ''
 
 satellite_file = 'data'
 fire_file = 'fire_detections.kml'
@@ -120,13 +128,22 @@ else:
 		print '>> Retrieving satellite data <<'
 		sys.stdout.flush()
 		data = retrieve_af_data(bbox,time_iso)
+		if igns:
+			data.update(process_ignitions(igns,bounds=bbox))
+		if perim_path:
+			data.update(process_infrared_perimeters(perim_path,bounds=bbox))
 
-		print ''
-		print '>> Saving satellite data file (data) <<'
-		sys.stdout.flush()
-		time_num = map(time_iso2num,time_iso)
-		sl.save((data,fxlon,fxlat,time_num),satellite_file)
-		print 'data file saved correctly!'
+		if data:
+			print ''
+			print '>> Saving satellite data file (data) <<'
+			sys.stdout.flush()
+			time_num = map(time_iso2num,time_iso)
+			sl.save((data,fxlon,fxlat,time_num),satellite_file)
+			print 'data file saved correctly!'
+		else:
+			print ''
+			print 'ERROR: No data obtained...'
+			sys.exit(1)
 
 	print ''
 	if (not fire_exists) or (not ground_exists):
@@ -134,7 +151,6 @@ else:
 		sys.stdout.flush()
 		# sort the granules by dates
 		sdata=sort_dates(data)
-		tt = [ dd[1]['time_num'] for dd in sdata ]  # array of times
 	if fire_exists:
 		print '>> File %s already created! <<' % fire_file
 	else:
@@ -143,7 +159,7 @@ else:
 		keys = ['latitude','longitude','brightness','scan','track','acq_date','acq_time','satellite','instrument','confidence','bright_t31','frp','scan_angle']
 		dkeys = ['lat_fire','lon_fire','brig_fire','scan_fire','track_fire','acq_date','acq_time','sat_fire','instrument','conf_fire','t31_fire','frp_fire','scan_angle_fire']
 		prods = {'AF':'Active Fires','FRP':'Fire Radiative Power'}
-		N = [len(d[1]['lat_fire']) for d in sdata]
+		N = [len(d[1]['lat_fire']) if 'lat_fire' in d[1] else 0 for d in sdata]
 		json = sdata2json(sdata,keys,dkeys,N)
 		json2kml(json,fire_file,bbox,prods)
 	if ground_exists:
@@ -155,29 +171,34 @@ else:
 		keys = ['latitude','longitude','scan','track','acq_date','acq_time','satellite','instrument','scan_angle']
 		dkeys = ['lat_nofire','lon_nofire','scan_nofire','track_nofire','acq_date','acq_time','sat_fire','instrument','scan_angle_nofire']
 		prods = {'NF':'No Fire'}
-		N = [len(d[1]['lat_nofire']) for d in sdata]
+		N = [len(d[1]['lat_nofire']) if 'lat_nofire' in d[1] else 0 for d in sdata]
 		json = sdata2json(sdata,keys,dkeys,N)
 		json2kml(json,ground_file,bbox,prods)
 
 	print ''
 	print '>> Processing satellite data <<'
 	sys.stdout.flush()
-	result = process_satellite_detections(data,fxlon,fxlat,time_num)
+	result = process_detections(data,fxlon,fxlat,time_num)
 	# Taking necessary variables from result dictionary
 	scale = result['time_scale_num']
 	time_num_granules = result['time_num_granules']
 	time_num_interval = result['time_num']
-	lon = np.array(result['fxlon']).astype(float).T
-	lat = np.array(result['fxlat']).astype(float).T
+	lon = np.array(result['fxlon']).astype(float)
+	lat = np.array(result['fxlat']).astype(float)
 
 U = np.array(result['U']).astype(float)
 L = np.array(result['L']).astype(float)
 T = np.array(result['T']).astype(float)
 
+if 'C' in result.keys():
+	conf = np.array(result['C'])
+else:
+	conf = None
+
 print ''
 print '>> Preprocessing the data <<'
 sys.stdout.flush()
-X,y = preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules)
+X,y,c = preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules,C=conf)
 
 print ''
 print '>> Running Support Vector Machine <<'
@@ -189,7 +210,7 @@ F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat))
 print ''
 print '>> Saving the results <<'
 sys.stdout.flush()
-tscale = 24*3600
+tscale = 24*3600 # scale from seconds to days
 # Fire arrival time in seconds from the begining of the simulation
 tign_g = F[2]*float(tscale)+scale[0]-time_num_interval[0]
 # Creating the dictionary with the results

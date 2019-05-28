@@ -1,24 +1,19 @@
 import warnings
 warnings.filterwarnings("ignore")
 import scipy.io as sio
-import pdb
-import saveload as sl
-from interpolation import *
-import time
 import numpy as np
-import sys
 from scipy import spatial
-import itertools
-from utils import *
 import matplotlib.pyplot as plt
-import os
-import sys
+import saveload as sl
+from utils import Dict
+from interpolation import sort_dates, nearest_scipy, neighbor_indices_ball, neighbor_indices_pixel, neighbor_indices_ellipse
+import os, sys, time, itertools
 
-def process_satellite_detections(data,fxlon,fxlat,time_num):
+def process_detections(data,fxlon,fxlat,time_num):
 	"""
-	Process satellite detections to obtain upper and lower bounds
+	Process detections to obtain upper and lower bounds
 
-	:param data: satellite data obtained from JPSSD
+	:param data: data obtained from JPSSD
 	:param fxlon: longitude coordinates of the fire mesh (from wrfout)
 	:param fxlat: latitude coordinates of the fire mesh (from wrfout)
 	:param time_num: numerical value of the starting and ending time
@@ -35,9 +30,9 @@ def process_satellite_detections(data,fxlon,fxlat,time_num):
 	mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
 	dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
 	mm=5 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
-	pen=False # Creating heterogeneous penalty depending on the confidence level
 	confl=70. # Minimum confidence level for the pixels
 	confa=False # Histogram plot of the confidence level distribution
+	confm=True # Store confidence of each fire detection
 	burn=False # Using or not the burned scar product
 
 	print 'mesh shape %s %s' % fxlon.shape
@@ -78,9 +73,8 @@ def process_satellite_detections(data,fxlon,fxlat,time_num):
 	L[:]=time_scale_num[0]
 	T=np.empty(DD)
 	T[:]=time_scale_num[1]
-	if pen:
-		LP=np.zeros(DD)
-		UP=np.zeros(DD)
+	if confm:
+		C=np.zeros(DD)
 
 	# Confidence analysis
 	confanalysis=Dict({'f7': np.array([]),'f8': np.array([]), 'f9': np.array([])})
@@ -118,6 +112,7 @@ def process_satellite_detections(data,fxlon,fxlat,time_num):
 			confanalysis.f8=np.concatenate((confanalysis.f8,conf[rfire==8]))
 			confanalysis.f9=np.concatenate((confanalysis.f9,conf[rfire==9]))
 			flc=conf>confl # fire large confidence indexes
+
 			if ut>1 or mt>1:
 				# taking lon, lat, scan and track of the fire detections which fire large confidence indexes
 				lon=sdata[gran][1]['lon_fire'][flc]
@@ -129,16 +124,16 @@ def process_satellite_detections(data,fxlon,fxlat,time_num):
 			if ut==1:
 				# indices with high confidence
 				iu=ffi[flc]
-				# defining penalty in the places with high confidence
-				if pen:
-					UP[iu]=conf[flc]
 			elif ut==2:
 				# creating the indices for all the pixel neighbours of the upper bound
 				iu=neighbor_indices_ellipse(vfxlon,vfxlat,lon,lat,scan,track)
 			else:
 				print 'ERROR: invalid ut option.'
 				sys.exit()
-			U[iu]=ti # set U to granule time where fire detected
+			mu = U[iu] > ti # only upper bounds did not set yet
+			if ut==1 and confm:
+				C[iu[mu]]=conf[flc][mu]
+			U[iu[mu]]=ti # set U to granule time where fire detected and not detected before
 
 			# Set mask
 			if mt==1:
@@ -154,7 +149,12 @@ def process_satellite_detections(data,fxlon,fxlat,time_num):
 			else:
 				print 'ERROR: invalid mt option.'
 				sys.exit()
-			T[im]=ti # update mask T
+			if mt > 1:
+				ind = np.where(im)[0]
+				mmt = ind[ti < T[im]] # only mask did not set yet
+				T[mmt]=ti # update mask T
+			else:
+				T[im[T[im] > ti]]=ti # update mask T
 
 		# Set mask from burned scar data
 		if burn:
@@ -192,6 +192,15 @@ def process_satellite_detections(data,fxlon,fxlat,time_num):
 	print "average U-L %s" % ((U-L).sum()/np.prod(U.shape))
 	print np.histogram((U-L)/(24*3600))
 
+	if (L>U).sum() > 0:
+		print "Inconsistency in the data, removing lower bounds..."
+		L[L>U]=time_scale_num[0]
+		print "L<U: %s" % (L<U).sum()
+		print "L=U: %s" % (L==U).sum()
+		print "L>U: %s" % (L>U).sum()
+		print "average U-L %s" % ((U-L).sum()/np.prod(U.shape))
+		print np.histogram((U-L)/(24*3600))
+
 	print 'Confidence analysis'
 	if confa:
 		plt.subplot(1,3,1)
@@ -219,10 +228,11 @@ def process_satellite_detections(data,fxlon,fxlat,time_num):
 
 	print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_scale_num[0]
 
-	if pen:
+	if confm:
+		C=np.transpose(np.reshape(C,fxlon.shape))
 		result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat,
 		'time_num':time_num, 'time_scale_num' : time_scale_num,
-		'time_num_granules' : tt, 'UP':UP, 'LP':LP}
+		'time_num_granules' : tt, 'C':C}
 	else:
 		result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat,
 		'time_num':time_num, 'time_scale_num' : time_scale_num,
@@ -232,6 +242,9 @@ def process_satellite_detections(data,fxlon,fxlat,time_num):
 
 	print 'To visualize, run in Matlab the script plot_results.m'
 	print 'Multigrid using in fire_interpolation the script jpss_mg.m'
+
+	result['fxlon'] = np.transpose(result['fxlon'])
+	result['fxlat'] = np.transpose(result['fxlat'])
 
 	return result
 
@@ -246,5 +259,5 @@ if __name__ == "__main__":
 		print 'Error: file %s not exist or not readable' % sat_file
 		sys.exit(1)
 
-	process_satellite_detections(data,fxlon,fxlat,time_num)
+	process_detections(data,fxlon,fxlat,time_num)
 
