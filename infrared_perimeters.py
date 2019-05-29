@@ -197,7 +197,7 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
             perimeters.update({prefix + time_data: Dict({'file': file, 'lon': lons, 'lat': lats,
                             'fire': fires, 'conf_fire': np.array(100*np.ones(lons[fires==9].shape)),
                             'lon_fire': lons[fires==9], 'lat_fire': lons[fires==9], 'lon_nofire': lats[fires==5], 'lat_nofire': lats[fires==5],
-                            'scan_fire': scan*np.ones(lons.shape), 'track_fire': track*np.ones(lons.shape),
+                            'scan_fire': scan*np.ones(lons[fires==9].shape), 'track_fire': track*np.ones(lons[fires==9].shape),
                             'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
     else:
         print 'Warning: No KML files in the path specified'
