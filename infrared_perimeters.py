@@ -141,6 +141,11 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
                 print 'Exception: %s.' % e
                 sys.exit(1)
 
+            # Plot perimeter
+            if plot:
+                plt.ion()
+                plt.plot([coord[0] for coordinate in coordinates for coord in coordinate],[coord[1] for coordinate in coordinates for coord in coordinate],'bx')
+
             # Create upper and lower bound coordinates depending on in/out polygons
             # compute path elements for each polygon
             paths = [Path(coord) for coord in coordinates]
@@ -185,6 +190,8 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
                 plt.plot(lons[fires==5],lats[fires==5],'g.')
                 plt.plot(lons[fires==9],lats[fires==9],'r.')
                 plt.show()
+                plt.pause(.001)
+                plt.cla()
 
             # update perimeters dictionary
             perimeters.update({prefix + time_data: Dict({'file': file, 'lon': lons, 'lat': lats,
@@ -199,8 +206,9 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
 
 
 if __name__ == "__main__":
-    plot = False
+    plot = True
+    bounds = (-115.97282409667969, -115.28449249267578, 43.808258056640625, 44.302913665771484)
     dst = './pioneer/perim'
 
-    p = process_infrared_perimeters(dst,plot)
+    p = process_infrared_perimeters(dst,bounds,plot=plot)
     print p
