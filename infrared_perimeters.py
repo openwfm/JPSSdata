@@ -1,3 +1,4 @@
+from matplotlib.path import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path as osp
@@ -6,18 +7,40 @@ from utils import Dict
 import saveload as sl
 import re, glob, sys, os
 
-def process_ignitions(igns,bounds=None):
+
+def process_ignitions(igns,bounds):
+    """
+    Process ignitions the same way than satellite data.
+
+    :param igns: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
+    :param bounds: coordinate bounding box filtering to
+    :return ignitions: dictionary with all the information from each ignition similar to satellite data
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com), 2019-05-29
+    """
+
+    # prefix of the elements in the dictionary
     prefix = "IGN"
+    # initializing dictionary
     ignitions = dict({})
+    # scan and track dimensions of the observation (in km)
     scan = 1.
     track = 1.
+
+    # for each ignition
     for lon, lat, time_iso in zip(igns[0],igns[1],igns[2]):
         try:
+            # take coordinates
             lon = np.array(lon)
             lat = np.array(lat)
+            # look if coordinates in bounding box
             mask = np.logical_and(np.logical_and(np.logical_and(lon>bounds[0],lon<bounds[1]),lat>bounds[2]),lat<bounds[3])
+            if not mask.sum():
+                break
             lons = lon[mask]
             lats = lat[mask]
+            # get time elements
             time_num = time_iso2num(time_iso)
             time_datetime = time_iso2datetime(time_iso)
             time_data = '_A%04d%03d_%02d%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
@@ -28,8 +51,12 @@ def process_ignitions(igns,bounds=None):
             print 'Error: bad ignition %s specified.' % igns
             print 'Exception: %s.' % e
             sys.exit(1)
+
+        # no nofire detection
         lon_nofire = np.array([])
         lat_nofire = np.array([])
+
+        # update ignitions dictionary
         ignitions.update({prefix + time_data: Dict({'lon': lons, 'lat': lats,
                                 'fire': np.array(9*np.ones(lons.shape)), 'conf_fire': np.array(100*np.ones(lons.shape)),
                                 'lon_fire': lons, 'lat_fire': lats, 'lon_nofire': lon_nofire, 'lat_nofire': lat_nofire,
@@ -37,59 +64,134 @@ def process_ignitions(igns,bounds=None):
                                 'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
     return ignitions
 
-def process_infrared_perimeters(dst,bounds=None,maxp=1000,plot=False):
+
+def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
+    """
+    Process infrared perimeters the same way than satellite data.
+
+    :param dst: path to kml perimeter files
+    :param bounds: coordinate bounding box filtering to
+    :param maxp: optional, maximum number of points for each perimeter
+    :param ngrid: optional, number of nodes for the grid of in/out nodes at each direction
+    :param plot: optional, boolean to plot or not the result at each perimeter iteration
+    :return perimeters: dictionary with all the information from each perimeter similar to satellite data
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com), 2019-05-29
+    """
+
+    # list of kml files in 'dst' path
     files = glob.glob(osp.join(dst, '*.kml'))
+    # prefix of the elements in the dictionary
     prefix = "PER"
+    # initializing dictionary
     perimeters = Dict({})
+    # scan and track dimensions of the observation (in km)
     scan = .01
     track = .01
+
+    # Creating grid where to evaluate in/out of the perimeter
+    [X,Y] = np.meshgrid(np.linspace(bounds[0],bounds[1],ngrid),np.linspace(bounds[2],bounds[3],ngrid))
+    XX = np.c_[(X.ravel(),Y.ravel())]
+
+    # if any file
     if files:
+        # for each file
         for file in files:
             print 'Retrieving perimeters from %s' % file
             try:
+                # open the file
                 f = open(file,"r")
+                # read all the lines of the file
                 f_str = ''.join(f.readlines())
+                # close the file
                 f.close()
             except Exception as e:
                 print 'Error: exception when opening file %s, %s' % (file,e.message)
                 sys.exit(1)
             try:
+                # Read name and get time elements
+                # read name of the file
                 name = re.findall(r'<name>(.*?)</name>',f_str,re.DOTALL)[0]
+                # read date of the perimeter
                 date = re.match(r'.*([0-9]{2}-[0-9]{2}-[0-9]{4} [0-9]{4})',name).groups()[0]
+                # create ISO time of the date
                 time_iso = date[6:10]+'-'+date[0:2]+'-'+date[3:5]+'T'+date[11:13]+':'+date[13:15]+':00'
+                # create numerical time from the ISO time
                 time_num = time_iso2num(time_iso)
+                # create datetime element from the ISO time
                 time_datetime = time_iso2datetime(time_iso)
+                # create time stamp
                 time_data = '_A%04d%03d_%02d%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
                                                     time_datetime.hour, time_datetime.minute)
+                # create acquisition date
                 acq_date = '%04d-%02d-%02d' % (time_datetime.year, time_datetime.month, time_datetime.day)
+                # create acquisition time
                 acq_time = '%02d%02d' % (time_datetime.hour, time_datetime.minute)
+
+                # Get the coordinates of all the perimeters
+                # regex of the polygons (or perimeters)
                 polygons = re.findall(r'<Polygon>(.*?)</Polygon>',f_str,re.DOTALL)
+                # for each polygon, regex of the coordinates
                 buckets = [re.split('\r\n\s+',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in polygons]
-                coordinates = [np.array(re.split(',',b)[0:2]).astype(float) for bucket in buckets for b in bucket]
-                if len(coordinates) > maxp:
-                    coarse = len(coordinates)/maxp
-                    if coarse > 0:
-                        coordinates = coordinates[1::coarse]
+                # array of arrays with each polygon coordinates
+                coordinates = [[np.array(re.split(',',b)[0:2]).astype(float) for b in bucket] for bucket in buckets]
             except Exception as e:
                 print 'Error: file %s has not proper structure.' % file
                 print 'Exception: %s.' % e
                 sys.exit(1)
-            lon = np.array([coord[0] for coord in coordinates])
-            lat = np.array([coord[1] for coord in coordinates])
+
+            # Create upper and lower bound coordinates depending on in/out polygons
+            # compute path elements for each polygon
+            paths = [Path(coord) for coord in coordinates]
+            # compute mask of coordinates inside polygon for each polygon
+            masks = [path.contains_points(XX) for path in paths]
+            # logical or for all the masks
+            inmask = np.logical_or.reduce(masks)
+            # upper and lower bounds arifitial from in/out polygon
+            up_arti = XX[inmask]
+            lon_fire = np.array([up[0] for up in up_arti])
+            lat_fire = np.array([up[1] for up in up_arti])
+            low_arti = XX[~inmask]
+            lon_nofire = np.array([low[0] for low in low_arti])
+            lat_nofire = np.array([low[1] for low in low_arti])
+
+            # take a coarsening of the perimeters
+            for k,coord in enumerate(coordinates):
+                if len(coord) > maxp:
+                    coarse = len(coord)/maxp
+                    if coarse > 0:
+                        coordinates[k] = [coord[ind] for ind in np.concatenate(([0],range(len(coord))[coarse:-coarse:coarse]))]
+
+            # append perimeter nodes
+            lon_fire = np.append(lon_fire,np.array([coord[0] for coordinate in coordinates for coord in coordinate]))
+            lat_fire = np.append(lat_fire,np.array([coord[1] for coordinate in coordinates for coord in coordinate]))
+
+            # create general arrays
+            lon = np.concatenate((lon_nofire,lon_fire))
+            lat = np.concatenate((lat_nofire,lat_fire))
+            fire = np.concatenate((5*np.ones(lon_nofire.shape),9*np.ones(lon_fire.shape)))
+
+            # mask in bounds
             mask = np.logical_and(np.logical_and(np.logical_and(lon>bounds[0],lon<bounds[1]),lat>bounds[2]),lat<bounds[3])
+            if not mask.sum():
+                break
             lons = lon[mask]
             lats = lat[mask]
-            lon_nofire = np.array([])
-            lat_nofire = np.array([])
+            fires = fire[mask]
+
+            # plot results
             if plot:
-                plt.plot(lons,lats,'*')
+                plt.plot(lons[fires==5],lats[fires==5],'g.')
+                plt.plot(lons[fires==9],lats[fires==9],'r.')
+                plt.show()
+
+            # update perimeters dictionary
             perimeters.update({prefix + time_data: Dict({'file': file, 'lon': lons, 'lat': lats,
-                            'fire': np.array(9*np.ones(lons.shape)), 'conf_fire': np.array(100*np.ones(lons.shape)),
-                            'lon_fire': lons, 'lat_fire': lats, 'lon_nofire': lon_nofire, 'lat_nofire': lat_nofire,
+                            'fire': fires, 'conf_fire': np.array(100*np.ones(lons.shape)),
+                            'lon_fire': lons[fires==9], 'lat_fire': lons[fires==9], 'lon_nofire': lats[fires==5], 'lat_nofire': lats[fires==5],
                             'scan_fire': scan*np.ones(lons.shape), 'track_fire': track*np.ones(lons.shape),
                             'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
-        if plot:
-            plt.show()
     else:
         print 'Warning: No KML files in the path specified'
         perimeters = []
@@ -98,7 +200,7 @@ def process_infrared_perimeters(dst,bounds=None,maxp=1000,plot=False):
 
 if __name__ == "__main__":
     plot = False
-    dst = './pioneer_perim'
+    dst = './pioneer/perim'
 
     p = process_infrared_perimeters(dst,plot)
     print p

@@ -228,12 +228,16 @@ print '>> Computing contour lines of the fire arrival time <<'
 print 'Computing the contours...'
 # Fire arrival time in seconds from an old date
 Z = F[2]*tscale+scale[0]
-# Granules numeric times
-contour_data = get_contour_verts(F[0], F[1], Z, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
-print 'Creating the KML file...'
-# Creating the KML file
-contour2kml(contour_data,contour_file)
-print 'The resulting contour lines are saved in perimeters_svm.kml file'
+try:
+    # Granules numeric times
+    contour_data = get_contour_verts(F[0], F[1], Z, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
+    print 'Creating the KML file...'
+    # Creating the KML file
+    contour2kml(contour_data,contour_file)
+    print 'The resulting contour lines are saved in perimeters_svm.kml file'
+except Exception as e:
+    print 'Warning: contour creation problem'
+    print 'Run: python contlinesvm.py'
 
 print ''
 print '>> DONE <<'

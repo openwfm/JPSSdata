@@ -344,14 +344,18 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # Visualization of the data
     X0, X1, X2 = X[:, 0], X[:, 1], X[:, 2]
     if plot_data:
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        fig.suptitle("Plotting the original data to fit")
-        ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        ax.set_xlabel("Longitude")
-        ax.set_ylabel("Latitude")
-        ax.set_zlabel("Time (days)")
-        plt.savefig('original_data.png')
+        try:
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            fig.suptitle("Plotting the original data to fit")
+            ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
+            ax.set_xlabel("Longitude")
+            ax.set_ylabel("Latitude")
+            ax.set_zlabel("Time (days)")
+            plt.savefig('original_data.png')
+        except Exception as e:
+            print 'Warning: something went wrong when plotting...'
+            print e
 
     # Normalization of the data into [0,1]^3
     if norm:
@@ -432,14 +436,18 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
 
     # Visualization of scaled data
     if plot_scaled:
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        fig.suptitle("Plotting the data scaled to fit")
-        ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
-        ax.set_xlabel("Longitude normalized")
-        ax.set_ylabel("Latitude normalized")
-        ax.set_zlabel("Time normalized")
-        plt.savefig('scaled_data.png')
+        try:
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            fig.suptitle("Plotting the data scaled to fit")
+            ax.scatter(X0, X1, X2, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
+            ax.set_xlabel("Longitude normalized")
+            ax.set_ylabel("Latitude normalized")
+            ax.set_zlabel("Time normalized")
+            plt.savefig('scaled_data.png')
+        except Exception as e:
+            print 'Warning: something went wrong when plotting...'
+            print e
 
     # Reescaling gamma to include more detailed results
     gamma = kgam / (n_features * X.std())
@@ -504,50 +512,58 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     sys.stdout.flush()
     # Plotting the Separating Hyperplane of the SVM classification with the support vectors
     if plot_supports:
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
-        # plotting the separating hyperplane
-        ax.plot_wireframe(F[0], F[1], F[2], color='orange')
-        # computing the indeces where no support vectors
-        rr = np.array(range(len(y)))
-        ms = np.isin(rr,clf.support_)
-        nsupp = rr[~ms]
-        # plotting no-support vectors (smaller)
-        ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=plt.cm.coolwarm, s=.5, vmin=y.min(), vmax=y.max())
-        # plotting support vectors (bigger)
-        ax.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], clf.support_vectors_[:, 2], c=y[clf.support_], cmap=plt.cm.coolwarm, s=20, edgecolors='k');
-        ax.set_xlim(xx.min(),xx.max())
-        ax.set_ylim(yy.min(),yy.max())
-        ax.set_zlim(zz.min(),zz.max())
-        ax.set_xlabel("Longitude normalized")
-        ax.set_ylabel("Latitude normalized")
-        ax.set_zlabel("Time normalized")
-        plt.savefig('support.png')
+        try:
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
+            # plotting the separating hyperplane
+            ax.plot_wireframe(F[0], F[1], F[2], color='orange')
+            # computing the indeces where no support vectors
+            rr = np.array(range(len(y)))
+            ms = np.isin(rr,clf.support_)
+            nsupp = rr[~ms]
+            # plotting no-support vectors (smaller)
+            ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=plt.cm.coolwarm, s=.5, vmin=y.min(), vmax=y.max())
+            # plotting support vectors (bigger)
+            ax.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], clf.support_vectors_[:, 2], c=y[clf.support_], cmap=plt.cm.coolwarm, s=20, edgecolors='k');
+            ax.set_xlim(xx.min(),xx.max())
+            ax.set_ylim(yy.min(),yy.max())
+            ax.set_zlim(zz.min(),zz.max())
+            ax.set_xlabel("Longitude normalized")
+            ax.set_ylabel("Latitude normalized")
+            ax.set_zlabel("Time normalized")
+            plt.savefig('support.png')
+        except Exception as e:
+            print 'Warning: something went wrong when plotting...'
+            print e
 
     # Plot the fire arrival time resulting from the SVM classification normalized
     if plot_result:
-        Fx, Fy, Fz = np.array(F[0]), np.array(F[1]), np.array(F[2])
-        with np.errstate(invalid='ignore'):
-            Fz[Fz > X2.max()] = np.nan
-        if notnan:
-            Fz[np.isnan(Fz)] = X2.max()
-            Fz = np.minimum(Fz, X2.max())
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        fig.suptitle("Fire arrival time normalized")
-        # plotting fire arrival time
-        p = ax.plot_surface(Fx, Fy, Fz, cmap=plt.cm.coolwarm,
-                       linewidth=0, antialiased=False)
-        ax.set_xlim(xx.min(),xx.max())
-        ax.set_ylim(yy.min(),yy.max())
-        ax.set_zlim(zz.min(),zz.max())
-        cbar = fig.colorbar(p)
-        cbar.set_label('Fire arrival time normalized', labelpad=20, rotation=270)
-        ax.set_xlabel("Longitude normalized")
-        ax.set_ylabel("Latitude normalized")
-        ax.set_zlabel("Time normalized")
-        plt.savefig('tign_g.png')
+        try:
+            Fx, Fy, Fz = np.array(F[0]), np.array(F[1]), np.array(F[2])
+            with np.errstate(invalid='ignore'):
+                Fz[Fz > X2.max()] = np.nan
+            if notnan:
+                Fz[np.isnan(Fz)] = X2.max()
+                Fz = np.minimum(Fz, X2.max())
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            fig.suptitle("Fire arrival time normalized")
+            # plotting fire arrival time
+            p = ax.plot_surface(Fx, Fy, Fz, cmap=plt.cm.coolwarm,
+                           linewidth=0, antialiased=False)
+            ax.set_xlim(xx.min(),xx.max())
+            ax.set_ylim(yy.min(),yy.max())
+            ax.set_zlim(zz.min(),zz.max())
+            cbar = fig.colorbar(p)
+            cbar.set_label('Fire arrival time normalized', labelpad=20, rotation=270)
+            ax.set_xlabel("Longitude normalized")
+            ax.set_ylabel("Latitude normalized")
+            ax.set_zlabel("Time normalized")
+            plt.savefig('tign_g.png')
+        except Exception as e:
+            print 'Warning: something went wrong when plotting...'
+            print e
 
     # Translate the result again into initial data scale
     if norm:
@@ -580,19 +596,23 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
 
     # Plot the fire arrival time resulting from the SVM classification
     if plot_result:
-        # Plotting the result
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        fig.suptitle("Plotting the 3D graph function of a SVM")
-        FFx, FFy, FFz = np.array(FF[0]), np.array(FF[1]), np.array(FF[2])
-        # plotting original data
-        ax.scatter(oX0, oX1, oX2, c=oy, cmap=plt.cm.coolwarm, s=2, vmin=y.min(), vmax=y.max())
-        # plotting fire arrival time
-        ax.plot_wireframe(FFx, FFy, FFz, color='orange')
-        ax.set_xlabel("Longitude")
-        ax.set_ylabel("Latitude")
-        ax.set_zlabel("Time (days)")
-        plt.savefig('result.png')
+        try:
+            # Plotting the result
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            fig.suptitle("Plotting the 3D graph function of a SVM")
+            FFx, FFy, FFz = np.array(FF[0]), np.array(FF[1]), np.array(FF[2])
+            # plotting original data
+            ax.scatter(oX0, oX1, oX2, c=oy, cmap=plt.cm.coolwarm, s=2, vmin=y.min(), vmax=y.max())
+            # plotting fire arrival time
+            ax.plot_wireframe(FFx, FFy, FFz, color='orange')
+            ax.set_xlabel("Longitude")
+            ax.set_ylabel("Latitude")
+            ax.set_zlabel("Time (days)")
+            plt.savefig('result.png')
+        except Exception as e:
+            print 'Warning: something went wrong when plotting...'
+            print e
 
     print '>> SUCCESS <<'
     t_final = time()
