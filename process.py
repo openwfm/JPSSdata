@@ -63,6 +63,9 @@ import sys
 import os
 from time import time
 
+# plot observed information
+plot_observed = False
+
 # if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
 # examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
 igns = None
@@ -151,7 +154,7 @@ else:
 			sys.exit(1)
 
 	print ''
-	if (not fire_exists) or (not gearth_exists):
+	if (not fire_exists) or (not gearth_exists and plot_observed):
 		print '>> Generating KML of fire and ground detections <<'
 		sys.stdout.flush()
 		# sort the granules by dates
@@ -173,7 +176,7 @@ else:
 		json = sdata2json(nsdata,keys,dkeys,N)
 		# write KML file from json notation
 		json2kml(json,fire_file,bbox,prods)
-	if gearth_exists:
+	if gearth_exists or not plot_observed:
 		print ''
 		print '>> File %s already created! <<' % gearth_file
 	else:
