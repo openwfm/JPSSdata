@@ -87,8 +87,8 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
     # initializing dictionary
     perimeters = Dict({})
     # scan and track dimensions of the observation (in km)
-    scan = .01
-    track = .01
+    scan = .05
+    track = .05
 
     # Creating grid where to evaluate in/out of the perimeter
     [X,Y] = np.meshgrid(np.linspace(bounds[0],bounds[1],ngrid),np.linspace(bounds[2],bounds[3],ngrid))
@@ -198,6 +198,7 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
                             'fire': fires, 'conf_fire': np.array(100*np.ones(lons[fires==9].shape)),
                             'lon_fire': lons[fires==9], 'lat_fire': lons[fires==9], 'lon_nofire': lats[fires==5], 'lat_nofire': lats[fires==5],
                             'scan_fire': scan*np.ones(lons[fires==9].shape), 'track_fire': track*np.ones(lons[fires==9].shape),
+                            'scan_nofire': scan*np.ones(lons[fires==5].shape), 'track_nofire': track*np.ones(lons[fires==9].shape),
                             'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
     else:
         print 'Warning: No KML files in the path specified'
@@ -211,4 +212,4 @@ if __name__ == "__main__":
     dst = './pioneer/perim'
 
     p = process_infrared_perimeters(dst,bounds,plot=plot)
-    print p
+    sl.save(p,'perimeters')
