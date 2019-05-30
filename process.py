@@ -48,9 +48,12 @@ from interpolation import sort_dates
 from setup import process_detections
 from infrared_perimeters import process_ignitions, process_infrared_perimeters
 from svm import preprocess_data_svm, SVM3
+from mpl_toolkits.basemap import Basemap
+from plot_pixels import basemap_scatter_mercator, create_kml
 from contline import get_contour_verts
 from contour2kml import contour2kml
 import saveload as sl
+from utils import Dict
 from scipy.io import loadmat, savemat
 import numpy as np
 import datetime as dt
@@ -68,6 +71,7 @@ perim_path = ''
 satellite_file = 'data'
 fire_file = 'fire_detections.kml'
 ground_file = 'nofire.kml'
+gearth_file = 'googlearth.kmz'
 bounds_file = 'result.mat'
 svm_file = 'svm.mat'
 contour_file = 'perimeters_svm.kml'
@@ -78,6 +82,7 @@ def exist(path):
 satellite_exists = exist(satellite_file)
 fire_exists = exist(fire_file)
 ground_exists = exist(ground_file)
+gearth_exists = exist(gearth_file)
 bounds_exists = exist(bounds_file)
 
 if len(sys.argv) != 4 and (not bounds_exists) and (not satellite_exists):
@@ -146,7 +151,7 @@ else:
 			sys.exit(1)
 
 	print ''
-	if (not fire_exists) or (not ground_exists):
+	if (not fire_exists) or (not ground_exists) or (not gearth_exists):
 		print '>> Generating KML of fire and ground detections <<'
 		sys.stdout.flush()
 		# sort the granules by dates
@@ -174,6 +179,26 @@ else:
 		N = [len(d[1]['lat_nofire']) if 'lat_nofire' in d[1] else 0 for d in sdata]
 		json = sdata2json(sdata,keys,dkeys,N)
 		json2kml(json,ground_file,bbox,prods)
+	if gearth_exists:
+		print ''
+		print '>> File %s already created! <<' % gearth_file
+	else:
+		# creating KMZ overlay of each information
+		bmap = Basemap(projection='merc',llcrnrlat=bbox[2], urcrnrlat=bbox[3], llcrnrlon=bbox[0], urcrnrlon=bbox[1])
+		kmld = []
+		for idx, g in enumerate(sdata):
+			raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bbox,bmap)
+			bounds = (corner_coords[0][0],corner_coords[1][0],corner_coords[0][1],corner_coords[2][1])
+			pngfile = g[0]+'.png'
+			timestamp = g[1].acq_date + 'T' + g[1].acq_time[0:2] + ':' + g[1].acq_time[2:4] + 'Z'
+			with open(pngfile, 'w') as f:
+				f.write(raster_png_data)
+			print '> File %s saved.' % g[0]
+			kmld.append(Dict({'name': g[0], 'png_file': pngfile, 'bounds': bbox, 'time': timestamp}))
+		create_kml(kmld,'./doc.kml')
+		os.system('zip -r %s doc.kml *.png' % gearth_file)
+		print 'Created file %s' % gearth_file
+		os.system('rm doc.kml *_A*_*.png')
 
 	print ''
 	print '>> Processing satellite data <<'

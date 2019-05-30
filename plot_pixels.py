@@ -50,7 +50,7 @@ def create_pixels(lons,lats,widths,heights,alphas,color,label):
 	return col
 
 
-def basemap_scatter_mercator(g,bounds,map):
+def basemap_scatter_mercator(g,bounds,bmap):
 	"""
 	Scatter plot of fire and ground pixels in a png file using a basemap with mercator projection
 
@@ -75,7 +75,7 @@ def basemap_scatter_mercator(g,bounds,map):
 	categories = (np.array(mask[fil] == 3), np.array(mask[fil] == 5),
 				np.array(mask[fil] == 7), np.array(mask[fil] == 8),
 				np.array(mask[fil] == 9))
-	alphas = (.2,.2,.4,.5,.6)
+	alphas = (.4,.4,.5,.6,.7)
 	labels = ('Water','Ground','Fire low','Fire nominal','Fire high')
 
 	lon = []
@@ -92,7 +92,7 @@ def basemap_scatter_mercator(g,bounds,map):
 	colors = [(0,0,.5),(0,.5,0),(1,1,0),(1,.65,0),(.5,0,0)]
 	cmap = LinearSegmentedColormap.from_list('fire_detections', colors, N=N)
 	for i in range(N):
-		m.scatter(lon[i],lat[i],size,c=val[i],latlon=True,marker='.',cmap=cmap,vmin=-.5,vmax=N-.5,alpha=alphas[i],linewidths=0)
+		bmap.scatter(lon[i],lat[i],size,c=val[i],latlon=True,marker='.',cmap=cmap,vmin=-.5,vmax=N-.5,alpha=alphas[i],linewidths=0)
 
 	str_io = StringIO.StringIO()
 	plt.savefig(str_io,bbox_inches='tight',format='png',pad_inches=0,transparent=True)
@@ -293,10 +293,10 @@ def create_kml(kml_data,kml_path):
 	with open(kml_path,'w') as kml:
 		kml.write("""<?xml version="1.0" encoding="UTF-8"?>\n""")
 		kml.write("""<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">\n""")
-		kml.write("""<Document><name>Satellite Data</name>""")
+		kml.write("""<Document><name>Observed Data</name>""")
 		kml.write("""
 		<Folder>
-			<name>granules</name>""")
+			<name>Overlays</name>""")
 		for idx,data in enumerate(kml_data):
 			name = data['name']
 			time = data['time']
@@ -376,6 +376,7 @@ if __name__ == "__main__":
 		create_kml(kmld,'./doc.kml')
 		os.system('zip -r granules.kmz doc.kml *.png')
 		print 'Created file granules.kmz'
+		os.system('rm doc.kml *_A*_*.png')
 	elif sys.argv[1] is '1':
 		for g in granules:
 			center_pixels_plot(g[1],bounds)
