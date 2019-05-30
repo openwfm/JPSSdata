@@ -59,8 +59,7 @@ from utils import Dict
 from scipy.io import loadmat, savemat
 import numpy as np
 import datetime as dt
-import sys
-import os
+import sys, os, re
 from time import time
 
 # plot observed information
