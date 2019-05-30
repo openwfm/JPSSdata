@@ -164,28 +164,46 @@ else:
 		keys = ['latitude','longitude','brightness','scan','track','acq_date','acq_time','satellite','instrument','confidence','bright_t31','frp','scan_angle']
 		dkeys = ['lat_fire','lon_fire','brig_fire','scan_fire','track_fire','acq_date','acq_time','sat_fire','instrument','conf_fire','t31_fire','frp_fire','scan_angle_fire']
 		prods = {'AF':'Active Fires','FRP':'Fire Radiative Power'}
-		N = [len(d[1]['lat_fire']) if 'lat_fire' in d[1] else 0 for d in sdata]
-		json = sdata2json(sdata,keys,dkeys,N)
+		# filter out perimeter information (too many pixels)
+		regex = re.compile(r'^((?!(PER_A)).)*$')
+		nsdata = [d for d in sdata if regex.match(d[0])]
+		# compute number of elements for each granule
+		N = [len(d[1]['lat_fire']) if 'lat_fire' in d[1] else 0 for d in nsdata]
+		# transform dictionary notation to json notation
+		json = sdata2json(nsdata,keys,dkeys,N)
+		# write KML file from json notation
 		json2kml(json,fire_file,bbox,prods)
 	if gearth_exists:
 		print ''
 		print '>> File %s already created! <<' % gearth_file
 	else:
 		# creating KMZ overlay of each information
+		# create the Basemap to plot into
 		bmap = Basemap(projection='merc',llcrnrlat=bbox[2], urcrnrlat=bbox[3], llcrnrlon=bbox[0], urcrnrlon=bbox[1])
+		# initialize array
 		kmld = []
+		# for each observed information
 		for idx, g in enumerate(sdata):
+			# plot a scatter basemap
 			raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bbox,bmap)
+			# compute bounds
 			bounds = (corner_coords[0][0],corner_coords[1][0],corner_coords[0][1],corner_coords[2][1])
+			# create png name
 			pngfile = g[0]+'.png'
+			# create timestamp for KML
 			timestamp = g[1].acq_date + 'T' + g[1].acq_time[0:2] + ':' + g[1].acq_time[2:4] + 'Z'
+			# write PNG file
 			with open(pngfile, 'w') as f:
 				f.write(raster_png_data)
 			print '> File %s saved.' % g[0]
+			# append dictionary information for the KML creation
 			kmld.append(Dict({'name': g[0], 'png_file': pngfile, 'bounds': bbox, 'time': timestamp}))
+		# create KML
 		create_kml(kmld,'./doc.kml')
-		os.system('zip -r %s doc.kml *.png' % gearth_file)
+		# create KMZ with all the PNGs included
+		os.system('zip -r %s doc.kml *_A*_*.png' % gearth_file)
 		print 'Created file %s' % gearth_file
+		# eliminate images and KML after creation of KMZ
 		os.system('rm doc.kml *_A*_*.png')
 
 	print ''

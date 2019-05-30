@@ -87,7 +87,7 @@ def basemap_scatter_mercator(g,bounds,bmap):
 		val.append(np.ones(lon[i].shape)*i)
 
 	N = len(categories)
-	fig = plt.figure(frameon=False,figsize=(12,8),dpi=72)
+	fig = plt.figure(frameon=False,figsize=(12,8),dpi=50)
 	plt.axis('off')
 	colors = [(0,0,.5),(0,.5,0),(1,1,0),(1,.65,0),(.5,0,0)]
 	cmap = LinearSegmentedColormap.from_list('fire_detections', colors, N=N)
