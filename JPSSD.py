@@ -825,13 +825,14 @@ def sdata2json(sdata,keys,dkeys,N):
     """
     ret=Dict({'granules': [d[0] for d in sdata]})
     for i,k in enumerate(keys):
-        dd = [d[1][dkeys[i]] if dkeys[i] in d[1] else [] for d in sdata]
+        dd = [d[1][dkeys[i]] if dkeys[i] in d[1] else None for d in sdata]
         if dd:
-            if isinstance(dd[0],(list, tuple, np.ndarray)):
+            if np.any([isinstance(d,(list, tuple, np.ndarray)) for d in dd]):
+                out = [d if d is not None else np.array([]) for d in dd]
                 ret.update({k : dd})
             else:
-                ddn=[[d[1][1][dkeys[i]]]*N[d[0]] for d in enumerate(sdata) if dkeys[i] in d[1][1]]
-                ret.update({k : ddn})
+                out = [[d[1][1][dkeys[i]]]*N[d[0]] if dkeys[i] in d[1][1] else [] for d in enumerate(sdata)]
+                ret.update({k : out})
 
     return ret
 
@@ -996,7 +997,7 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
             else:
                 for v in list(d):
                     d[v]=[d[v]]
-                    opt='pixels'
+                opt='pixels'
 
         frp_style={-1:'modis_frp_no_data',40:'modis_frp_gt_400'}
         for i in range(0,40):
