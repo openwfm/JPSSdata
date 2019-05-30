@@ -11,14 +11,16 @@
 # 	days - length of the simulation in decimal days
 #
 # OVERFLOW
-# 	1) Methods from JPSSD.py file:
+# 	1) Methods from JPSSD.py and infrared_perimeters.py file:
 # 		*) Find granules overlaping fire domain and time interval.
 #		*) Download Active Satellite Data.
-#		*) Read Active Satellite Data files.
-#		*) Save satellite granule information in 'data' file.
-#	2) Methods from interpolation.py and JPSSD.py files:
-#		*) Write KML file 'fire_detections.kml' with fire detection pixels.
-#		*) Write KML file 'nofire.kml' with saved ground detection pixels.
+#		*) Read and process Active Satellite Data files.
+# 		*) Process ignitions.
+#		*) Read and process infrared perimeters files.
+#		*) Save observed data information in 'data' file.
+#	2) Methods from interpolation.py, JPSSD.py, and plot_pixels.py files:
+#		*) Write KML file 'fire_detections.kml' with fire detection pixels (satellite, ignitions and perimeters).
+#		*) Write KMZ file 'googlearth.kmz' with saved images and KML file of observed data.
 #	3) Method process_detections from setup.py file:
 #		*) Sort all the granules from all the sources in time order.
 #		*) Construct upper and lower bounds using a mask to prevent ground after fire.
@@ -36,8 +38,8 @@
 #	- 'result.mat': matlab file containing upper and lower bounds (U and L) from satellite data.
 # 	- 'svm.mat': matlab file containing the solution to the Support Vector Machine execution.
 #				 Contains estimation of the fire arrival time in tign_g variable.
-#	- 'fire_detections.kml': KML file with fire satellite detection pixels.
-#	- 'nofire.kml': KML file with saved ground satellite detection pixels.
+#	- 'fire_detections.kml': KML file with fire detection pixels (satellite, ignitions and perimeters).
+#	- 'googlearth.kmz': KMZ file with saved images and KML file of observed data.
 #	- 'perimeters_svm.kml': KML file with perimeters from estimation of the fire arrival time using SVM.
 #
 # Developed in Python 2.7.15 :: Anaconda, Inc.
@@ -80,7 +82,6 @@ def exist(path):
 
 satellite_exists = exist(satellite_file)
 fire_exists = exist(fire_file)
-ground_exists = exist(ground_file)
 gearth_exists = exist(gearth_file)
 bounds_exists = exist(bounds_file)
 
@@ -150,7 +151,7 @@ else:
 			sys.exit(1)
 
 	print ''
-	if (not fire_exists) or (not ground_exists) or (not gearth_exists):
+	if (not fire_exists) or (not gearth_exists):
 		print '>> Generating KML of fire and ground detections <<'
 		sys.stdout.flush()
 		# sort the granules by dates
