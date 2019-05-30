@@ -70,7 +70,6 @@ perim_path = ''
 
 satellite_file = 'data'
 fire_file = 'fire_detections.kml'
-ground_file = 'nofire.kml'
 gearth_file = 'googlearth.kmz'
 bounds_file = 'result.mat'
 svm_file = 'svm.mat'
@@ -167,18 +166,6 @@ else:
 		N = [len(d[1]['lat_fire']) if 'lat_fire' in d[1] else 0 for d in sdata]
 		json = sdata2json(sdata,keys,dkeys,N)
 		json2kml(json,fire_file,bbox,prods)
-	if ground_exists:
-		print ''
-		print '>> File %s already created! <<' % ground_file
-	else:
-		# writting ground detections file
-		print 'writting KML with ground'
-		keys = ['latitude','longitude','scan','track','acq_date','acq_time','satellite','instrument','scan_angle']
-		dkeys = ['lat_nofire','lon_nofire','scan_nofire','track_nofire','acq_date','acq_time','sat_fire','instrument','scan_angle_nofire']
-		prods = {'NF':'No Fire'}
-		N = [len(d[1]['lat_nofire']) if 'lat_nofire' in d[1] else 0 for d in sdata]
-		json = sdata2json(sdata,keys,dkeys,N)
-		json2kml(json,ground_file,bbox,prods)
 	if gearth_exists:
 		print ''
 		print '>> File %s already created! <<' % gearth_file
