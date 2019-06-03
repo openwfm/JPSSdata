@@ -605,7 +605,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
             # plotting original data
             ax.scatter(oX0, oX1, oX2, c=oy, cmap=plt.cm.coolwarm, s=2, vmin=y.min(), vmax=y.max())
             # plotting fire arrival time
-            ax.plot_wireframe(FFx, FFy, FFz, color='orange')
+            ax.plot_wireframe(FFx, FFy, FFz, color='orange', alpha=.5)
             ax.set_xlabel("Longitude")
             ax.set_ylabel("Latitude")
             ax.set_zlabel("Time (days)")
