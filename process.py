@@ -236,7 +236,7 @@ X,y,c = preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules,C=conf)
 print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
-C = 10.
+C = 500.
 kgam = 10.
 F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat))
 
@@ -245,7 +245,7 @@ print '>> Saving the results <<'
 sys.stdout.flush()
 tscale = 24*3600 # scale from seconds to days
 # Fire arrival time in seconds from the begining of the simulation
-tign_g = F[2]*float(tscale)+scale[0]-time_num_interval[0]
+tign_g = np.array(F[2])*float(tscale)+scale[0]-time_num_interval[0]
 # Creating the dictionary with the results
 svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
         'fxlon': F[0], 'fxlat': F[1], 'Z': F[2],
@@ -260,15 +260,16 @@ print ''
 print '>> Computing contour lines of the fire arrival time <<'
 print 'Computing the contours...'
 # Fire arrival time in seconds from an old date
-Z = F[2]*tscale+scale[0]
+Z = np.array(F[2])*tscale+scale[0]
 try:
     # Granules numeric times
     contour_data = get_contour_verts(F[0], F[1], Z, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
+    sl.save(contour_data,'test')
     print 'Creating the KML file...'
     # Creating the KML file
     contour2kml(contour_data,contour_file)
     print 'The resulting contour lines are saved in perimeters_svm.kml file'
-except Exception as e:
+except:
     print 'Warning: contour creation problem'
     print 'Run: python contlinesvm.py'
 

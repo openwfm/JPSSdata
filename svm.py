@@ -17,6 +17,7 @@ import numpy as np
 from time import time
 from infrared_perimeters import process_infrared_perimeters
 import sys
+import saveload as sl
 
 def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     """
@@ -187,7 +188,7 @@ def make_meshgrid(x, y, z, s=(50,50,50), exp=.1):
                              np.linspace(z_min, z_max, sz))
     return xx, yy, zz
 
-def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
+def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False):
     """
     Compute the surface decision frontier for a classifier.
 
@@ -196,7 +197,8 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
     :param yy: meshgrid ndarray
     :param zz: meshgrid ndarray
     :param bal: number between 0 and 1, balance between lower and upper bounds in decision function (in case not level 0)
-    :param plot_poly: boolean of plotting polynomial approximation (if tech=='poly')
+    :param plot_decision: boolean of plotting decision volume
+    :param plot_poly: boolean of plotting polynomial approximation
     :return F: 2D meshes with xx, yy coordinates and the hyperplane z which gives decision functon 0
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
@@ -223,6 +225,42 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
     # Reshaping decision function volume
     Z = ZZ.reshape(xx.shape)
     print 'decision function shape: ', Z.shape
+
+    if plot_decision:
+        try:
+            from skimage import measure
+            from shiftcmap import shiftedColorMap
+            verts, faces, normals, values = measure.marching_cubes_lewiner(Z, level=0, allow_degenerate=False)
+            # Scale and transform to actual size of the interesting volume
+            h = np.divide([xx.max()-xx.min(), yy.max() - yy.min(), zz.max() - zz.min()],np.array(xx.shape)-1)
+            verts = verts * h
+            verts = verts + [xx.min(), yy.min(), zz.min()]
+            mesh = Poly3DCollection(verts[faces], facecolor='orange', alpha=.9)
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            fig.suptitle("Decision volume")
+            col = [(0, 0, 1), (.5, .5, .5), (1, 0, 0)]
+            cm = colors.LinearSegmentedColormap.from_list('BuRd',col,N=100)
+            midpoint = 1 - ZZ.max() / (ZZ.max() + abs(ZZ.min()))
+            shiftedcmap = shiftedColorMap(cm, midpoint=midpoint, name='shifted')
+            X = xx.ravel()
+            Y = yy.ravel()
+            T = zz.ravel()
+            kk = 50
+            p = ax.scatter(X[0::kk], Y[0::kk], T[0::kk], c=ZZ[0::kk], s=.1, alpha=.4, cmap=shiftedcmap)
+            cbar = fig.colorbar(p)
+            cbar.set_label('decision function value', rotation=270, labelpad=20)
+            ax.add_collection3d(mesh)
+            ax.set_zlim([xx.min(),xx.max()])
+            ax.set_ylim([yy.min(),yy.max()])
+            ax.set_zlim([zz.min(),zz.max()])
+            ax.set_xlabel("Longitude normalized")
+            ax.set_ylabel("Latitude normalized")
+            ax.set_zlabel("Time normalized")
+            plt.savefig('decision.png')
+        except Exception as e:
+            print 'Warning: something went wrong when plotting...'
+            print e
 
     if plot_poly:
         fig = plt.figure()
@@ -252,20 +290,24 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_poly=False):
                 Fz[k1,k2] = realr.min()
                 # Plotting the approximated polynomial with the decision function
                 if plot_poly:
-                    plt.ion()
-                    plt.plot(pz(zr),zr)
-                    plt.plot(Z[k1,k2],zr,'+')
-                    plt.plot(np.zeros(len(realr)),realr,'o',c='g')
-                    plt.plot(0,Fz[k1,k2],'o',markersize=3,c='r')
-                    plt.title('Polynomial approximation of decision_function(%f,%f,z)' % (Fx[k1,k2],Fy[k1,k2]))
-                    plt.xlabel('decision function value')
-                    plt.ylabel('Z')
-                    plt.legend(['polynomial','decision values','roots','fire arrival time'])
-                    plt.xlim([Z.min(),Z.max()])
-                    plt.ylim([zz.min(),zz.max()])
-                    plt.show()
-                    plt.pause(.001)
-                    plt.cla()
+                    try:
+                        plt.ion()
+                        plt.plot(pz(zr),zr)
+                        plt.plot(Z[k1,k2],zr,'+')
+                        plt.plot(np.zeros(len(realr)),realr,'o',c='g')
+                        plt.plot(0,Fz[k1,k2],'o',markersize=3,c='r')
+                        plt.title('Polynomial approximation of decision_function(%f,%f,z)' % (Fx[k1,k2],Fy[k1,k2]))
+                        plt.xlabel('decision function value')
+                        plt.ylabel('Z')
+                        plt.legend(['polynomial','decision values','roots','fire arrival time'])
+                        plt.xlim([Z.min(),Z.max()])
+                        plt.ylim([zz.min(),zz.max()])
+                        plt.show()
+                        plt.pause(.001)
+                        plt.cla()
+                    except Exception as e:
+                        print 'Warning: something went wrong when plotting...'
+                        print e
             else:
                 # If there is not a real root of the polynomial between zz.min() and zz.max(), just define as a Nan
                 Fz[k1,k2] = np.nan
@@ -300,7 +342,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     plot_data = True
     # plot scaled data with artificial data
     plot_scaled = True
-    # plot polynomial approximation (if postech=='poly')
+    # plot decision volume
+    plot_decision = False
+    # plot polynomial approximation
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
     plot_supports = True
@@ -506,7 +550,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # Computing the 2D fire arrival time, F
     print '>> Computing the 2D fire arrival time, F...'
     sys.stdout.flush()
-    F = frontier(clf, xx, yy, zz, plot_poly=plot_poly)
+    F = frontier(clf, xx, yy, zz, plot_decision=plot_decision, plot_poly=plot_poly)
 
     print '>> Creating final results...'
     sys.stdout.flush()
@@ -523,9 +567,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
             ms = np.isin(rr,clf.support_)
             nsupp = rr[~ms]
             # plotting no-support vectors (smaller)
-            ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=plt.cm.coolwarm, s=.5, vmin=y.min(), vmax=y.max())
+            ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=plt.cm.coolwarm, s=.5, vmin=y.min(), vmax=y.max(), alpha=.1)
             # plotting support vectors (bigger)
-            ax.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], clf.support_vectors_[:, 2], c=y[clf.support_], cmap=plt.cm.coolwarm, s=20, edgecolors='k');
+            ax.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], clf.support_vectors_[:, 2], c=y[clf.support_], cmap=plt.cm.coolwarm, s=20, edgecolors='k', alpha=.2);
             ax.set_xlim(xx.min(),xx.max())
             ax.set_ylim(yy.min(),yy.max())
             ax.set_zlim(zz.min(),zz.max())
