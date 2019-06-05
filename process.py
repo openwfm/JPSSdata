@@ -49,6 +49,7 @@ from JPSSD import read_fire_mesh, retrieve_af_data, sdata2json, json2kml, time_i
 from interpolation import sort_dates
 from setup import process_detections
 from infrared_perimeters import process_ignitions, process_infrared_perimeters
+from forecast import process_forecast
 from svm import preprocess_data_svm, SVM3
 from mpl_toolkits.basemap import Basemap
 from plot_pixels import basemap_scatter_mercator, create_kml
@@ -71,6 +72,9 @@ igns = None
 # if infrared perimeters: path to KML files
 # examples: perim_path = './pioneer/perim'
 perim_path = ''
+# if forecast wrfout: path to netcdf wrfout forecast file
+# example: forecast_path = './patch/wrfout_patch'
+forecast_path = ''
 
 satellite_file = 'data'
 fire_file = 'fire_detections.kml'
@@ -139,6 +143,8 @@ else:
 			data.update(process_ignitions(igns,bounds=bbox))
 		if perim_path:
 			data.update(process_infrared_perimeters(perim_path,bounds=bbox))
+		if forecast_path:
+			data.update(process_forecast(forecast_path,bounds=bbox))
 
 		if data:
 			print ''

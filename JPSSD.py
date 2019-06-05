@@ -900,6 +900,21 @@ def time_iso2datetime(time_iso):
     time_datetime=datetime.datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
     return time_datetime
 
+def time_datetime2iso(time_datetime):
+    """
+    Transform a datetime element to iso time string
+
+    :param time_datetime: datetime element
+    :return time_iso: string iso date
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com) 2018-10-01
+    """
+    time_iso='%02d-%02d-%02dT%02d:%02d:%02dZ' % (time_datetime.year,time_datetime.month,
+                                                    time_datetime.day,time_datetime.hour,
+                                                    time_datetime.minute,time_datetime.second)
+    return time_iso
+
 def time_num2iso(time_num):
     """
     Transform a time integer number of seconds since December 31 1969 at 17:00:00 to an iso time string
