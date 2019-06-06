@@ -9,7 +9,7 @@ import saveload as sl
 import re, glob, sys, os
 
 
-def process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track):
+def process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track,wrfout_file=''):
     """
     Process forecast from lon, lat, and tign_g
 
@@ -138,7 +138,7 @@ def process_forecast_wrfout(wrfout_file,bounds,plot=False):
     scan = dx/1000.
     track = dy/1000.
     # create forecast
-    forecast = process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track)
+    forecast = process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track,wrfout_file=wrfout_file)
     # close netcdf file
     data.close()
 
@@ -150,5 +150,5 @@ if __name__ == "__main__":
     bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
     dst = './patch/wrfout_patch'
 
-    f = process_forecast(dst,bounds,plot=plot)
+    f = process_forecast_wrfout(dst,bounds,plot=plot)
     sl.save(f,'forecast')
