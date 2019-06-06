@@ -9,11 +9,13 @@ import saveload as sl
 import re, glob, sys, os
 
 
-def process_forecast(wrfout_file,bounds,plot=False):
+def process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track):
     """
-    Process infrared perimeters the same way than satellite data.
+    Process forecast from lon, lat, and tign_g
 
-    :param dst: path to kml perimeter files
+    :param lon: array of longitudes
+    :param lat: array of latitudes
+    :param tign_g: array of fire arrival time
     :param bounds: coordinate bounding box filtering to
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
@@ -24,40 +26,16 @@ def process_forecast(wrfout_file,bounds,plot=False):
     prefix = "FOR"
     # confidences
     conf_fire = 70
-    conf_nofire = 70
     # margin percentage
     margin = .1
     # initializing dictionary
     forecast = Dict({})
 
-    # read file
-    try:
-        data = nc.Dataset(wrfout_file)
-    except Exception as e:
-        print 'Warning: No netcdf file %s in the path' % wrfout_file
-        return []
-    # current time
-    ctime = ''.join(data['Times'][-1])
+    # ctime transformations
     ctime_iso = ctime.replace('_','T')
     ctime_datetime = time_iso2datetime(ctime_iso)
-    # getting rid of strip
-    atmlenx = len(data.dimensions['west_east'])
-    atmleny = len(data.dimensions['south_north'])
-    staglenx = len(data.dimensions['west_east_stag'])
-    stagleny = len(data.dimensions['south_north_stag'])
-    dimlenx = len(data.dimensions['west_east_subgrid'])
-    dimleny = len(data.dimensions['south_north_subgrid'])
-    ratiox = dimlenx/max(staglenx,atmlenx+1)
-    ratioy = dimleny/max(stagleny,atmleny+1)
-    lenx = dimlenx-ratiox
-    leny = dimleny-ratioy
-    # coordinates
-    lon = data['FXLONG'][0][0:lenx,0:leny]
-    lat = data['FXLAT'][0][0:lenx,0:leny]
     # mask coordinates to bounding box
     mask = np.logical_and(np.logical_and(np.logical_and(lon>bounds[0],lon<bounds[1]),lat>bounds[2]),lat<bounds[3])
-    # fire arrival time
-    tign_g = data['TIGN_G'][0][0:lenx,0:leny]
     # create a square subset of fire arrival time less than the maximum
     mtign = np.logical_and(mask,tign_g < tign_g.max())
     mlon = lon[mtign]
@@ -65,17 +43,9 @@ def process_forecast(wrfout_file,bounds,plot=False):
     mlen = margin*(mlon.max()-mlon.min())
     sbounds = (mlon.min()-mlen, mlon.max()+mlen, mlat.min()-mlen, mlat.max()+mlen)
     smask = np.logical_and(np.logical_and(np.logical_and(lon>sbounds[0],lon<sbounds[1]),lat>sbounds[2]),lat<sbounds[3])
-    # resolutions
-    dx = data.getncattr('DX')
-    dy = data.getncattr('DY')
-    # scan and track dimensions of the observation (in km)
-    scan = dx/1000.
-    track = dy/1000.
-    # close netcdf file
-    data.close()
 
     # times to get fire arrival time from
-    dt_forecast = 1800 # in seconds
+    dt_forecast = 600 # in seconds
     TT = np.arange(tign_g.min(),tign_g.max(),dt_forecast)[0:-1]
     for T in TT:
         # fire arrival time to datetime
@@ -123,6 +93,54 @@ def process_forecast(wrfout_file,bounds,plot=False):
                             'scan_fire': scan*np.ones(lons[fires==9].shape), 'track_fire': track*np.ones(lons[fires==9].shape),
                             'scan_nofire': scan*np.ones(lons[fires==5].shape), 'track_nofire': track*np.ones(lons[fires==9].shape),
                             'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
+
+    return forecast
+
+def process_forecast_wrfout(wrfout_file,bounds,plot=False):
+    """
+    Process forecast from a wrfout.
+
+    :param dst: path to wrfout file
+    :param bounds: coordinate bounding box filtering to
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com), 2019-06-05
+    """
+
+    # read file
+    try:
+        data = nc.Dataset(wrfout_file)
+    except Exception as e:
+        print 'Warning: No netcdf file %s in the path' % wrfout_file
+        return []
+    # current time
+    ctime = ''.join(data['Times'][-1])
+    # getting rid of strip
+    atmlenx = len(data.dimensions['west_east'])
+    atmleny = len(data.dimensions['south_north'])
+    staglenx = len(data.dimensions['west_east_stag'])
+    stagleny = len(data.dimensions['south_north_stag'])
+    dimlenx = len(data.dimensions['west_east_subgrid'])
+    dimleny = len(data.dimensions['south_north_subgrid'])
+    ratiox = dimlenx/max(staglenx,atmlenx+1)
+    ratioy = dimleny/max(stagleny,atmleny+1)
+    lenx = dimlenx-ratiox
+    leny = dimleny-ratioy
+    # coordinates
+    lon = data['FXLONG'][0][0:lenx,0:leny]
+    lat = data['FXLAT'][0][0:lenx,0:leny]
+    # fire arrival time
+    tign_g = data['TIGN_G'][0][0:lenx,0:leny]
+    # resolutions
+    dx = data.getncattr('DX')
+    dy = data.getncattr('DY')
+    # scan and track dimensions of the observation (in km)
+    scan = dx/1000.
+    track = dy/1000.
+    # create forecast
+    forecast = process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track)
+    # close netcdf file
+    data.close()
 
     return forecast
 
