@@ -11,7 +11,7 @@ from scipy.ndimage import gaussian_filter
 import os
 import sys
 
-def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6, gauss_filter=True, plot_contours=False):
+def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6, gauss_filter=True, plot_contours=False, col_repr=False, levels_gran=False):
     # Computing the levels
     # Datetimes for the first and last granule
     dt1=datetime.datetime.fromtimestamp(time_num_granules[0])
@@ -25,7 +25,10 @@ def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour
     M=int(np.round((hours+1)/contour_dt_hours ))
     # Datetimes where we are going to compute the levels
     dts=[dti+datetime.timedelta(hours=k*contour_dt_hours) for k in range(1,M)]
-    levels=[time.mktime(t.timetuple()) for t in dts]
+    if levels_gran:
+        levels=time_num_granules
+    else:
+        levels=[time.mktime(t.timetuple()) for t in dts]
 
     # Scaling the time components as in detections
     time_num=np.array(levels)
@@ -78,18 +81,40 @@ def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour
                 plt.scatter(xx,yy)
         plt.show()
 
-    # Creating an array of dictionaries for each perimeter
-    conts=[Dict({'text':time_iso[k],
-        'LineStyle':{
-            'color':'ff081388',
-            'width':'2.5',
-        },
-        'PolyStyle':{
-            'color':'66000086',
-            'colorMode':'random'
-        },
-        'time_begin':time_iso[k],
-        'polygons': contours[k] }) for k in range(0,len(contours))]
+    if col_repr:
+        import matplotlib.colors as colors
+        col = np.flip(np.divide([(230, 25, 75, 150), (245, 130, 48, 150), (255, 255, 25, 150),
+                                (210, 245, 60, 150), (60, 180, 75, 150), (70, 240, 240, 150),
+                                (0, 0, 128, 150), (145, 30, 180, 150), (240, 50, 230, 150),
+                                (128, 128, 128, 150)],255.),0)
+        cm = colors.LinearSegmentedColormap.from_list('BuRd',col,len(contours))
+        cols = ['%02x%02x%02x%02x' % tuple(255*np.flip(c)) for c in cm(range(cm.N))]
+
+        # Creating an array of dictionaries for each perimeter
+        conts=[Dict({'text':time_iso[k],
+            'LineStyle':{
+                'color': cols[k],
+                'width':'2.5',
+            },
+            'PolyStyle':{
+                'color':'66000086',
+                'colorMode':'random'
+            },
+            'time_begin':time_iso[k],
+            'polygons': contours[k] }) for k in range(len(contours))]
+    else:
+        # Creating an array of dictionaries for each perimeter
+        conts=[Dict({'text':time_iso[k],
+            'LineStyle':{
+                'color':'ff081388',
+                'width':'2.5',
+            },
+            'PolyStyle':{
+                'color':'66000086',
+                'colorMode':'random'
+            },
+            'time_begin':time_iso[k],
+            'polygons': contours[k] }) for k in range(len(contours))]
 
     # Creating a dictionary to store the KML file information
     data=Dict({'name':'contours.kml',
