@@ -1008,8 +1008,10 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
 
             copyto('kmls/partial1.kml',kml)
 
+            # set some constants
             r = 6378   # Earth radius
             km_lat = 180/(np.pi*r)  # 1km in degrees latitude
+            ND = len(d['latitude'])
 
             for prod in prods:
 
@@ -1024,10 +1026,13 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                             (210, 245, 60, 150), (60, 180, 75, 150), (70, 240, 240, 150),
                             (0, 0, 128, 150), (145, 30, 180, 150), (240, 50, 230, 150),
                             (128, 128, 128, 150)],255.),0)
-                    cm = colors.LinearSegmentedColormap.from_list('BuRd',col,len(d['latitude']))
+                    cm = colors.LinearSegmentedColormap.from_list('BuRd',col,ND)
                     cols = ['%02x%02x%02x%02x' % tuple(255*np.flip(c)) for c in cm(range(cm.N))]
+                    t_range = range(ND-1,-1,-1)
+                else:
+                    t_range = range(ND)
 
-                for t in range(len(d['latitude'])-1,-1,-1):
+                for t in t_range:
                     lats=np.array(d['latitude'][t]).astype(float)
                     lons=np.array(d['longitude'][t]).astype(float)
                     ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
