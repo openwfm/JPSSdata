@@ -248,10 +248,10 @@ tscale = 24*3600 # scale from seconds to days
 tign_g = np.array(F[2])*float(tscale)+scale[0]-time_num_interval[0]
 # Creating the dictionary with the results
 svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
-        'fxlon': F[0], 'fxlat': F[1], 'Z': F[2],
-        'tign_g': tign_g,
-        'tscale': tscale, 'time_num_granules': time_num_granules,
-        'time_scale_num': scale, 'time_num': time_num_interval}
+		'fxlon': F[0], 'fxlat': F[1], 'Z': F[2],
+		'tign_g': tign_g,
+		'tscale': tscale, 'time_num_granules': time_num_granules,
+		'time_scale_num': scale, 'time_num': time_num_interval}
 # Save resulting file
 savemat(svm_file, mdict=svm)
 print 'The results are saved in svm.mat file'
@@ -260,16 +260,17 @@ print ''
 print '>> Computing contour lines of the fire arrival time <<'
 print 'Computing the contours...'
 try:
-    # Granules numeric times
-    contour_data = get_contour_verts(F[0], F[1], F[2]*tscale+scale[0], time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
-    sl.save(contour_data,'test')
-    print 'Creating the KML file...'
-    # Creating the KML file
-    contour2kml(contour_data,contour_file)
-    print 'The resulting contour lines are saved in perimeters_svm.kml file'
+	# Granules numeric times
+	Z = F[2]*tscale+scale[0]
+	# Creating contour lines
+	contour_data = get_contour_verts(F[0], F[1], Z, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
+	print 'Creating the KML file...'
+	# Creating the KML file
+	contour2kml(contour_data,contour_file)
+	print 'The resulting contour lines are saved in perimeters_svm.kml file'
 except:
-    print 'Warning: contour creation problem'
-    print 'Run: python contlinesvm.py'
+	print 'Warning: contour creation problem'
+	print 'Run: python contlinesvm.py'
 
 print ''
 print '>> DONE <<'

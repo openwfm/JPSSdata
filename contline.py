@@ -12,6 +12,7 @@ import os
 import sys
 
 def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6, gauss_filter=True, plot_contours=False, col_repr=False, levels_gran=False):
+    fig = plt.figure()
     # Computing the levels
     # Datetimes for the first and last granule
     dt1=datetime.datetime.fromtimestamp(time_num_granules[0])
