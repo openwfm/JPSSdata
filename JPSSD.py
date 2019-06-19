@@ -882,7 +882,7 @@ def time_iso2num(time_iso):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
-    time_datetime=datetime.datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
+    time_datetime=datetime.datetime.strptime(time_iso[0:19],'%Y-%m-%dT%H:%M:%S')
     # seconds since December 31 1969 at 17:00:00
     s=time.mktime(time_datetime.timetuple())
     return s
@@ -897,7 +897,7 @@ def time_iso2datetime(time_iso):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
-    time_datetime=datetime.datetime.strptime(time_iso[0:18],'%Y-%m-%dT%H:%M:%S')
+    time_datetime=datetime.datetime.strptime(time_iso[0:19],'%Y-%m-%dT%H:%M:%S')
     return time_datetime
 
 def time_datetime2iso(time_datetime):

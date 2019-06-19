@@ -1,15 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import os.path as osp
-import netCDF4 as nc
 from datetime import timedelta
 from JPSSD import time_iso2num, time_iso2datetime, time_datetime2iso
 from utils import Dict
-import saveload as sl
 import re, glob, sys, os
 
 
-def process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track,wrfout_file=''):
+def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=600.,plot=False):
     """
     Process forecast from lon, lat, and tign_g
 
@@ -17,17 +14,27 @@ def process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track,wrfout_file=''):
     :param lat: array of latitudes
     :param tign_g: array of fire arrival time
     :param bounds: coordinate bounding box filtering to
+    :param ctime: time char in wrfout of the last fire arrival time
+    :param dx,dy: data resolution in meters
+    :param dt_for: optional, temporal resolution to get the fire arrival time from in seconds
+    :param wrfout_file: optional, to get the name of the file in the dictionary
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
-    Angel Farguell (angel.farguell@gmail.com), 2019-06-05
+    Angel Farguell (angel.farguell@gmail.com) and James Haley, 2019-06-05
     """
+
+    if plot:
+        fig = plt.figure()
 
     # prefix of the elements in the dictionary
     prefix = "FOR"
     # confidences
-    conf_fire = 70
+    conf_fire = 80
     # margin percentage
     margin = .1
+    # scan and track dimensions of the observation (in km)
+    scan = 1.5*dx/1000.
+    track = 1.5*dy/1000.
     # initializing dictionary
     forecast = Dict({})
 
@@ -45,8 +52,7 @@ def process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track,wrfout_file=''):
     smask = np.logical_and(np.logical_and(np.logical_and(lon>sbounds[0],lon<sbounds[1]),lat>sbounds[2]),lat<sbounds[3])
 
     # times to get fire arrival time from
-    dt_forecast = 600 # in seconds
-    TT = np.arange(tign_g.min(),tign_g.max(),dt_forecast)[0:-1]
+    TT = np.arange(tign_g.min()-3*dt_for,tign_g.max(),dt_for)[0:-1]
     for T in TT:
         # fire arrival time to datetime
         time_datetime = ctime_datetime-timedelta(seconds=float(tign_g.max()-T)) # there is an error of about 10 seconds (wrfout not ending at exact time of simulation)
@@ -55,8 +61,8 @@ def process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track,wrfout_file=''):
         # create numerical time from the ISO time
         time_num = time_iso2num(time_iso)
         # create time stamp
-        time_data = '_A%04d%03d_%02d%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
-                                                time_datetime.hour, time_datetime.minute)
+        time_data = '_A%04d%03d_%02d%02d_%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
+                                                time_datetime.hour, time_datetime.minute, time_datetime.second)
         # create acquisition date
         acq_date = '%04d-%02d-%02d' % (time_datetime.year, time_datetime.month, time_datetime.day)
         # create acquisition time
@@ -80,11 +86,11 @@ def process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track,wrfout_file=''):
         # plot results
         if plot:
             plt.ion()
+            plt.cla()
             plt.plot(lons[fires==5],lats[fires==5],'g.')
             plt.plot(lons[fires==9],lats[fires==9],'r.')
+            plt.pause(.0001)
             plt.show()
-            plt.pause(.001)
-            plt.cla()
 
         # update perimeters dictionary
         forecast.update({prefix + time_data: Dict({'file': wrfout_file, 'time_tign_g': T, 'lon': lons, 'lat': lats,
@@ -108,6 +114,7 @@ def process_forecast_wrfout(wrfout_file,bounds,plot=False):
     """
 
     # read file
+    import netCDF4 as nc
     try:
         data = nc.Dataset(wrfout_file)
     except Exception as e:
@@ -134,11 +141,8 @@ def process_forecast_wrfout(wrfout_file,bounds,plot=False):
     # resolutions
     dx = data.getncattr('DX')
     dy = data.getncattr('DY')
-    # scan and track dimensions of the observation (in km)
-    scan = dx/1000.
-    track = dy/1000.
     # create forecast
-    forecast = process_tign_g(lon,lat,tign_g,bounds,ctime,scan,track,wrfout_file=wrfout_file)
+    forecast = process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file=wrfout_file,plot=plot)
     # close netcdf file
     data.close()
 
@@ -146,9 +150,27 @@ def process_forecast_wrfout(wrfout_file,bounds,plot=False):
 
 
 if __name__ == "__main__":
-    plot = True
-    bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
-    dst = './patch/wrfout_patch'
+    import saveload as sl
+    real = False
+    plot = False
 
-    f = process_forecast_wrfout(dst,bounds,plot=plot)
-    sl.save(f,'forecast')
+    if real:
+        bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
+        dst = './patch/wrfout_patch'
+        f = process_forecast_wrfout(dst,bounds,plot=plot)
+        sl.save(f,'forecast')
+    else:
+        from infrared_perimeters import process_ignitions
+        from setup import process_detections
+        dst = 'ideal_test'
+        ideal = sl.load(dst)
+        kk = 5
+        data = process_tign_g(ideal['lon'][::kk,::kk],ideal['lat'][::kk,::kk],ideal['tign_g'][::kk,::kk],ideal['bounds'],ideal['ctime'],ideal['dx'],ideal['dy'],wrfout_file='ideal',dt_for=ideal['dt'],plot=plot)
+        if 'point' in ideal.keys():
+            p = [[ideal['point'][0]],[ideal['point'][1]],[ideal['point'][2]]]
+            data.update(process_ignitions(p,ideal['bounds']))
+        etime = time_iso2num(ideal['ctime'].replace('_','T'))
+        time_num_int = (etime-ideal['tign_g'].max(),etime)
+        sl.save((data,ideal['lon'],ideal['lat'],time_num_int),'data')
+        process_detections(data,ideal['lon'],ideal['lat'],time_num_int)
+

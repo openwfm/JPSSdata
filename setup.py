@@ -24,7 +24,7 @@ def process_detections(data,fxlon,fxlat,time_num):
 	"""
 
 	# process satellite settings
-	maxsize=400 # Max size of the fire mesh
+	maxsize=500 # Max size of the fire mesh
 	ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
 	lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
 	mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
@@ -112,18 +112,19 @@ def process_detections(data,fxlon,fxlat,time_num):
 			confanalysis.f8=np.concatenate((confanalysis.f8,conf[rfire==8]))
 			confanalysis.f9=np.concatenate((confanalysis.f9,conf[rfire==9]))
 			flc=conf>confl # fire large confidence indexes
+			ffa=U[ffi][flc]>ti # first fire arrival
 
 			if ut>1 or mt>1:
 				# taking lon, lat, scan and track of the fire detections which fire large confidence indexes
-				lon=sdata[gran][1]['lon_fire'][flc]
-				lat=sdata[gran][1]['lat_fire'][flc]
-				scan=sdata[gran][1]['scan_fire'][flc]
-				track=sdata[gran][1]['track_fire'][flc]
+				lon=sdata[gran][1]['lon_fire'][flc][ffa]
+				lat=sdata[gran][1]['lat_fire'][flc][ffa]
+				scan=sdata[gran][1]['scan_fire'][flc][ffa]
+				track=sdata[gran][1]['track_fire'][flc][ffa]
 
 			# Set upper bounds
 			if ut==1:
 				# indices with high confidence
-				iu=ffi[flc]
+				iu=ffi[flc][ffa]
 			elif ut==2:
 				# creating the indices for all the pixel neighbours of the upper bound
 				iu=neighbor_indices_ellipse(vfxlon,vfxlat,lon,lat,scan,track)
@@ -132,13 +133,14 @@ def process_detections(data,fxlon,fxlat,time_num):
 				sys.exit()
 			mu = U[iu] > ti # only upper bounds did not set yet
 			if ut==1 and confm:
-				C[iu[mu]]=conf[flc][mu]
+				C[iu[mu]]=conf[flc][ffa][mu]
+			print 'U set at %s points' % np.unique(iu[mu]).shape
 			U[iu[mu]]=ti # set U to granule time where fire detected and not detected before
 
 			# Set mask
 			if mt==1:
 				# creating the indices for all the pixel neighbours of the upper bound indices
-				kk=neighbor_indices_ball(itree,ffi[flc],fxlon.shape,dist)
+				kk=neighbor_indices_ball(itree,np.unique(ffi[flc]),fxlon.shape,dist)
 				im=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
 			elif mt==2:
 				# creating the indices for all the pixel neighbours of the upper bound indices
@@ -152,8 +154,10 @@ def process_detections(data,fxlon,fxlat,time_num):
 			if mt > 1:
 				ind = np.where(im)[0]
 				mmt = ind[ti < T[im]] # only mask did not set yet
+				print 'T set at %s points' % mmt.shape
 				T[mmt]=ti # update mask T
 			else:
+				print 'T set at %s points' % im[T[im] > ti].shape
 				T[im[T[im] > ti]]=ti # update mask T
 
 		# Set mask from burned scar data

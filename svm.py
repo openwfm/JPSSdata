@@ -377,6 +377,15 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # below min of z direction for lower bound artifitial creation
     dminz = .1
 
+    # using different weights for the data
+    if isinstance(C,(list,tuple,np.ndarray)):
+        using_weights = True
+        from libsvm_weights.python.svm import svm_problem, svm_parameter
+        from libsvm_weights.python.svmutil import svm_train, svm_predict
+        from sklearn.utils import compute_class_weight
+    else:
+        using_weights = False
+
     # Data inputs
     X = np.array(X).astype(float)
     y = np.array(y)
@@ -500,8 +509,13 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # Creating the SVM model
     print '>> Creating the SVM model...'
     sys.stdout.flush()
-    clf = svm.SVC(C=C, kernel="rbf", gamma=gamma, cache_size=1000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
-    print clf
+    if using_weights:
+        prob = svm_problem(C,y,X)
+        param = svm_parameter('-g %g -w%01d %g -w%01d %g -m 1000' % (gamma, cls[0], class_weight[0],
+                                                            cls[1], class_weight[1]))
+    else:
+        clf = svm.SVC(C=C, kernel="rbf", gamma=gamma, cache_size=1000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
+        print clf
 
     # Fitting the data using Super Vector Machine technique
     print '>> Fitting the SVM model...'
@@ -661,6 +675,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     print '>> SUCCESS <<'
     t_final = time()
     print 'TOTAL elapsed time: %ss.' % str(abs(t_final-t_init))
+    plt.close()
 
     return FF
 

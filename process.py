@@ -49,7 +49,7 @@ from JPSSD import read_fire_mesh, retrieve_af_data, sdata2json, json2kml, time_i
 from interpolation import sort_dates
 from setup import process_detections
 from infrared_perimeters import process_ignitions, process_infrared_perimeters
-from forecast import process_forecast
+from forecast import process_forecast_wrfout
 from svm import preprocess_data_svm, SVM3
 from mpl_toolkits.basemap import Basemap
 from plot_pixels import basemap_scatter_mercator, create_kml
@@ -144,7 +144,7 @@ else:
 		if perim_path:
 			data.update(process_infrared_perimeters(perim_path,bounds=bbox))
 		if forecast_path:
-			data.update(process_forecast(forecast_path,bounds=bbox))
+			data.update(process_forecast_wrfout(forecast_path,bounds=bbox))
 
 		if data:
 			print ''
@@ -242,8 +242,8 @@ X,y,c = preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules,C=conf)
 print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
-C = 500.
-kgam = 10.
+C = 100.
+kgam = 100.
 F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat))
 
 print ''

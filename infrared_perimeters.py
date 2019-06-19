@@ -43,8 +43,8 @@ def process_ignitions(igns,bounds):
             # get time elements
             time_num = time_iso2num(time_iso)
             time_datetime = time_iso2datetime(time_iso)
-            time_data = '_A%04d%03d_%02d%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
-                                        time_datetime.hour, time_datetime.minute)
+            time_data = '_A%04d%03d_%02d%02d_%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
+                                        time_datetime.hour, time_datetime.minute, time_datetime.second)
             acq_date = '%04d-%02d-%02d' % (time_datetime.year, time_datetime.month, time_datetime.day)
             acq_time = '%02d%02d' % (time_datetime.hour, time_datetime.minute)
         except Exception as e:
