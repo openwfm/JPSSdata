@@ -242,7 +242,10 @@ X,y,c = preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules,C=conf)
 print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
-C = 100.
+if conf is None:
+	C = 100.
+else:
+	C = 10.*c
 kgam = 100.
 F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat))
 

@@ -188,7 +188,7 @@ def make_meshgrid(x, y, z, s=(50,50,50), exp=.1):
                              np.linspace(z_min, z_max, sz))
     return xx, yy, zz
 
-def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False):
+def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, using_weights=False):
     """
     Compute the surface decision frontier for a classifier.
 
@@ -214,7 +214,12 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False):
     print '>> Evaluating the decision function...'
     sys.stdout.flush()
     t_1 = time()
-    ZZ = clf.decision_function(XX)
+    if using_weights:
+        from libsvm_weights.python.svmutil import svm_predict
+        _, _, p_vals = svm_predict([], XX, clf)
+        ZZ = np.array([p[0] for p in p_vals])
+    else:
+        ZZ = clf.decision_function(XX)
     t_2 = time()
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
     hist = np.histogram(ZZ)
@@ -372,16 +377,20 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     toparti = False
     # proportion over max of z direction for upper bound artifitial creation
     dmaxz = .1
+    # confidence level of the artificial upper bounds
+    confau = 100.
     # creation of an artifitial mesh of down lower bounds
     downarti = True
     # below min of z direction for lower bound artifitial creation
     dminz = .1
+    # confidence level of the artificial lower bounds
+    confal = 10.
 
     # using different weights for the data
     if isinstance(C,(list,tuple,np.ndarray)):
         using_weights = True
         from libsvm_weights.python.svm import svm_problem, svm_parameter
-        from libsvm_weights.python.svmutil import svm_train, svm_predict
+        from libsvm_weights.python.svmutil import svm_train
         from sklearn.utils import compute_class_weight
     else:
         using_weights = False
@@ -431,7 +440,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         # Extreme values at z direction
         minz = X[:, 2].min()
         maxz = X[:, 2].max()
-        # Division of lower and upper bounds
+        # Division of lower and upper bounds for data and confidence level
         fl = X[y==np.unique(y)[0]]
         fu = X[y==np.unique(y)[1]]
         # Create artificial lower bounds
@@ -442,6 +451,12 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         Xg = np.concatenate([ np.c_[(np.repeat(fl[k][0],len(flz[k])),np.repeat(fl[k][1],len(flz[k])),flz[k])] for k in range(len(flz)) ])
         # Definition of new fire detections after artificial detections added
         Xf = np.concatenate([ np.c_[(np.repeat(fu[k][0],len(fuz[k])),np.repeat(fu[k][1],len(fuz[k])),fuz[k])] for k in range(len(fuz)) ])
+        # Define new confidence levels
+        if using_weights:
+            cl = C[y==np.unique(y)[0]]
+            cu = C[y==np.unique(y)[1]]
+            Cg = np.concatenate([ np.repeat(cl[k],len(flz[k])) for k in range(len(flz)) ])
+            Cf = np.concatenate([ np.repeat(cu[k],len(fuz[k])) for k in range(len(fuz)) ])
 
         # Top artificial upper bounds
         if toparti:
@@ -454,8 +469,14 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
             Xfa = np.c_[(xn.ravel(),yn.ravel(),znf.ravel())]
             # Definition of new fire detections after top artificial upper detections
             Xfn = np.concatenate((Xf,Xfa))
+            # Definition of new confidence level
+            if using_weights:
+                Cfa = np.ones(len(Xfa))*confau
+                Cfn = np.concatenate((Cf,Cfa))
         else:
             Xfn = Xf
+            if using_weights:
+                Cfn = Cf
 
         # Bottom artificial lower bounds
         if downarti:
@@ -468,14 +489,23 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
             Xga = np.c_[(xn.ravel(),yn.ravel(),zng.ravel())]
             # Definition of new ground detections after down artificial lower detections
             Xgn = np.concatenate((Xg,Xga))
+            # Definition of new confidence level
+            if using_weights:
+                Cga = np.ones(len(Xga))*confal
+                Cgn = np.concatenate((Cg,Cga))
         else:
             Xgn = Xg
+            if using_weights:
+                Cgn = Cg
 
         # New definition of the training vectors
         X = np.concatenate((Xgn, Xfn))
         # New definition of the target values
         y = np.concatenate((np.repeat(np.unique(y)[0],len(Xgn)),np.repeat(np.unique(y)[1],len(Xfn))))
-    	# New definition of each feature vector
+    	# New definition of the confidence level
+        if using_weights:
+            C = np.concatenate((Cgn, Cfn))
+        # New definition of each feature vector
     	X0, X1, X2 = X[:, 0], X[:, 1], X[:, 2]
 
     # Printing number of samples and features
@@ -510,9 +540,13 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     print '>> Creating the SVM model...'
     sys.stdout.flush()
     if using_weights:
+        # Compute class balanced weights
+        cls, _ = np.unique(y, return_inverse=True)
+        class_weight = compute_class_weight("balanced", cls, y)
         prob = svm_problem(C,y,X)
-        param = svm_parameter('-g %g -w%01d %g -w%01d %g -m 1000' % (gamma, cls[0], class_weight[0],
-                                                            cls[1], class_weight[1]))
+        arg = '-g %.15g -w%01d %.15g -w%01d %.15g -m 1000 -h 0' % (gamma, cls[0], class_weight[0],
+                                            cls[1], class_weight[1])
+        param = svm_parameter(arg)
     else:
         clf = svm.SVC(C=C, kernel="rbf", gamma=gamma, cache_size=1000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
         print clf
@@ -521,17 +555,21 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     print '>> Fitting the SVM model...'
     sys.stdout.flush()
     t_1 = time()
-    clf.fit(X, y)
+    if using_weights:
+        clf = svm_train(prob,param)
+    else:
+        clf.fit(X, y)
     t_2 = time()
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
 
-    # Check if the classification failed
-    if clf.fit_status_:
-        print '>> FAILED <<'
-        print 'Failed fitting the data'
-        sys.exit(1)
-    print 'number of support vectors: ', clf.n_support_
-    print 'score of trained data: ', clf.score(X,y)
+    if not using_weights:
+        # Check if the classification failed
+        if clf.fit_status_:
+            print '>> FAILED <<'
+            print 'Failed fitting the data'
+            sys.exit(1)
+        print 'number of support vectors: ', clf.n_support_
+        print 'score of trained data: ', clf.score(X,y)
 
     # Creating the mesh grid to evaluate the classification
     print '>> Creating mesh grid to evaluate the classification...'
@@ -564,13 +602,19 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # Computing the 2D fire arrival time, F
     print '>> Computing the 2D fire arrival time, F...'
     sys.stdout.flush()
-    F = frontier(clf, xx, yy, zz, plot_decision=plot_decision, plot_poly=plot_poly)
+    F = frontier(clf, xx, yy, zz, plot_decision=plot_decision, plot_poly=plot_poly, using_weights=using_weights)
 
     print '>> Creating final results...'
     sys.stdout.flush()
     # Plotting the Separating Hyperplane of the SVM classification with the support vectors
     if plot_supports:
         try:
+            if using_weights:
+                supp_ind = np.sort(clf.get_sv_indices())-1
+                supp_vec = X[supp_ind]
+            else:
+                supp_ind = clf.support_
+                supp_vec = clf.support_vectors_
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
@@ -578,12 +622,12 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
             ax.plot_wireframe(F[0], F[1], F[2], color='orange')
             # computing the indeces where no support vectors
             rr = np.array(range(len(y)))
-            ms = np.isin(rr,clf.support_)
+            ms = np.isin(rr,supp_ind)
             nsupp = rr[~ms]
             # plotting no-support vectors (smaller)
             ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=plt.cm.coolwarm, s=.5, vmin=y.min(), vmax=y.max(), alpha=.1)
             # plotting support vectors (bigger)
-            ax.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], clf.support_vectors_[:, 2], c=y[clf.support_], cmap=plt.cm.coolwarm, s=20, edgecolors='k', alpha=.2);
+            ax.scatter(supp_vec[:, 0], supp_vec[:, 1], supp_vec[:, 2], c=y[supp_ind], cmap=plt.cm.coolwarm, s=20, edgecolors='k', alpha=.2);
             ax.set_xlim(xx.min(),xx.max())
             ax.set_ylim(yy.min(),yy.max())
             ax.set_zlim(zz.min(),zz.max())
@@ -675,7 +719,8 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     print '>> SUCCESS <<'
     t_final = time()
     print 'TOTAL elapsed time: %ss.' % str(abs(t_final-t_init))
-    plt.close()
+    plt.show()
+    # plt.close()
 
     return FF
 
@@ -688,21 +733,23 @@ if __name__ == "__main__":
     def exp1():
         Xg = [[0, 0, 0], [2, 2, 0], [2, 0, 0], [0, 2, 0]]
         Xf = [[0, 0, 1], [1, 1, 0], [2, 2, 1], [2, 0, 1], [0, 2, 1]]
-        return Xg, Xf
+        C = np.concatenate((10.*np.ones(len(Xg)),100.*np.ones(len(Xf))))
+        return Xg, Xf, C
     def exp2():
         Xg = [[0, 0, 0], [2, 2, 0], [2, 0, 0], [0, 2, 0], [4, 2, 0], [4, 0, 0], [2, 1, 0.5]]
         Xf = [[0, 0, 1], [1, 1, 0.25], [2, 2, 1], [2, 0, 1], [0, 2, 1], [3, 1, 0.25], [4, 2, 1], [4, 0, 1]]
-        return Xg, Xf
+        C = np.concatenate((10.*np.ones(len(Xg)),100.*np.ones(len(Xf))))
+        return Xg, Xf, C
 
     # Creating the options
     options = {1 : exp1, 2 : exp2}
 
     # Defining the option depending on the experiment
-    Xg, Xf = options[exp]()
+    Xg, Xf, C = options[exp]()
 
     # Creating the data necessary to run SVM3 function
     X = np.concatenate((Xg, Xf))
     y = np.concatenate((-np.ones(len(Xg)), np.ones(len(Xf))))
 
     # Running SVM classification
-    SVM3(X,y,C=10.)
+    SVM3(X,y,C=C)
