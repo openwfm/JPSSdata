@@ -164,7 +164,7 @@ if __name__ == "__main__":
         from setup import process_detections
         dst = 'ideal_test'
         ideal = sl.load(dst)
-        kk = 5
+        kk = 4
         data = process_tign_g(ideal['lon'][::kk,::kk],ideal['lat'][::kk,::kk],ideal['tign_g'][::kk,::kk],ideal['bounds'],ideal['ctime'],ideal['dx'],ideal['dy'],wrfout_file='ideal',dt_for=ideal['dt'],plot=plot)
         if 'point' in ideal.keys():
             p = [[ideal['point'][0]],[ideal['point'][1]],[ideal['point'][2]]]
