@@ -29,7 +29,8 @@ def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=600.,
     # prefix of the elements in the dictionary
     prefix = "FOR"
     # confidences
-    conf_fire = 80
+    conf_fire = 50
+    conf_nofire = 10
     # margin percentage
     margin = .1
     # scan and track dimensions of the observation (in km)
@@ -97,6 +98,7 @@ def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=600.,
                             'fire': fires, 'conf_fire': np.array(conf_fire*np.ones(lons[fires==9].shape)),
                             'lon_fire': lons[fires==9], 'lat_fire': lats[fires==9], 'lon_nofire': lons[fires==5], 'lat_nofire': lats[fires==5],
                             'scan_fire': scan*np.ones(lons[fires==9].shape), 'track_fire': track*np.ones(lons[fires==9].shape),
+                            'conf_nofire': np.array(conf_nofire*np.ones(lons[fires==5].shape)),
                             'scan_nofire': scan*np.ones(lons[fires==5].shape), 'track_nofire': track*np.ones(lons[fires==9].shape),
                             'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
 

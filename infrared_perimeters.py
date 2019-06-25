@@ -27,6 +27,8 @@ def process_ignitions(igns,bounds):
     # scan and track dimensions of the observation (in km)
     scan = 1.
     track = 1.
+    # confidences
+    conf_fire = 100
 
     # for each ignition
     for lon, lat, time_iso in zip(igns[0],igns[1],igns[2]):
@@ -55,14 +57,16 @@ def process_ignitions(igns,bounds):
         # no nofire detection
         lon_nofire = np.array([])
         lat_nofire = np.array([])
+        conf_nofire = np.array([])
 
         # update ignitions dictionary
         ignitions.update({prefix + time_data: Dict({'lon': lons, 'lat': lats,
-                                'fire': np.array(9*np.ones(lons.shape)), 'conf_fire': np.array(100*np.ones(lons.shape)),
+                                'fire': np.array(9*np.ones(lons.shape)), 'conf_fire': np.array(conf_fire*np.ones(lons.shape)),
                                 'lon_fire': lons, 'lat_fire': lats, 'lon_nofire': lon_nofire, 'lat_nofire': lat_nofire,
                                 'scan_fire': scan*np.ones(lons.shape), 'track_fire': track*np.ones(lons.shape),
-                                'scan_nofire': scan*np.ones(lon_nofire.shape), 'track_nofire': track*np.ones(lon_nofire.shape),
-                                'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
+                                'conf_nofire' : conf_nofire, 'scan_nofire': scan*np.ones(lon_nofire.shape),
+                                'track_nofire': track*np.ones(lon_nofire.shape), 'time_iso': time_iso,
+                                'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
     return ignitions
 
 
@@ -90,6 +94,9 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
     # scan and track dimensions of the observation (in km)
     scan = .05
     track = .05
+    # confidences
+    conf_fire = 100
+    conf_nofire = 100
 
     # Creating grid where to evaluate in/out of the perimeter
     [X,Y] = np.meshgrid(np.linspace(bounds[0],bounds[1],ngrid),np.linspace(bounds[2],bounds[3],ngrid))
@@ -196,9 +203,10 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
 
             # update perimeters dictionary
             perimeters.update({prefix + time_data: Dict({'file': file, 'lon': lons, 'lat': lats,
-                            'fire': fires, 'conf_fire': np.array(100*np.ones(lons[fires==9].shape)),
+                            'fire': fires, 'conf_fire': np.array(conf_fire*np.ones(lons[fires==9].shape)),
                             'lon_fire': lons[fires==9], 'lat_fire': lats[fires==9], 'lon_nofire': lons[fires==5], 'lat_nofire': lats[fires==5],
                             'scan_fire': scan*np.ones(lons[fires==9].shape), 'track_fire': track*np.ones(lons[fires==9].shape),
+                            'conf_nofire': np.array(conf_nofire*np.ones(lons[fires==5].shape)),
                             'scan_nofire': scan*np.ones(lons[fires==5].shape), 'track_nofire': track*np.ones(lons[fires==9].shape),
                             'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
     else:

@@ -30,9 +30,10 @@ def process_detections(data,fxlon,fxlat,time_num):
 	mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
 	dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
 	mm=5 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
-	confl=70. # Minimum confidence level for the pixels
+	confl=10. # Minimum confidence level for the pixels
 	confa=False # Histogram plot of the confidence level distribution
-	confm=True # Store confidence of each fire detection
+	confm=True # Store confidence of each fire and ground detection
+	conf_nofire=30. # In absence of nofire confidence, value for nofire confidence (satellite data)
 	burn=False # Using or not the burned scar product
 
 	print 'mesh shape %s %s' % fxlon.shape
@@ -75,6 +76,7 @@ def process_detections(data,fxlon,fxlat,time_num):
 	T[:]=time_scale_num[1]
 	if confm:
 		C=np.zeros(DD)
+		Cg=np.zeros(DD)
 
 	# Confidence analysis
 	confanalysis=Dict({'f7': np.array([]),'f8': np.array([]), 'f9': np.array([])})
@@ -111,7 +113,7 @@ def process_detections(data,fxlon,fxlat,time_num):
 			confanalysis.f7=np.concatenate((confanalysis.f7,conf[rfire==7]))
 			confanalysis.f8=np.concatenate((confanalysis.f8,conf[rfire==8]))
 			confanalysis.f9=np.concatenate((confanalysis.f9,conf[rfire==9]))
-			flc=conf>confl # fire large confidence indexes
+			flc=conf>=confl # fire large confidence indexes
 			ffa=U[ffi][flc]>ti # first fire arrival
 
 			if ut>1 or mt>1:
@@ -132,16 +134,23 @@ def process_detections(data,fxlon,fxlat,time_num):
 				print 'ERROR: invalid ut option.'
 				sys.exit()
 			mu = U[iu] > ti # only upper bounds did not set yet
-			if ut==1 and confm:
-				C[iu[mu]]=conf[flc][ffa][mu]
-			print 'U set at %s points' % np.unique(iu[mu]).shape
-			U[iu[mu]]=ti # set U to granule time where fire detected and not detected before
+			if confm:
+				if ut==1:
+					C[iu[mu]]=conf[flc][ffa][mu]
+				else:
+					print 'ERROR: ut=2 and confm=True not implemented!'
+					sys.exit(1)
+			print 'U set at %s points' % mu.sum()
+			if ut==1:
+				U[iu[mu]]=ti # set U to granule time where fire detected and not detected before
+			else:
+				U[iu][mu]=ti # set U to granule time where fire detected and not detected before
 
 			# Set mask
 			if mt==1:
 				# creating the indices for all the pixel neighbours of the upper bound indices
 				kk=neighbor_indices_ball(itree,np.unique(ffi[flc]),fxlon.shape,dist)
-				im=sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]]))
+				im=np.array(sorted(np.unique([x[0]+x[1]*fxlon.shape[0] for x in vfind[kk]])))
 			elif mt==2:
 				# creating the indices for all the pixel neighbours of the upper bound indices
 				im=neighbor_indices_pixel(vfxlon,vfxlat,lon,lat,scan,track)
@@ -185,6 +194,18 @@ def process_detections(data,fxlon,fxlat,time_num):
 			else:
 				print 'ERROR: invalid lt option.'
 				sys.exit()
+			if confm:
+				if lt==1:
+					try:
+						# get nofire confidence if we have it
+						confg=sdata[gran][1]['conf_nofire']
+					except:
+						# if not, define confidence from conf_nofire value
+						confg=conf_nofire*np.ones(il.shape)
+					Cg[il]=confg[(ti<T[ff])[nofi]]
+				else:
+					print 'ERROR: lt=2 and confm=True not implemented!'
+					sys.exit(1)
 			L[il]=ti # set L to granule time where fire detected
 			print 'L set at %s points' % jj.sum()
 		t_final = time.time()
@@ -234,9 +255,10 @@ def process_detections(data,fxlon,fxlat,time_num):
 
 	if confm:
 		C=np.transpose(np.reshape(C,fxlon.shape))
+		Cg=np.transpose(np.reshape(Cg,fxlon.shape))
 		result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat,
 		'time_num':time_num, 'time_scale_num' : time_scale_num,
-		'time_num_granules' : tt, 'C':C}
+		'time_num_granules' : tt, 'C':C, 'Cg': Cg}
 	else:
 		result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat,
 		'time_num':time_num, 'time_scale_num' : time_scale_num,

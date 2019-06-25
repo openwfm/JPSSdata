@@ -37,9 +37,6 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     Angel Farguell (angel.farguell@gmail.com), 2019-04-01
     """
 
-    # Confidence of nofire detections
-    nofire_conf = 10
-
     # Flatten coordinates
     lon = np.reshape(lons,np.prod(lons.shape)).astype(float)
     lat = np.reshape(lats,np.prod(lats.shape)).astype(float)
@@ -107,7 +104,7 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     if C is None:
         c = 80*np.ones(y.shape)
     else:
-        c = np.concatenate((nofire_conf*np.ones(len(lx)),np.reshape(C,np.prod(C.shape))[um]))
+        c = np.concatenate((C[0].ravel()[lm],C[1].ravel()[um]))
 
     # Clean data if not in bounding box
     bbox = (lon.min(),lon.max(),lat.min(),lat.max(),time_num_granules)

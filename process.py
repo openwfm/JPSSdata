@@ -66,7 +66,7 @@ from time import time
 # plot observed information
 plot_observed = False
 # dynamic penalization term
-dyn_pen = False
+dyn_pen = True
 
 # if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
 # examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
@@ -236,6 +236,11 @@ if 'C' in result.keys():
 else:
 	conf = None
 
+if 'Cg' in result.keys():
+	conf = (np.array(result['Cg']),conf)
+else:
+	conf = (10*np.ones(L.shape),conf)
+
 print ''
 print '>> Preprocessing the data <<'
 sys.stdout.flush()
@@ -244,13 +249,10 @@ X,y,c = preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules,C=conf)
 print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
-if conf is None:
+if conf is None or not dyn_pen:
 	C = 100.
 else:
-	if dyn_pen:
-		C = 10.*c
-	else:
-		C = 100.
+	C = np.power(c,3)/1000.
 kgam = 100.
 F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat))
 
