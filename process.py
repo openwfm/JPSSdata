@@ -66,7 +66,7 @@ from time import time
 # plot observed information
 plot_observed = False
 # dynamic penalization term
-dyn_pen = True
+dyn_pen = False
 
 # if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
 # examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
