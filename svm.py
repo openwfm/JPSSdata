@@ -716,8 +716,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     print '>> SUCCESS <<'
     t_final = time()
     print 'TOTAL elapsed time: %ss.' % str(abs(t_final-t_init))
-    plt.show()
-    # plt.close()
+    plt.close()
 
     return FF
 
