@@ -201,7 +201,7 @@ def process_detections(data,fxlon,fxlat,time_num):
 						confg=sdata[gran][1]['conf_nofire']
 					except:
 						# if not, define confidence from conf_nofire value
-						confg=conf_nofire*np.ones(il.shape)
+						confg=conf_nofire*np.ones(nofi.sum())
 					Cg[il]=confg[(ti<T[ff])[nofi]]
 				else:
 					print 'ERROR: lt=2 and confm=True not implemented!'
