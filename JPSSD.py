@@ -17,6 +17,7 @@ import h5py
 import datetime
 import time
 import pandas as pd
+import matplotlib.colors as colors
 from itertools import groupby
 from subprocess import check_output, call
 
@@ -1022,8 +1023,10 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
 
             copyto('kmls/partial1.kml',kml)
 
+            # set some constants
             r = 6378   # Earth radius
             km_lat = 180/(np.pi*r)  # 1km in degrees latitude
+            ND = len(d['latitude'])
 
             for prod in prods:
 
@@ -1033,7 +1036,18 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                 if prod == 'FRP':
                     copyto('kmls/partial2.kml',kml)
 
-                for t in range(len(d['latitude'])):
+                if prod == 'TF':
+                    col = np.flip(np.divide([(230, 25, 75, 150), (245, 130, 48, 150), (255, 255, 25, 150),
+                            (210, 245, 60, 150), (60, 180, 75, 150), (70, 240, 240, 150),
+                            (0, 0, 128, 150), (145, 30, 180, 150), (240, 50, 230, 150),
+                            (128, 128, 128, 150)],255.),0)
+                    cm = colors.LinearSegmentedColormap.from_list('BuRd',col,ND)
+                    cols = ['%02x%02x%02x%02x' % tuple(255*np.flip(c)) for c in cm(range(cm.N))]
+                    t_range = range(ND-1,-1,-1)
+                else:
+                    t_range = range(ND)
+
+                for t in t_range:
                     lats=np.array(d['latitude'][t]).astype(float)
                     lons=np.array(d['longitude'][t]).astype(float)
                     ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
@@ -1123,6 +1137,11 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                                     kml.write('<styleUrl> modis_conf_med </styleUrl>\n')
                                 else:
                                     kml.write('<styleUrl> modis_conf_high </styleUrl>\n')
+                            elif prod == 'TF':
+                                kml.write('<Style>\n'+'<PolyStyle>\n'
+                                            +'<color>%s</color>\n' % cols[t]
+                                            +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                            +'</Style>\n')
                             elif prod == 'FRP':
                                 frpx = min(40,np.ceil(frp/10.)-1)
                                 kml.write('<styleUrl> %s </styleUrl>\n' % frp_style[frpx] )
