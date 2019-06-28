@@ -198,7 +198,7 @@ else:
 			pngfile = g[0]+'.png'
 			# create timestamp for KML
 			timestamp = g[1].acq_date + 'T' + g[1].acq_time[0:2] + ':' + g[1].acq_time[2:4] + 'Z'
-			if not exist(g[0]):
+			if not exist(pngfile):
 				# plot a scatter basemap
 				raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bbox,bmap)
 				# compute bounds
