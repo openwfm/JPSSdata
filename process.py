@@ -194,18 +194,21 @@ else:
 		kmld = []
 		# for each observed information
 		for idx, g in enumerate(sdata):
-			# plot a scatter basemap
-			raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bbox,bmap)
-			# compute bounds
-			bounds = (corner_coords[0][0],corner_coords[1][0],corner_coords[0][1],corner_coords[2][1])
 			# create png name
 			pngfile = g[0]+'.png'
 			# create timestamp for KML
 			timestamp = g[1].acq_date + 'T' + g[1].acq_time[0:2] + ':' + g[1].acq_time[2:4] + 'Z'
-			# write PNG file
-			with open(pngfile, 'w') as f:
-				f.write(raster_png_data)
-			print '> File %s saved.' % g[0]
+			if not exist(g[0]):
+				# plot a scatter basemap
+				raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bbox,bmap)
+				# compute bounds
+				bounds = (corner_coords[0][0],corner_coords[1][0],corner_coords[0][1],corner_coords[2][1])
+				# write PNG file
+				with open(pngfile, 'w') as f:
+					f.write(raster_png_data)
+				print '> File %s saved.' % g[0]
+			else:
+				print '> File %s already created.' % g[0]
 			# append dictionary information for the KML creation
 			kmld.append(Dict({'name': g[0], 'png_file': pngfile, 'bounds': bbox, 'time': timestamp}))
 		# create KML
