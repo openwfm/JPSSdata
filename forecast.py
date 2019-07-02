@@ -6,7 +6,7 @@ from utils import Dict
 import re, glob, sys, os
 
 
-def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=600.,plot=False):
+def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=900.,plot=False):
     """
     Process forecast from lon, lat, and tign_g
 
@@ -32,10 +32,10 @@ def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=600.,
     conf_fire = 50
     conf_nofire = 10
     # margin percentage
-    margin = .1
+    margin = .5
     # scan and track dimensions of the observation (in km)
-    scan = 1.5*dx/1000.
-    track = 1.5*dy/1000.
+    scan = dx/1000.
+    track = dy/1000.
     # initializing dictionary
     forecast = Dict({})
 
@@ -141,8 +141,12 @@ def process_forecast_wrfout(wrfout_file,bounds,plot=False):
     # fire arrival time
     tign_g = data['TIGN_G'][0][0:lenx,0:leny]
     # resolutions
-    dx = data.getncattr('DX')
-    dy = data.getncattr('DY')
+    DX = data.getncattr('DX')
+    DY = data.getncattr('DY')
+    sx = data.dimensions['west_east_subgrid'].size/data.dimensions['west_east_stag'].size
+    sy = data.dimensions['south_north_subgrid'].size/data.dimensions['south_north_stag'].size
+    dx = DX/sx
+    dy = DY/sy
     # create forecast
     forecast = process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file=wrfout_file,plot=plot)
     # close netcdf file
@@ -153,10 +157,10 @@ def process_forecast_wrfout(wrfout_file,bounds,plot=False):
 
 if __name__ == "__main__":
     import saveload as sl
-    real = False
-    plot = False
+    real = True
 
     if real:
+        plot = True
         bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
         dst = './patch/wrfout_patch'
         f = process_forecast_wrfout(dst,bounds,plot=plot)
@@ -165,6 +169,7 @@ if __name__ == "__main__":
         from infrared_perimeters import process_ignitions
         from setup import process_detections
         dst = 'ideal_test'
+        plot = False
         ideal = sl.load(dst)
         kk = 4
         data = process_tign_g(ideal['lon'][::kk,::kk],ideal['lat'][::kk,::kk],ideal['tign_g'][::kk,::kk],ideal['bounds'],ideal['ctime'],ideal['dx'],ideal['dy'],wrfout_file='ideal',dt_for=ideal['dt'],plot=plot)
