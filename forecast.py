@@ -6,7 +6,7 @@ from utils import Dict
 import re, glob, sys, os
 
 
-def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=900.,plot=False):
+def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=3600.,plot=False):
     """
     Process forecast from lon, lat, and tign_g
 
@@ -157,7 +157,7 @@ def process_forecast_wrfout(wrfout_file,bounds,plot=False):
 
 if __name__ == "__main__":
     import saveload as sl
-    real = True
+    real = False
 
     if real:
         plot = True
@@ -175,6 +175,9 @@ if __name__ == "__main__":
         data = process_tign_g(ideal['lon'][::kk,::kk],ideal['lat'][::kk,::kk],ideal['tign_g'][::kk,::kk],ideal['bounds'],ideal['ctime'],ideal['dx'],ideal['dy'],wrfout_file='ideal',dt_for=ideal['dt'],plot=plot)
         if 'point' in ideal.keys():
             p = [[ideal['point'][0]],[ideal['point'][1]],[ideal['point'][2]]]
+            data.update(process_ignitions(p,ideal['bounds']))
+        elif 'points' in ideal.keys():
+            p = [[point[0] for point in ideal['points']],[point[1] for point in ideal['points']],[point[2] for point in ideal['points']]]
             data.update(process_ignitions(p,ideal['bounds']))
         etime = time_iso2num(ideal['ctime'].replace('_','T'))
         time_num_int = (etime-ideal['tign_g'].max(),etime)

@@ -17,7 +17,7 @@ ncf=Dataset(file,'r')
 add_seconds=ncf.variables['t'][0]
 # Datetime of image scan
 dt=datetime(2000, 1, 1, 12)+timedelta(seconds=float(add_seconds.data))
-print 'dt = ' 
+print 'dt = '
 print dt
 
 # Detections in RGB array
@@ -61,7 +61,7 @@ print sat_lon
 sat_sweep=ncf.variables['goes_imager_projection'].sweep_angle_axis
 print 'sat_sweep = '
 print sat_sweep
-# The projection x and y coordinates equals 
+# The projection x and y coordinates equals
 # the scanning angle (in radians) multiplied by the satellite height (https://proj4.org/operations/projections/geos.html)
 X=ncf.variables['x'][:] * sat_h
 Y=ncf.variables['y'][:] * sat_h
@@ -79,6 +79,7 @@ lats[np.isnan(R)]=np.nan
 lons[np.isnan(R)]=np.nan
 
 # create new netCDF file with lat/lon info
+'''
 newfile = "appended" + file
 w_ncf = Dataset(newfile, 'w')
 with Dataset(file) as src, w_ncf as dst:
@@ -93,7 +94,7 @@ with Dataset(file) as src, w_ncf as dst:
     for name, variable in src.variables.iteritems():
         x = dst.createVariable(name, variable.datatype, variable.dimensions)
         dst.variables[name][:] = src.variables[name][:]
-        
+
     # add new lat/lon info
     dst.createDimension('longitude', None)
     dst.createDimension('lattitude', None)
@@ -104,6 +105,7 @@ with Dataset(file) as src, w_ncf as dst:
     dst.variables['lattitude'][:] = lats
     # close the new file
     dst.close()
+'''
 
 # Make a new map object for the HRRR model domain map projection
 mH = Basemap(resolution='l', projection='lcc', area_thresh=5000, \
@@ -137,7 +139,7 @@ l = {'latitude': 41.812,
 #     'longitude': -108.538}
 
 mZ = Basemap(projection='lcc', resolution='i',
-            width=3E5, height=3E5, 
+            width=3E5, height=3E5,
             lat_0=l['latitude'], lon_0=l['longitude'],)
 
 # Now we can plot the GOES data on a zoomed in map centered on the Sugarloaf wildfire

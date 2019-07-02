@@ -122,9 +122,10 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
                 # read name of the file
                 name = re.findall(r'<name>(.*?)</name>',f_str,re.DOTALL)[0]
                 # read date of the perimeter
-                date = re.match(r'.*([0-9]{2}-[0-9]{2}-[0-9]{4} [0-9]{4})',name).groups()[0]
+                date = re.match(r'.*([0-9]+)-([0-9]+)-([0-9]+) ([0-9]{2})([0-9]{2})',name).groups()
+                date = (date[2],date[0],date[1],date[3],date[4])
                 # create ISO time of the date
-                time_iso = date[6:10]+'-'+date[0:2]+'-'+date[3:5]+'T'+date[11:13]+':'+date[13:15]+':00'
+                time_iso = '%04d-%02d-%02dT%02d:%02d:00' % tuple([ int(d) for d in date ])
                 # create numerical time from the ISO time
                 time_num = time_iso2num(time_iso)
                 # create datetime element from the ISO time
@@ -217,8 +218,10 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
 
 if __name__ == "__main__":
     plot = True
-    bounds = (-115.97282409667969, -115.28449249267578, 43.808258056640625, 44.302913665771484)
-    dst = './pioneer/perim'
+    #bounds = (-115.97282409667969, -115.28449249267578, 43.808258056640625, 44.302913665771484)
+    #dst = './pioneer/perim'
+    bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
+    dst = './patch/perim'
 
     p = process_infrared_perimeters(dst,bounds,plot=plot)
     sl.save(p,'perimeters')
