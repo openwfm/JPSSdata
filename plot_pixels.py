@@ -70,7 +70,7 @@ def basemap_scatter_mercator(g,bounds,bmap):
 	flat = g.lat.ravel()
 	mask = g.fire.ravel()
 
-	fil = np.logical_and(np.logical_and(np.logical_and(flon>bounds[0],flon<bounds[1]),flat>bounds[2]),flat<bounds[3])
+	fil = np.logical_and(np.logical_and(np.logical_and(flon >= bounds[0], flon <= bounds[1]), flat >= bounds[2]), flat <= bounds[3])
 
 	categories = (np.array(mask[fil] == 3), np.array(mask[fil] == 5),
 				np.array(mask[fil] == 7), np.array(mask[fil] == 8),
@@ -238,7 +238,7 @@ def pixels_plot(g,bounds):
 
 	flon=np.reshape(lon,np.prod(lon.shape))
 	flat=np.reshape(lat,np.prod(lat.shape))
-	fil=np.logical_and(np.logical_and(np.logical_and(flon>bounds[0],flon<bounds[1]),flat>bounds[2]),flat<bounds[3])
+	fil=np.logical_and(np.logical_and(np.logical_and(flon >= bounds[0], flon <= bounds[1]), flat >= bounds[2]), flat <= bounds[3])
 	lon=flon[fil]
 	lat=flat[fil]
 

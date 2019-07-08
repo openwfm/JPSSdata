@@ -43,14 +43,15 @@ def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=3600.
     ctime_iso = ctime.replace('_','T')
     ctime_datetime = time_iso2datetime(ctime_iso)
     # mask coordinates to bounding box
-    mask = np.logical_and(np.logical_and(np.logical_and(lon>bounds[0],lon<bounds[1]),lat>bounds[2]),lat<bounds[3])
+    mask = np.logical_and(np.logical_and(np.logical_and(lon >= bounds[0], lon <= bounds[1]), lat >= bounds[2]), lat <= bounds[3])
     # create a square subset of fire arrival time less than the maximum
-    mtign = np.logical_and(mask,tign_g < tign_g.max())
+    mtign = np.logical_and(mask, tign_g < tign_g.max())
     mlon = lon[mtign]
     mlat = lat[mtign]
-    mlen = margin*(mlon.max()-mlon.min())
-    sbounds = (mlon.min()-mlen, mlon.max()+mlen, mlat.min()-mlen, mlat.max()+mlen)
-    smask = np.logical_and(np.logical_and(np.logical_and(lon>sbounds[0],lon<sbounds[1]),lat>sbounds[2]),lat<sbounds[3])
+    mlenlon = margin*(mlon.max()-mlon.min())
+    mlenlat = margin*(mlat.max()-mlat.min())
+    sbounds = (mlon.min()-mlenlon, mlon.max()+mlenlon, mlat.min()-mlenlat, mlat.max()+mlenlat)
+    smask = np.logical_and(np.logical_and(np.logical_and(lon >= sbounds[0], lon <= sbounds[1]), lat >= sbounds[2]), lat <= sbounds[3])
 
     # times to get fire arrival time from
     TT = np.arange(tign_g.min()-3*dt_for,tign_g.max(),dt_for)[0:-1]

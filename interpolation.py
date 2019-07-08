@@ -38,7 +38,7 @@ def nearest_euclidean(lon,lat,lons,lats,bounds):
 	rlon=np.zeros(vlon.shape)
 	rlat=np.zeros(vlat.shape)
 	for k in range(0,len(vlon)):
-		if (vlon[k]>bounds[0]) and (vlon[k]<bounds[1]) and (vlat[k]>bounds[2]) and (vlat[k]<bounds[3]):
+		if (vlon[k] >= bounds[0]) and (vlon[k] <= bounds[1]) and (vlat[k] >= bounds[2]) and (vlat[k] <= bounds[3]):
 			dist=np.square(lons-vlon[k])+np.square(lats-vlat[k])
 			ii,jj = np.unravel_index(dist.argmin(),dist.shape)
 			rlon[k]=lons[ii,jj]
@@ -67,7 +67,7 @@ def nearest_scipy(lon,lat,stree,bounds):
 	vlon=np.reshape(lon,np.prod(lon.shape))
 	vlat=np.reshape(lat,np.prod(lat.shape))
 	vlonlat=np.column_stack((vlon,vlat))
-	M=(vlon>bounds[0])*(vlon<bounds[1])*(vlat>bounds[2])*(vlat<bounds[3])
+	M=np.logical_and(np.logical_and(np.logical_and(vlon >= bounds[0], vlon <= bounds[1]), vlat >= bounds[2]), vlat <= bounds[3])
 	vlonlat=vlonlat[M]
 	inds=np.array(stree.query(vlonlat)[1])
 	ret=(inds,M)
@@ -138,7 +138,7 @@ def neighbor_indices_pixel(lons,lats,lon,lat,scan,track):
 	# creating bounds for each fire detection (pixel vertexs)
 	bounds=[[lon[k]-sqlon[k],lon[k]+sqlon[k],lat[k]-sqlat[k],lat[k]+sqlat[k]] for k in range(len(lat))]
 	# creating a logical array of indices in the fire mesh with the intersection of all the cases
-	ll=np.sum([np.array(np.logical_and(np.logical_and(np.logical_and(lons>b[0],lons<b[1]),lats>b[2]),lats<b[3])) for b in bounds],axis=0).astype(bool)
+	ll=np.sum([np.array(np.logical_and(np.logical_and(np.logical_and(lons >= b[0], lons <= b[1]), lats >= b[2]), lats <= b[3])) for b in bounds],axis=0).astype(bool)
 	if np.all(ll==False):
 		fll = np.array([False]*len(lons))
 		return fll

@@ -37,7 +37,7 @@ def process_ignitions(igns,bounds):
             lon = np.array(lon)
             lat = np.array(lat)
             # look if coordinates in bounding box
-            mask = np.logical_and(np.logical_and(np.logical_and(lon>bounds[0],lon<bounds[1]),lat>bounds[2]),lat<bounds[3])
+            mask = np.logical_and(np.logical_and(np.logical_and(lon >= bounds[0], lon <= bounds[1]),lat >= bounds[2]),lat <= bounds[3])
             if not mask.sum():
                 break
             lons = lon[mask]
@@ -187,7 +187,7 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
             fire = np.concatenate((5*np.ones(lon_nofire.shape),9*np.ones(lon_fire.shape)))
 
             # mask in bounds
-            mask = np.logical_and(np.logical_and(np.logical_and(lon>bounds[0],lon<bounds[1]),lat>bounds[2]),lat<bounds[3])
+            mask = np.logical_and(np.logical_and(np.logical_and(lon >= bounds[0],lon <= bounds[1]),lat >= bounds[2]),lat <= bounds[3])
             if not mask.sum():
                 break
             lons = lon[mask]

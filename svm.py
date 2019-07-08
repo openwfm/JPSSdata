@@ -108,10 +108,10 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
 
     # Clean data if not in bounding box
     bbox = (lon.min(),lon.max(),lat.min(),lat.max(),time_num_granules)
-    geo_mask = np.logical_and(np.logical_and(np.logical_and(X[:,0] > bbox[0],X[:,0] < bbox[1]), X[:,1] > bbox[2]), X[:,1] < bbox[3])
+    geo_mask = np.logical_and(np.logical_and(np.logical_and(X[:,0] >= bbox[0],X[:,0] <= bbox[1]), X[:,1] >= bbox[2]), X[:,1] <= bbox[3])
     btime = (0,(scale[1]-scale[0])/tscale)
-    time_mask = np.logical_and(X[:,2] > btime[0], X[:,2] < btime[1])
-    whole_mask = np.logical_and(geo_mask,time_mask)
+    time_mask = np.logical_and(X[:,2] >= btime[0], X[:,2] <= btime[1])
+    whole_mask = np.logical_and(geo_mask, time_mask)
     X = X[whole_mask,:]
     y = y[whole_mask]
     c = c[whole_mask]

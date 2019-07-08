@@ -260,7 +260,7 @@ def read_modis_files(files,bounds):
         flons=lon_fire_obj.get()
     except:
         flons=np.array([])
-    fll=np.logical_and(np.logical_and(np.logical_and(flons>bounds[0],flons<bounds[1]),flats>bounds[2]),flats<bounds[3])
+    fll=np.logical_and(np.logical_and(np.logical_and(flons >= bounds[0], flons <= bounds[1]), flats >= bounds[2]), flats <= bounds[3])
     ret.lat_fire=flats[fll]
     ret.lon_fire=flons[fll]
     try:
@@ -288,7 +288,7 @@ def read_modis_files(files,bounds):
     # No fire data
     lats=np.reshape(ret.lat,np.prod(ret.lat.shape))
     lons=np.reshape(ret.lon,np.prod(ret.lon.shape))
-    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
+    ll=np.logical_and(np.logical_and(np.logical_and(lons >= bounds[0], lons <= bounds[1]), lats >= bounds[2]), lats <= bounds[3])
     lats=lats[ll]
     lons=lons[ll]
     fire=np.reshape(ret.fire,np.prod(ret.fire.shape))
@@ -334,7 +334,7 @@ def read_viirs_files(files,bounds):
     # Fire detected information
     flats=np.array(ncf.variables['FP_latitude'][:])
     flons=np.array(ncf.variables['FP_longitude'][:])
-    fll=np.logical_and(np.logical_and(np.logical_and(flons>bounds[0],flons<bounds[1]),flats>bounds[2]),flats<bounds[3])
+    fll=np.logical_and(np.logical_and(np.logical_and(flons >= bounds[0], flons <= bounds[1]), flats >= bounds[2]),flats <= bounds[3])
     ret.lat_fire=flats[fll]
     ret.lon_fire=flons[fll]
     ret.brig_fire=np.array(ncf.variables['FP_T13'][:])[fll]
@@ -347,7 +347,7 @@ def read_viirs_files(files,bounds):
     # No fire data
     lats=np.reshape(ret.lat,np.prod(ret.lat.shape))
     lons=np.reshape(ret.lon,np.prod(ret.lon.shape))
-    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
+    ll=np.logical_and(np.logical_and(np.logical_and(lons >= bounds[0], lons <= bounds[1]), lats >= bounds[2]), lats <= bounds[3])
     lats=lats[ll]
     lons=lons[ll]
     fire=np.reshape(ret.fire,np.prod(ret.fire.shape))
@@ -1050,7 +1050,7 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                 for t in t_range:
                     lats=np.array(d['latitude'][t]).astype(float)
                     lons=np.array(d['longitude'][t]).astype(float)
-                    ll=np.logical_and(np.logical_and(np.logical_and(lons>bounds[0],lons<bounds[1]),lats>bounds[2]),lats<bounds[3])
+                    ll=np.logical_and(np.logical_and(np.logical_and(lons >= bounds[0], lons <= bounds[1]), lats >= bounds[2]), lats <= bounds[3])
                     latitude=lats[ll]
                     longitude=lons[ll]
                     NN=len(latitude)
