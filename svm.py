@@ -379,7 +379,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # creation of an artifitial mesh of down lower bounds
     downarti = True
     # below min of z direction for lower bound artifitial creation
-    dminz = .1
+    dminz = .05
     # confidence level of the artificial lower bounds
     confal = 10.
 

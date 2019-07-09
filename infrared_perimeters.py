@@ -8,7 +8,7 @@ import saveload as sl
 import re, glob, sys, os
 
 
-def process_ignitions(igns,bounds):
+def process_ignitions(igns,bounds,time=None):
     """
     Process ignitions the same way than satellite data.
 
@@ -19,6 +19,10 @@ def process_ignitions(igns,bounds):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2019-05-29
     """
+
+    # Time interval
+    if time:
+        interval_datetime = map(time_iso2datetime,time)
 
     # prefix of the elements in the dictionary
     prefix = "IGN"
@@ -45,6 +49,10 @@ def process_ignitions(igns,bounds):
             # get time elements
             time_num = time_iso2num(time_iso)
             time_datetime = time_iso2datetime(time_iso)
+            # skip if not inside interval (only if time is determined)
+            if time and (time_datetime < interval_datetime[0] or time_datetime > interval_datetime[1]):
+                print 'Perimeter from %s skipped, not inside the simulation interval!' % file
+                continue
             time_data = '_A%04d%03d_%02d%02d_%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
                                         time_datetime.hour, time_datetime.minute, time_datetime.second)
             acq_date = '%04d-%02d-%02d' % (time_datetime.year, time_datetime.month, time_datetime.day)
@@ -70,12 +78,13 @@ def process_ignitions(igns,bounds):
     return ignitions
 
 
-def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
+def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=False):
     """
     Process infrared perimeters the same way than satellite data.
 
     :param dst: path to kml perimeter files
     :param bounds: coordinate bounding box filtering to
+    :param time: optional, time interval in ISO
     :param maxp: optional, maximum number of points for each perimeter
     :param ngrid: optional, number of nodes for the grid of in/out nodes at each direction
     :param plot: optional, boolean to plot or not the result at each perimeter iteration
@@ -85,6 +94,10 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
     Angel Farguell (angel.farguell@gmail.com), 2019-05-29
     """
 
+    # Time interval
+    if time:
+        interval_datetime = map(time_iso2datetime,time)
+
     # list of kml files in 'dst' path
     files = glob.glob(osp.join(dst, '*.kml'))
     # prefix of the elements in the dictionary
@@ -92,8 +105,8 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
     # initializing dictionary
     perimeters = Dict({})
     # scan and track dimensions of the observation (in km)
-    scan = .05
-    track = .05
+    scan = .5
+    track = .5
     # confidences
     conf_fire = 100
     conf_nofire = 100
@@ -130,6 +143,10 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
                 time_num = time_iso2num(time_iso)
                 # create datetime element from the ISO time
                 time_datetime = time_iso2datetime(time_iso)
+                # skip if not inside interval (only if time is determined)
+                if time and (time_datetime < interval_datetime[0] or time_datetime > interval_datetime[1]):
+                    print 'Perimeter from %s skipped, not inside the simulation interval!' % file
+                    continue
                 # create time stamp
                 time_data = '_A%04d%03d_%02d%02d' % (time_datetime.year, time_datetime.timetuple().tm_yday,
                                                     time_datetime.hour, time_datetime.minute)
@@ -199,7 +216,7 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
                 plt.plot(lons[fires==5],lats[fires==5],'g.')
                 plt.plot(lons[fires==9],lats[fires==9],'r.')
                 plt.show()
-                plt.pause(.001)
+                plt.pause(.5)
                 plt.cla()
 
             # update perimeters dictionary
@@ -217,11 +234,36 @@ def process_infrared_perimeters(dst,bounds,maxp=1000,ngrid=50,plot=False):
 
 
 if __name__ == "__main__":
+    # Experiment to do
+    exp = 1
+    # Plot perimeters as created
     plot = True
-    #bounds = (-115.97282409667969, -115.28449249267578, 43.808258056640625, 44.302913665771484)
-    #dst = './pioneer/perim'
-    bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
-    dst = './patch/perim'
 
-    p = process_infrared_perimeters(dst,bounds,plot=plot)
+    # Defining options
+    def pioneer():
+        bounds = (-115.97282409667969, -115.28449249267578, 43.808258056640625, 44.302913665771484)
+        time_iso = ('2016-07-18T00:00:00Z', '2016-08-31T00:00:00Z')
+        igns = None
+        perims = './pioneer/perim'
+        return bounds, time_iso, igns, perims
+    def patch():
+        bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
+        time_iso = ('2013-08-10T00:00:00Z', '2013-08-15T00:00:00Z')
+        igns = ([-112.676039],[40.339372],['2013-08-10T20:00:00Z'])
+        perims = './patch/perim'
+        return bounds, time_iso, igns, perims
+
+    # Creating the options
+    options = {1: pioneer, 2: patch}
+
+    # Defining the option depending on the experiment
+    bounds, time_iso, igns, perims = options[exp]()
+
+    # Processing infrared perimeters
+    p = process_infrared_perimeters(perims,bounds,time=time_iso,plot=plot)
+    # Processing ignitions if defined
+    if igns:
+        p.update(process_ignitions(igns,bounds,time=time_iso))
+    # Saving results
     sl.save(p,'perimeters')
+

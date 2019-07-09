@@ -142,11 +142,11 @@ else:
 		sys.stdout.flush()
 		data = retrieve_af_data(bbox,time_iso)
 		if igns:
-			data.update(process_ignitions(igns,bounds=bbox))
+			data.update(process_ignitions(igns,bbox,time=time_iso))
 		if perim_path:
-			data.update(process_infrared_perimeters(perim_path,bounds=bbox))
+			data.update(process_infrared_perimeters(perim_path,bbox,time=time_iso))
 		if forecast_path:
-			data.update(process_forecast_wrfout(forecast_path,bounds=bbox))
+			data.update(process_forecast_wrfout(forecast_path,bbox,time=time_iso))
 
 		if data:
 			print ''

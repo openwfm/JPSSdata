@@ -33,7 +33,7 @@ def process_detections(data,fxlon,fxlat,time_num):
 	confl=10. # Minimum confidence level for the pixels
 	confa=False # Histogram plot of the confidence level distribution
 	confm=True # Store confidence of each fire and ground detection
-	conf_nofire=30. # In absence of nofire confidence, value for nofire confidence (satellite data)
+	conf_nofire=70. # In absence of nofire confidence, value for nofire confidence (satellite data)
 	burn=False # Using or not the burned scar product
 
 	print 'mesh shape %s %s' % fxlon.shape
