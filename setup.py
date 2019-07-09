@@ -196,9 +196,10 @@ def process_detections(data,fxlon,fxlat,time_num):
 				sys.exit()
 			if confm:
 				if lt==1:
+					mask_nofi = gg[np.logical_or(vfire == 3, vfire == 5)]
 					try:
 						# get nofire confidence if we have it
-						confg=sdata[gran][1]['conf_nofire']
+						confg=sdata[gran][1]['conf_nofire'][mask_nofi]
 					except:
 						# if not, define confidence from conf_nofire value
 						confg=conf_nofire*np.ones(nofi.sum())

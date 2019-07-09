@@ -43,7 +43,7 @@ def process_ignitions(igns,bounds,time=None):
             # look if coordinates in bounding box
             mask = np.logical_and(np.logical_and(np.logical_and(lon >= bounds[0], lon <= bounds[1]),lat >= bounds[2]),lat <= bounds[3])
             if not mask.sum():
-                break
+                continue
             lons = lon[mask]
             lats = lat[mask]
             # get time elements
