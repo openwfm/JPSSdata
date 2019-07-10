@@ -40,7 +40,7 @@ ctime = '2013-08-14_00:00:00'
 # Forecast creation
 data = process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='ideal',dt_for=dt,plot=True)
 #points = [[-113.25], [ilat], ['2013-08-13T23:52:30']]
-points = [[-113.25, -113.25, -113.25], [ilat], ['2013-08-13T23:52:30']]
+points = [[-113.25], [ilat], ['2013-08-13T23:52:30']]
 data.update(process_ignitions(points, bounds))
 
 # Process detections
