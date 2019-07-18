@@ -78,8 +78,9 @@ def process_detections(data,fxlon,fxlat,time_num):
 		C=np.zeros(DD)
 		Cg=np.zeros(DD)
 
-	# Confidence analysis
-	confanalysis=Dict({'f7': np.array([]),'f8': np.array([]), 'f9': np.array([])})
+	if confa:
+		# Confidence analysis
+		confanalysis=Dict({'f7': np.array([]),'f8': np.array([]), 'f9': np.array([])})
 
 	# For granules in order increasing in time
 	GG=len(sdata)
@@ -110,9 +111,10 @@ def process_detections(data,fxlon,fxlat,time_num):
 		if fi.any():   # at fire points
 			rfire=gfire[gfire>=7]
 			conf=sdata[gran][1]['conf_fire'] # confidence of the fire detections
-			confanalysis.f7=np.concatenate((confanalysis.f7,conf[rfire==7]))
-			confanalysis.f8=np.concatenate((confanalysis.f8,conf[rfire==8]))
-			confanalysis.f9=np.concatenate((confanalysis.f9,conf[rfire==9]))
+			if confa:
+				confanalysis.f7=np.concatenate((confanalysis.f7,conf[rfire==7]))
+				confanalysis.f8=np.concatenate((confanalysis.f8,conf[rfire==8]))
+				confanalysis.f9=np.concatenate((confanalysis.f9,conf[rfire==9]))
 			flc=conf>=confl # fire large confidence indexes
 			ffa=U[ffi][flc]>ti # first fire arrival
 
