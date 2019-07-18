@@ -64,9 +64,9 @@ import sys, os, re
 from time import time
 
 # plot observed information
-plot_observed = True
+plot_observed = False
 # if plot_observed = True: only fire?
-only_fire = True
+only_fire = False
 # dynamic penalization term
 dyn_pen = False
 
