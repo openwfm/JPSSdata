@@ -7,6 +7,8 @@ from interpolation import sort_dates
 from mpl_toolkits.basemap import Basemap
 from plot_pixels import basemap_scatter_mercator, create_kml
 
+only_fire = True
+
 def exist(path):
 	return (os.path.isfile(path) and os.access(path,os.R_OK))
 
@@ -43,7 +45,7 @@ for idx, g in enumerate(sdata):
     timestamp = g[1].acq_date + 'T' + g[1].acq_time[0:2] + ':' + g[1].acq_time[2:4] + 'Z'
     if not exist(pngfile):
         # plot a scatter basemap
-        raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bbox,bmap)
+        raster_png_data,corner_coords = basemap_scatter_mercator(g[1],bbox,bmap,only_fire)
         # compute bounds
         bounds = (corner_coords[0][0],corner_coords[1][0],corner_coords[0][1],corner_coords[2][1])
         # write PNG file
