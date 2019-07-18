@@ -540,12 +540,12 @@ def read_data(files,file_metadata,bounds):
                 f0=os.path.basename(f.geo)
             else:
                 print 'ERROR: read_data cannot read files=%s, not geo file' % f
-                sys.exit(1)
+                continue
             if 'fire' in f.keys():
                 f1=os.path.basename(f.fire)
             else:
-                print 'ERROR: read_data cannot read files=%s, not geo file' % f
-                sys.exit(1)
+                print 'ERROR: read_data cannot read files=%s, not fire file' % f
+                continue
             boo=True
             if 'ref' in f.keys():
                 f2=os.path.basename(f.ref)
