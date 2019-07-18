@@ -59,8 +59,6 @@ create_kml(kmld,'./doc.kml')
 # create KMZ with all the PNGs included
 os.system('zip -r %s doc.kml *_A*_*.png' % 'googlearth.kmz')
 print 'Created file googlearth.kmz'
-# eliminate images and KML after creation of KMZ
-os.system('rm doc.kml *_A*_*.png')
 
 print ''
 print '>> DONE <<'
