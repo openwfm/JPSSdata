@@ -23,10 +23,10 @@ dtf = dti+dt.timedelta(days=float(sys.argv[2]))
 time_final_iso = '%d-%02d-%02dT%02d:%02d:%02dZ' % (dtf.year,dtf.month,dtf.day,dtf.hour,dtf.minute,dtf.second)
 time_iso = (time_start_iso,time_final_iso)
 
-bbox = (float(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5]),float(sys.argv[6]))
+bounds = (float(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5]),float(sys.argv[6]))
 fxlon,fxlat = np.meshgrid(np.arange(bounds[0],bounds[1],dlon),
             np.arange(bounds[2],bounds[3],dlat))
-bounds = (fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max())
+bbox = (fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max())
 time_num = map(time_iso2num,time_iso)
 
 print ''
