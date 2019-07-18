@@ -51,7 +51,7 @@ def create_pixels(lons,lats,widths,heights,alphas,color,label):
 	return col
 
 
-def basemap_scatter_mercator(g,bounds,bmap):
+def basemap_scatter_mercator(g,bounds,bmap,only_fire=False):
 	"""
 	Scatter plot of fire and ground pixels in a png file using a basemap with mercator projection
 
@@ -73,11 +73,19 @@ def basemap_scatter_mercator(g,bounds,bmap):
 
 	fil = np.logical_and(np.logical_and(np.logical_and(flon >= bounds[0], flon <= bounds[1]), flat >= bounds[2]), flat <= bounds[3])
 
-	categories = (np.array(mask[fil] == 3), np.array(mask[fil] == 5),
-				np.array(mask[fil] == 7), np.array(mask[fil] == 8),
-				np.array(mask[fil] == 9))
-	alphas = (.4,.4,.5,.6,.7)
-	labels = ('Water','Ground','Fire low','Fire nominal','Fire high')
+	if only_fire:
+		categories = (np.array(mask[fil] == 7), np.array(mask[fil] == 8),
+					np.array(mask[fil] == 9))
+		alphas = (.5,.6,.7)
+		labels = ('Fire low','Fire nominal','Fire high')
+		colors = [(1,1,0),(1,.65,0),(.5,0,0)]
+	else:
+		categories = (np.array(mask[fil] == 3), np.array(mask[fil] == 5),
+					np.array(mask[fil] == 7), np.array(mask[fil] == 8),
+					np.array(mask[fil] == 9))
+		alphas = (.4,.4,.5,.6,.7)
+		labels = ('Water','Ground','Fire low','Fire nominal','Fire high')
+		colors = [(0,0,.5),(0,.5,0),(1,1,0),(1,.65,0),(.5,0,0)]
 
 	lon = []
 	lat = []
@@ -90,7 +98,6 @@ def basemap_scatter_mercator(g,bounds,bmap):
 	N = len(categories)
 	fig = plt.figure(frameon=False,figsize=(12,8))
 	plt.axis('off')
-	colors = [(0,0,.5),(0,.5,0),(1,1,0),(1,.65,0),(.5,0,0)]
 	cmap = LinearSegmentedColormap.from_list('fire_detections', colors, N=N)
 	for i in range(N):
 		bmap.scatter(lon[i],lat[i],size,c=val[i],latlon=True,marker='.',cmap=cmap,vmin=-.5,vmax=N-.5,alpha=alphas[i],linewidths=0)
