@@ -1,5 +1,6 @@
 import sys, os
 import datetime as dt
+import numpy as np
 import saveload as sl
 from utils import Dict
 from JPSSD import retrieve_af_data, time_iso2num
