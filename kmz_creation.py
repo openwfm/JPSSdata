@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import datetime as dt
 import saveload as sl
 from JPSSD import retrieve_af_data
@@ -63,6 +63,4 @@ os.system('rm doc.kml *_A*_*.png')
 
 print ''
 print '>> DONE <<'
-t_final = time()
-print 'Elapsed time for all the process: %ss.' % str(abs(t_final-t_init))
 sys.exit()
