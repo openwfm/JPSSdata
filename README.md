@@ -1,12 +1,14 @@
 # JPPSdata
-### Usage:
+### Usage Support Vector Machine:
+
+### Usage L2 minimization:
 1) Run case.py as:
 
 	$ python case.py wrfout start_time days
 
 	Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a text file called 'data'. It creates as well a csv file and a KML file with all the detections called 'fire_detections.csv' and 'fire_detections.kml'. It is also created a KML file with the ground detections called 'nofire.kml'. The input variales are:
 
-	- wrfout:  string, link to the wrfout file of WRF-SFIRE simulation.	
+	- wrfout:  string, link to the wrfout file of WRF-SFIRE simulation.
 	- start_time - string, YYYYMMDDHHMMSS where:
 		- YYYY - year
 		- MM - month
@@ -46,7 +48,7 @@ mirror: http://repo.or.cz/git-browser/by-commit.html?r=JPSSData.git
 ### Authors:
 Lauren Hearn,
 Jan Mandel,
-Angel Caus,
+Angel Farguell,
 James Haley
 
 University of Colorado Denver
@@ -58,11 +60,11 @@ University of Colorado Denver
 - reconcile data from M?D14 with geolocation data from M?D03 (completed)
 - extend MODIS search to VIIRS (completed)
 - continue translating ncvarinfo to proper python grammar
-- interpolate to a fire mesh and set up upper and lower bounds for fire arrival time
+- interpolate to a fire mesh and set up upper and lower bounds for fire arrival time (completed)
 - integrate in WRFXPY  https://github.com/openwfm/wrfxpy
 
 ### Contains:
-- JPPSD.py gather data from MODIS/VIIRS for a given time window and bounding box 
+- JPPSD.py gather data from MODIS/VIIRS for a given time window and bounding box
 - get_af_data.py a test driver for JPSSD.py to download all data for a given window
 - GOES16.py filters and downloads GOES satellite files from AWS
 - read_goes.py parses netCDF files for relevant fire info in given bounding box/time
@@ -72,7 +74,7 @@ University of Colorado Denver
 - out.mat reads data downloaded by JPPSD.py, with ability to plot granules
 - utils.py is a part of utils.py from https://github.com/openwfm/wrfxpy
 - sugarloaf.py test driver to download sample data for Sugarloaf fire into mesh and plot
-- ncvarinfo.py is a python version of code originally found [here](https://github.com/openwfm/wrf-fire/blob/master/other/Matlab/netcdf/private/ncvarinfo.m). 
+- ncvarinfo.py is a python version of code originally found [here](https://github.com/openwfm/wrf-fire/blob/master/other/Matlab/netcdf/private/ncvarinfo.m).
 
 ### External links:
 - Tools for searching the CMR API https://cmr.earthdata.nasa.gov

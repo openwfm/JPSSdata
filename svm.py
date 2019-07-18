@@ -364,24 +364,26 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # Options better to not change
     # number of horizontal nodes per observation (if fire_grid==None)
     hN = 5
-    # creation of over and under artificial upper and lower bounds in the pre-processing
-    arti = True
-    # resolution of artificial upper bounds vertical to the fire detections
-    hartil = .2
-    # resolution of artificial lower bounds vertical to the ground detections
+    # creation of under artificial lower bounds in the pre-processing
+    artil = False
+    # if artil = True: resolution of artificial upper bounds vertical to the fire detections
+    hartil = .1
+    # creation of over artificial upper bounds in the pre-processing
+    artiu = True
+    # if artiu = True: resolution of artificial lower bounds vertical to the ground detections
     hartiu = .1
-    # creation of an artifitial mesh of top upper bounds
-    toparti = False
-    # proportion over max of z direction for upper bound artifitial creation
-    dmaxz = .1
-    # confidence level of the artificial upper bounds
-    confau = 100.
     # creation of an artifitial mesh of down lower bounds
     downarti = True
-    # below min of z direction for lower bound artifitial creation
-    dminz = .05
-    # confidence level of the artificial lower bounds
-    confal = 10.
+    # if downarti = True: below min of z direction for lower bound artifitial creation
+    dminz = .1
+    # if downarti = True: confidence level of the artificial lower bounds
+    confal = 100.
+    # creation of an artifitial mesh of top upper bounds
+    toparti = False
+    # if toparti = True: proportion over max of z direction for upper bound artifitial creation
+    dmaxz = .1
+    # if toparti = True: confidence level of the artificial upper bounds
+    confau = 100.
 
     # using different weights for the data
     if isinstance(C,(list,tuple,np.ndarray)):
@@ -433,47 +435,44 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         X[:, 2] = X2
 
     # Creation of fire and ground artificial detections
-    if arti:
+    if artil or artiu or toparti or downarti:
         # Extreme values at z direction
         minz = X[:, 2].min()
         maxz = X[:, 2].max()
         # Division of lower and upper bounds for data and confidence level
         fl = X[y==np.unique(y)[0]]
         fu = X[y==np.unique(y)[1]]
-        # Create artificial lower bounds
-        flz = np.array([ np.unique(np.append(np.arange(f[2],minz,-hartil),f[2])) for f in fl ])
-        # Create artificial upper bounds
-        fuz = np.array([ np.unique(np.append(np.arange(f[2],maxz,hartiu),f[2])) for f in fu ])
-        # Definition of new ground detections after artificial detections added
-        Xg = np.concatenate([ np.c_[(np.repeat(fl[k][0],len(flz[k])),np.repeat(fl[k][1],len(flz[k])),flz[k])] for k in range(len(flz)) ])
-        # Definition of new fire detections after artificial detections added
-        Xf = np.concatenate([ np.c_[(np.repeat(fu[k][0],len(fuz[k])),np.repeat(fu[k][1],len(fuz[k])),fuz[k])] for k in range(len(fuz)) ])
-        # Define new confidence levels
-        if using_weights:
-            cl = C[y==np.unique(y)[0]]
-            cu = C[y==np.unique(y)[1]]
-            Cg = np.concatenate([ np.repeat(cl[k],len(flz[k])) for k in range(len(flz)) ])
-            Cf = np.concatenate([ np.repeat(cu[k],len(fuz[k])) for k in range(len(fuz)) ])
 
-        # Top artificial upper bounds
-        if toparti:
-            # Creation of the x,y new mesh of artificial upper bounds
-            xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
-                np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
-            # All the artificial new mesh are going to be over the data
-            znf = np.repeat(maxz+dmaxz,len(xn.ravel()))
-            # Artifitial upper bounds
-            Xfa = np.c_[(xn.ravel(),yn.ravel(),znf.ravel())]
-            # Definition of new fire detections after top artificial upper detections
-            Xfn = np.concatenate((Xf,Xfa))
-            # Definition of new confidence level
+        # Artifitial extensions of the lower bounds
+        if artil:
+            # Create artificial lower bounds
+            flz = np.array([ np.unique(np.append(np.arange(f[2],minz,-hartil),f[2])) for f in fl ])
+            # Definition of new ground detections after artificial detections added
+            Xg = np.concatenate([ np.c_[(np.repeat(fl[k][0],len(flz[k])),np.repeat(fl[k][1],len(flz[k])),flz[k])] for k in range(len(flz)) ])
             if using_weights:
-                Cfa = np.ones(len(Xfa))*confau
-                Cfn = np.concatenate((Cf,Cfa))
+                cl = C[y==np.unique(y)[0]]
+                Cg = np.concatenate([ np.repeat(cl[k],len(flz[k])) for k in range(len(flz)) ])
         else:
-            Xfn = Xf
+            Xg = fl
             if using_weights:
-                Cfn = Cf
+                cl = C[y==np.unique(y)[0]]
+                Cg = cl
+
+        # Artifitial extensions of the upper bounds
+        if artiu:
+            # Create artificial upper bounds
+            fuz = np.array([ np.unique(np.append(np.arange(f[2],maxz,hartiu),f[2])) for f in fu ])
+            # Definition of new fire detections after artificial detections added
+            Xf = np.concatenate([ np.c_[(np.repeat(fu[k][0],len(fuz[k])),np.repeat(fu[k][1],len(fuz[k])),fuz[k])] for k in range(len(fuz)) ])
+            # Define new confidence levels
+            if using_weights:
+                cu = C[y==np.unique(y)[1]]
+                Cf = np.concatenate([ np.repeat(cu[k],len(fuz[k])) for k in range(len(fuz)) ])
+        else:
+            Xf = fu
+            if using_weights:
+                cu = C[y==np.unique(y)[1]]
+                Cf = cu
 
         # Bottom artificial lower bounds
         if downarti:
@@ -494,6 +493,26 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
             Xgn = Xg
             if using_weights:
                 Cgn = Cg
+
+        # Top artificial upper bounds
+        if toparti:
+            # Creation of the x,y new mesh of artificial upper bounds
+            xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
+                                np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
+            # All the artificial new mesh are going to be over the data
+            znf = np.repeat(maxz+dmaxz,len(xn.ravel()))
+            # Artifitial upper bounds
+            Xfa = np.c_[(xn.ravel(),yn.ravel(),znf.ravel())]
+            # Definition of new fire detections after top artificial upper detections
+            Xfn = np.concatenate((Xf,Xfa))
+            # Definition of new confidence level
+            if using_weights:
+                Cfa = np.ones(len(Xfa))*confau
+                Cfn = np.concatenate((Cf,Cfa))
+        else:
+            Xfn = Xf
+            if using_weights:
+                Cfn = Cf
 
         # New definition of the training vectors
         X = np.concatenate((Xgn, Xfn))
@@ -730,22 +749,27 @@ if __name__ == "__main__":
         Xg = [[0, 0, 0], [2, 2, 0], [2, 0, 0], [0, 2, 0]]
         Xf = [[0, 0, 1], [1, 1, 0], [2, 2, 1], [2, 0, 1], [0, 2, 1]]
         C = np.concatenate((10.*np.ones(len(Xg)),100.*np.ones(len(Xf))))
-        return Xg, Xf, C
+        kgam = 1.
+        return Xg, Xf, C, kgam
     def exp2():
-        Xg = [[0, 0, 0], [2, 2, 0], [2, 0, 0], [0, 2, 0], [4, 2, 0], [4, 0, 0], [2, 1, 0.5]]
+        Xg = [[0, 0, 0], [2, 2, 0], [2, 0, 0], [0, 2, 0],
+            [4, 2, 0], [4, 0, 0], [2, 1, .5], [0, 1, .5],
+            [4, 1, .5], [2, 0, .5], [2, 2, .5]]
         Xf = [[0, 0, 1], [1, 1, 0.25], [2, 2, 1], [2, 0, 1], [0, 2, 1], [3, 1, 0.25], [4, 2, 1], [4, 0, 1]]
-        C = np.concatenate((10.*np.ones(len(Xg)),100.*np.ones(len(Xf))))
-        return Xg, Xf, C
+        C = np.concatenate((np.array([50.,50.,50.,50.,50.,50.,
+                        1000.,100.,100.,100.,100.]), 100.*np.ones(len(Xf))))
+        kgam = 5.
+        return Xg, Xf, C, kgam
 
     # Creating the options
     options = {1 : exp1, 2 : exp2}
 
     # Defining the option depending on the experiment
-    Xg, Xf, C = options[exp]()
+    Xg, Xf, C, kgam = options[exp]()
 
     # Creating the data necessary to run SVM3 function
     X = np.concatenate((Xg, Xf))
     y = np.concatenate((-np.ones(len(Xg)), np.ones(len(Xf))))
 
     # Running SVM classification
-    SVM3(X,y,C=C)
+    SVM3(X,y,C=C,kgam=kgam)

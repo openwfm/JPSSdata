@@ -30,7 +30,7 @@ def process_detections(data,fxlon,fxlat,time_num):
 	mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
 	dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
 	mm=5 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
-	confl=10. # Minimum confidence level for the pixels
+	confl=0. # Minimum confidence level for the pixels
 	confa=False # Histogram plot of the confidence level distribution
 	confm=True # Store confidence of each fire and ground detection
 	conf_nofire=70. # In absence of nofire confidence, value for nofire confidence (satellite data)

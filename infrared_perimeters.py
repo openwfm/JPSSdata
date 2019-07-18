@@ -32,7 +32,7 @@ def process_ignitions(igns,bounds,time=None):
     scan = 1.
     track = 1.
     # confidences
-    conf_fire = 100
+    conf_fire = 100.
 
     # for each ignition
     for lon, lat, time_iso in zip(igns[0],igns[1],igns[2]):
@@ -108,8 +108,8 @@ def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=Fa
     scan = .5
     track = .5
     # confidences
-    conf_fire = 100
-    conf_nofire = 100
+    conf_fire = 100.
+    conf_nofire = 70.
 
     # Creating grid where to evaluate in/out of the perimeter
     [X,Y] = np.meshgrid(np.linspace(bounds[0],bounds[1],ngrid),np.linspace(bounds[2],bounds[3],ngrid))
