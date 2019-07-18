@@ -24,7 +24,7 @@ def process_detections(data,fxlon,fxlat,time_num):
 	"""
 
 	# process satellite settings
-	maxsize=500 # Max size of the fire mesh
+	maxsize=1200 # Max size of the fire mesh
 	ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
 	lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
 	mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse

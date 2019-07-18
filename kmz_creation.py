@@ -2,12 +2,14 @@ import sys, os
 import datetime as dt
 import saveload as sl
 from utils import Dict
-from JPSSD import retrieve_af_data
+from JPSSD import retrieve_af_data, time_iso2num
 from interpolation import sort_dates
 from mpl_toolkits.basemap import Basemap
 from plot_pixels import basemap_scatter_mercator, create_kml
 
 only_fire = True
+dlon = .01
+dlat = .005
 
 def exist(path):
 	return (os.path.isfile(path) and os.access(path,os.R_OK))
@@ -21,12 +23,19 @@ time_final_iso = '%d-%02d-%02dT%02d:%02d:%02dZ' % (dtf.year,dtf.month,dtf.day,dt
 time_iso = (time_start_iso,time_final_iso)
 
 bbox = (float(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5]),float(sys.argv[6]))
+fxlon,fxlat = np.meshgrid(np.arange(bounds[0],bounds[1],dlon),
+            np.arange(bounds[2],bounds[3],dlat))
+bounds = (fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max())
+time_num = map(time_iso2num,time_iso)
 
 print ''
 print '>> Retrieving satellite data <<'
 sys.stdout.flush()
 data = retrieve_af_data(bbox,time_iso)
-sl.save((data,time_iso,bbox),'sat_data')
+
+print ''
+print '>> Saving data file <<'
+sl.save((data,fxlon,fxlat,time_num),'data')
 # sort the granules by dates
 sdata=sort_dates(data)
 
