@@ -696,7 +696,7 @@ def retrieve_af_data(bbox,time,burned=False):
     lonmin,lonmax,latmin,latmax = bbox
     bounds=bbox
     bbox = [(lonmin,latmax),(lonmin,latmin),(lonmax,latmin),(lonmax,latmax),(lonmin,latmax)]
-    maxg = 150
+    maxg = 1000
 
     print "bbox"
     print bbox

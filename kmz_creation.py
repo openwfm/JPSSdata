@@ -1,3 +1,4 @@
+import sys
 import datetime as dt
 from JPSSD import retrieve_af_data
 from interpolation import sort_dates
@@ -5,14 +6,14 @@ from mpl_toolkits.basemap import Basemap
 from plot_pixels import basemap_scatter_mercator, create_kml
 
 print ''
-print '>> Reading the fire mesh <<'
+print '>> Reading the arguments <<'
 dti = dt.datetime.strptime(sys.argv[1],'%Y%m%d%H%M%S')
 time_start_iso = '%d-%02d-%02dT%02d:%02d:%02dZ' % (dti.year,dti.month,dti.day,dti.hour,dti.minute,dti.second)
 dtf = dti+dt.timedelta(days=float(sys.argv[2]))
 time_final_iso = '%d-%02d-%02dT%02d:%02d:%02dZ' % (dtf.year,dtf.month,dtf.day,dtf.hour,dtf.minute,dtf.second)
 time_iso = (time_start_iso,time_final_iso)
 
-bbox = (sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6])
+bbox = (float(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5]),float(sys.argv[6]))
 
 print ''
 print '>> Retrieving satellite data <<'
