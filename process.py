@@ -224,7 +224,7 @@ else:
 	print ''
 	print '>> Processing satellite data <<'
 	sys.stdout.flush()
-	result = process_detections(data,fxlon,fxlat,time_num)
+	result = process_detections(data,fxlon,fxlat,time_num,bbox)
 	# Taking necessary variables from result dictionary
 	scale = result['time_scale_num']
 	time_num_granules = result['time_num_granules']

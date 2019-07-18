@@ -9,7 +9,7 @@ from utils import Dict
 from interpolation import sort_dates, nearest_scipy, neighbor_indices_ball, neighbor_indices_pixel, neighbor_indices_ellipse
 import os, sys, time, itertools
 
-def process_detections(data,fxlon,fxlat,time_num):
+def process_detections(data,fxlon,fxlat,time_num,bounds):
 	"""
 	Process detections to obtain upper and lower bounds
 
@@ -43,7 +43,6 @@ def process_detections(data,fxlon,fxlat,time_num):
 	fxlat = fxlat[0::coarsening,0::coarsening]
 	print 'coarsened  %s %s' % fxlon.shape
 
-	bounds=[fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
 	vfxlon=np.reshape(fxlon,np.prod(fxlon.shape))
 	vfxlat=np.reshape(fxlat,np.prod(fxlat.shape))
 	vfgrid=np.column_stack((vfxlon,vfxlat))
