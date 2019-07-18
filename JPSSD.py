@@ -747,10 +747,12 @@ def nrt_elimination(granules):
     Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2018-11-30
     """
 
-    nlist=[g for g in granules['MOD14'] if g['data_center']=='LPDAAC_ECS']
-    granules['MOD14']=nlist
-    nlist=[g for g in granules['MYD14'] if g['data_center']=='LPDAAC_ECS']
-    granules['MYD14']=nlist
+    if 'MOD14' in granules:
+    	nlist=[g for g in granules['MOD14'] if g['data_center']=='LPDAAC_ECS']
+   	granules['MOD14']=nlist
+    if 'MYD14' in granules:
+    	nlist=[g for g in granules['MYD14'] if g['data_center']=='LPDAAC_ECS']
+    	granules['MYD14']=nlist
 
 
 def read_fire_mesh(filename):

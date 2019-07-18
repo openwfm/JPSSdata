@@ -6,6 +6,9 @@ from interpolation import sort_dates
 from mpl_toolkits.basemap import Basemap
 from plot_pixels import basemap_scatter_mercator, create_kml
 
+def exist(path):
+	return (os.path.isfile(path) and os.access(path,os.R_OK))
+
 print ''
 print '>> Reading the arguments <<'
 dti = dt.datetime.strptime(sys.argv[1],'%Y%m%d%H%M%S')
