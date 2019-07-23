@@ -561,14 +561,26 @@ def read_data(files,file_metadata,bounds):
             id = prefix + '_' + key
             print "id " + id
             if prefix=="MOD" or prefix=="MYD":
-                item=read_modis_files(f,bounds)
-                item.instrument="MODIS"
+                try:
+			item=read_modis_files(f,bounds)
+                	item.instrument="MODIS"
+		except Exception as e:
+			print 'WARNING: reading the files from MODIS failed with error %s' % e
+			continue
             elif prefix=="VNP":
-                item=read_viirs_files(f,bounds)
-                item.instrument="VIIRS"
+		try:
+                	item=read_viirs_files(f,bounds)
+                	item.instrument="VIIRS"
+		except Exception as e:
+                        print 'WARNING: reading the files from VIIRS failed with error %s' % e
+                        continue
             elif prefix=="OR":
-                item=read_goes_files(f)
-                item.instrument="GOES"
+		try:
+                	item=read_goes_files(f)
+                	item.instrument="GOES"
+		except Exception as e:
+                        print 'WARNING: reading the files from GOES failed with error %s' % e
+                        continue
             else:
                 print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
                 continue

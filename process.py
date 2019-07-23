@@ -279,11 +279,11 @@ print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if conf is None or not dyn_pen:
-	C = 1000.
-	kgam = 1000.
+	C = 1e6
+	kgam = 1e5
 else:
-	C = np.power(c,3)/1000.
-	kgam = 10.
+	C = np.power(c,3)
+	kgam = 10000.
 F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat))
 
 print ''
