@@ -33,8 +33,8 @@ def nearest_euclidean(lon,lat,lons,lats,bounds):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
-	vlon=np.reshape(lon,np.prod(lon.shape))
-	vlat=np.reshape(lat,np.prod(lat.shape))
+	vlon=np.ravel(lon)
+	vlat=np.ravel(lat)
 	rlon=np.zeros(vlon.shape)
 	rlat=np.zeros(vlat.shape)
 	for k in range(0,len(vlon)):
@@ -64,8 +64,8 @@ def nearest_scipy(lon,lat,stree,bounds):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-20
     """
-	vlon=np.reshape(lon,np.prod(lon.shape))
-	vlat=np.reshape(lat,np.prod(lat.shape))
+	vlon=np.ravel(lon)
+	vlat=np.ravel(lat)
 	vlonlat=np.column_stack((vlon,vlat))
 	M=np.logical_and(np.logical_and(np.logical_and(vlon >= bounds[0], vlon <= bounds[1]), vlat >= bounds[2]), vlat <= bounds[3])
 	vlonlat=vlonlat[M]
@@ -222,24 +222,24 @@ if __name__ == "__main__":
 	# Result by Euclidean distance
 	print '>>Euclidean approax<<'
 	(rlon,rlat)=nearest_euclidean(lon,lat,lons,lats,bounds)
-	rlon=np.reshape(rlon,np.prod(lon.shape))
-	rlat=np.reshape(rlat,np.prod(lat.shape))
+	rlon=np.ravel(rlon)
+	rlat=np.ravel(rlat)
 	vlonlatm=np.column_stack((rlon,rlat))
 	print vlonlatm
 	t_final = time()
 	print 'Elapsed time: %ss.' % str(t_final-t_init)
 
 	# Result by scipy.spatial.cKDTree function
-	vlons=np.reshape(lons,np.prod(lons.shape))
-	vlats=np.reshape(lats,np.prod(lats.shape))
+	vlons=np.ravel(lons)
+	vlats=np.ravel(lats)
 	vlonlats=np.column_stack((vlons,vlats))
 	print vlonlats
 	stree=spatial.cKDTree(vlonlats)
 	(inds,K)=nearest_scipy(lon,lat,stree,bounds)
 	vlonlatm2=np.empty((np.prod(lon.shape),2))
 	vlonlatm2[:]=np.nan
-	vlons=np.reshape(lons,np.prod(lons.shape))
-	vlats=np.reshape(lats,np.prod(lats.shape))
+	vlons=np.ravel(lons)
+	vlats=np.ravel(lats)
 	vlonlats=np.column_stack((vlons,vlats))
 	vlonlatm2[K]=vlonlats[inds]
 	print '>>cKDTree<<'

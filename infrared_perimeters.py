@@ -113,7 +113,7 @@ def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=Fa
 
     # Creating grid where to evaluate in/out of the perimeter
     [X,Y] = np.meshgrid(np.linspace(bounds[0],bounds[1],ngrid),np.linspace(bounds[2],bounds[3],ngrid))
-    XX = np.c_[(X.ravel(),Y.ravel())]
+    XX = np.c_[np.ravel(X),np.ravel(Y)]
 
     # if any file
     if files:

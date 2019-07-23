@@ -67,9 +67,9 @@ def basemap_scatter_mercator(g,bounds,bmap,only_fire=False):
 
 	size = 50
 	# Satellite pixels
-	flon = g.lon.ravel()
-	flat = g.lat.ravel()
-	mask = g.fire.ravel()
+	flon = np.ravel(g.lon)
+	flat = np.ravel(g.lat)
+	mask = np.ravel(g.fire)
 
 	fil = np.logical_and(np.logical_and(np.logical_and(flon >= bounds[0], flon <= bounds[1]), flat >= bounds[2]), flat <= bounds[3])
 
@@ -244,20 +244,20 @@ def pixels_plot(g,bounds):
 		ax = fig.gca(projection='3d')
 		surf = ax.plot_surface(lon,lat,angle)
 
-	flon=np.reshape(lon,np.prod(lon.shape))
-	flat=np.reshape(lat,np.prod(lat.shape))
+	flon=np.ravel(lon)
+	flat=np.ravel(lat)
 	fil=np.logical_and(np.logical_and(np.logical_and(flon >= bounds[0], flon <= bounds[1]), flat >= bounds[2]), flat <= bounds[3])
 	lon=flon[fil]
 	lat=flat[fil]
 
-	ff=np.reshape(fire,np.prod(fire.shape))
+	ff=np.ravel(fire)
 	ffg=ff[fil]
 	nofi=np.logical_or(ffg == 3, ffg == 5)
 	fi=np.array(ffg > 6)
 
-	width=np.reshape(w,np.prod(w.shape))[fil]
-	height=np.reshape(h,np.prod(h.shape))[fil]
-	alpha=np.reshape(angle,np.prod(angle.shape))[fil]
+	width=np.ravel(w)[fil]
+	height=np.ravel(h)[fil]
+	alpha=np.ravel(angle)[fil]
 
 	fig = plt.figure()
 	ax = fig.add_subplot(111)

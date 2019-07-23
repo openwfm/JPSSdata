@@ -286,18 +286,18 @@ def read_modis_files(files,bounds):
         sf=np.array([])
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p)
     # No fire data
-    lats=np.reshape(ret.lat,np.prod(ret.lat.shape))
-    lons=np.reshape(ret.lon,np.prod(ret.lon.shape))
+    lats=np.ravel(ret.lat)
+    lons=np.ravel(ret.lon)
     ll=np.logical_and(np.logical_and(np.logical_and(lons >= bounds[0], lons <= bounds[1]), lats >= bounds[2]), lats <= bounds[3])
     lats=lats[ll]
     lons=lons[ll]
-    fire=np.reshape(ret.fire,np.prod(ret.fire.shape))
+    fire=np.ravel(ret.fire)
     fire=fire[ll]
     nf=np.logical_or(fire == 3, fire == 5)
     ret.lat_nofire=lats[nf]
     ret.lon_nofire=lons[nf]
     sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
-    sample=np.reshape(sample,np.prod(sample.shape))
+    sample=np.ravel(sample)
     sample=sample[ll]
     sfn=sample[nf]
     ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p)
@@ -345,18 +345,18 @@ def read_viirs_files(files,bounds):
     sf=np.array(ncf.variables['FP_sample'][:])[fll]
     ret.scan_angle_fire,ret.scan_fire,ret.track_fire=pixel_dim(sf,N,h,p,alpha)
     # No fire data
-    lats=np.reshape(ret.lat,np.prod(ret.lat.shape))
-    lons=np.reshape(ret.lon,np.prod(ret.lon.shape))
+    lats=np.ravel(ret.lat)
+    lons=np.ravel(ret.lon)
     ll=np.logical_and(np.logical_and(np.logical_and(lons >= bounds[0], lons <= bounds[1]), lats >= bounds[2]), lats <= bounds[3])
     lats=lats[ll]
     lons=lons[ll]
-    fire=np.reshape(ret.fire,np.prod(ret.fire.shape))
+    fire=np.ravel(ret.fire)
     fire=fire[ll]
     nf=np.logical_or(fire == 3, fire == 5)
     ret.lat_nofire=lats[nf]
     ret.lon_nofire=lons[nf]
     sample=np.array([range(0,ret.lat.shape[1])]*ret.lat.shape[0])
-    sample=np.reshape(sample,np.prod(sample.shape))
+    sample=np.ravel(sample)
     sample=sample[ll]
     sfn=sample[nf]
     ret.scan_angle_nofire,ret.scan_nofire,ret.track_nofire=pixel_dim(sfn,N,h,p,alpha)
@@ -805,7 +805,7 @@ def data2json(data,keys,dkeys,N):
     ret=Dict({})
     for i,k in enumerate(keys):
         if isinstance(data[list(data)[0]][dkeys[i]],(list, tuple, np.ndarray)):
-            dd=[np.reshape(data[d][dkeys[i]],np.prod(data[d][dkeys[i]].shape)) for d in list(data)]
+            dd=[np.ravel(data[d][dkeys[i]]) for d in list(data)]
             ret.update({k : np.concatenate(dd)})
         else:
             dd=[[data[d[1]][dkeys[i]]]*N[d[0]] for d in enumerate(list(data))]
@@ -1149,6 +1149,22 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                                 kml.write('<styleUrl> %s </styleUrl>\n' % frp_style[frpx] )
                             elif prod == 'NF':
                                 kml.write('<styleUrl> no_fire </styleUrl>\n')
+                            elif prod == 'AFN':
+                                if conf < 30:
+                                    kml.write('<Style>\n'+'<PolyStyle>\n'
+                                            +'<color>7000ffff</color>\n'
+                                            +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                            +'</Style>\n')
+                                elif conf < 80:
+                                    kml.write('<Style>\n'+'<PolyStyle>\n'
+                                            +'<color>7000a5ff</color>\n'
+                                            +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                            +'</Style>\n')
+                                else:
+                                    kml.write('<Style>\n'+'<PolyStyle>\n'
+                                            +'<color>700000ff</color>\n'
+                                            +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                            +'</Style>\n')
 
                             kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
 

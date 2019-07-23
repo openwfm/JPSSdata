@@ -38,8 +38,8 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     """
 
     # Flatten coordinates
-    lon = np.reshape(lons,np.prod(lons.shape)).astype(float)
-    lat = np.reshape(lats,np.prod(lats.shape)).astype(float)
+    lon = np.ravel(lons).astype(float)
+    lat = np.ravel(lats).astype(float)
 
     # Temporal scale to days
     tscale = 24*3600
@@ -52,9 +52,9 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     print 'U==L: ',(U==L).sum()
 
     # Reshape to 1D
-    uu = np.reshape(U,np.prod(U.shape))
-    ll = np.reshape(L,np.prod(L.shape))
-    tt = np.reshape(T,np.prod(T.shape))
+    uu = np.ravel(U)
+    ll = np.ravel(L)
+    tt = np.ravel(T)
 
     # Maximum and minimums to NaN data
     uu[uu==uu.max()] = np.nan
@@ -104,7 +104,7 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     if C is None:
         c = 80*np.ones(y.shape)
     else:
-        c = np.concatenate((C[0].ravel()[lm],C[1].ravel()[um]))
+        c = np.concatenate((np.ravel(C[0])[lm],np.ravel(C[1])[um]))
 
     # Clean data if not in bounding box
     bbox = (lon.min(),lon.max(),lat.min(),lat.max(),time_num_granules)
@@ -205,7 +205,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
     """
 
     # Creating the 3D grid
-    XX = np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
+    XX = np.c_[np.ravel(xx), np.ravel(yy), np.ravel(zz)]
 
     # Evaluating the decision function
     print '>> Evaluating the decision function...'
@@ -245,9 +245,9 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
             cm = colors.LinearSegmentedColormap.from_list('BuRd',col,N=100)
             midpoint = 1 - ZZ.max() / (ZZ.max() + abs(ZZ.min()))
             shiftedcmap = shiftedColorMap(cm, midpoint=midpoint, name='shifted')
-            X = xx.ravel()
-            Y = yy.ravel()
-            T = zz.ravel()
+            X = np.ravel(xx)
+            Y = np.ravel(yy)
+            T = np.ravel(zz)
             kk = 50
             p = ax.scatter(X[0::kk], Y[0::kk], T[0::kk], c=ZZ[0::kk], s=.1, alpha=.4, cmap=shiftedcmap)
             cbar = fig.colorbar(p)
@@ -480,9 +480,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
             xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
                 np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
             # All the artificial new mesh are going to be below the data
-            zng = np.repeat(minz-dminz,len(xn.ravel()))
+            zng = np.repeat(minz-dminz,len(np.ravel(xn)))
             # Artifitial lower bounds
-            Xga = np.c_[(xn.ravel(),yn.ravel(),zng.ravel())]
+            Xga = np.c_[np.ravel(xn),np.ravel(yn),np.ravel(zng)]
             # Definition of new ground detections after down artificial lower detections
             Xgn = np.concatenate((Xg,Xga))
             # Definition of new confidence level
@@ -500,9 +500,9 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
             xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
                                 np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
             # All the artificial new mesh are going to be over the data
-            znf = np.repeat(maxz+dmaxz,len(xn.ravel()))
+            znf = np.repeat(maxz+dmaxz,len(np.ravel(xn)))
             # Artifitial upper bounds
-            Xfa = np.c_[(xn.ravel(),yn.ravel(),znf.ravel())]
+            Xfa = np.c_[np.ravel(xn),np.ravel(yn),np.ravel(znf)]
             # Definition of new fire detections after top artificial upper detections
             Xfn = np.concatenate((Xf,Xfa))
             # Definition of new confidence level
@@ -705,8 +705,8 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         print '>> Interpolating the results in the fire mesh'
         Flon = fire_grid[0]
         Flat = fire_grid[1]
-        points = np.c_[Fx.ravel(),Fy.ravel()]
-        values = Fz.ravel()
+        points = np.c_[np.ravel(Fx),np.ravel(Fy)]
+        values = np.ravel(Fz)
         Ffire = interpolate.griddata(points,values,(Flon,Flat))
         FF = [Flon,Flat,Ffire]
     else:

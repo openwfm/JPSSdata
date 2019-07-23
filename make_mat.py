@@ -77,8 +77,8 @@ for ng,gran in enumerate(grans):
 		lats_interp = np.arange(bounds[2],bounds[3],res)
 		print 'rows:',len(lats_interp)
 		lons_interp,lats_interp = np.meshgrid(lons_interp,lats_interp)
-		glons = np.reshape(lons_interp,np.prod(lons_interp.shape))
-		glats = np.reshape(lats_interp,np.prod(lats_interp.shape))
+		glons = np.ravel(lons_interp)
+		glats = np.ravel(lats_interp)
 
 		# initialize fire_interp
 		if not whole:
@@ -99,9 +99,9 @@ for ng,gran in enumerate(grans):
 		print 'radius =',radius
 
 		# flatten granule data into 1d arrays
-		lons = np.reshape(data[gran].lon,np.prod(data[gran].lon.shape))
-		lats = np.reshape(data[gran].lat,np.prod(data[gran].lat.shape))
-		fires = np.reshape(data[gran].fire,np.prod(data[gran].fire.shape)).astype(np.int8)
+		lons = np.ravel(data[gran].lon)
+		lats = np.ravel(data[gran].lat)
+		fires = np.ravel(data[gran].fire).astype(np.int8)
 		if not whole:
 			M = (lons>fbounds[0])*(lons<fbounds[1])*(lats>fbounds[2])*(lats<fbounds[3])
 			Mg = (glons>fbounds[0])*(glons<fbounds[1])*(glats>fbounds[2])*(glats<fbounds[3])

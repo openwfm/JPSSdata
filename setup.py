@@ -9,7 +9,7 @@ from utils import Dict
 from interpolation import sort_dates, nearest_scipy, neighbor_indices_ball, neighbor_indices_pixel, neighbor_indices_ellipse
 import os, sys, time, itertools
 
-def process_detections(data,fxlon,fxlat,time_num,bounds=None):
+def process_detections(data,fxlon,fxlat,time_num,bounds=None,maxsize=500):
 	"""
 	Process detections to obtain upper and lower bounds
 
@@ -24,7 +24,6 @@ def process_detections(data,fxlon,fxlat,time_num,bounds=None):
 	"""
 
 	# process satellite settings
-	maxsize=1200 # Max size of the fire mesh
 	ut=1 # Upper bound technique, ut=1: Center of the pixel -- ut=2: Ellipse inscribed in the pixel
 	lt=1 # Lower bound technique, lt=1: Center of the pixel -- lt=2: Ellipse inscribed in the pixel (very slow)
 	mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
@@ -45,12 +44,12 @@ def process_detections(data,fxlon,fxlat,time_num,bounds=None):
 
 	if not bounds:
 		bounds=[fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
-	vfxlon=np.reshape(fxlon,np.prod(fxlon.shape))
-	vfxlat=np.reshape(fxlat,np.prod(fxlat.shape))
+	vfxlon=np.ravel(fxlon)
+	vfxlat=np.ravel(fxlat)
 	vfgrid=np.column_stack((vfxlon,vfxlat))
 	print 'Setting up interpolation'
 	stree=spatial.cKDTree(vfgrid)
-	vfind=np.array(list(itertools.product(np.array(range(0,fxlon.shape[0])),np.array(range(0,fxlon.shape[1])))))
+	vfind=np.array(list(itertools.product(np.array(range(fxlon.shape[0])),np.array(range(fxlon.shape[1])))))
 	itree=spatial.cKDTree(vfind)
 
 	# Sort dictionary by time_num into an array of tuples (key, dictionary of values)
@@ -100,7 +99,7 @@ def process_detections(data,fxlon,fxlat,time_num,bounds=None):
 		# gg: mask in the granule of g-points = pixel coordinates inside the fire mesh
 		# ff: the closed points in fire mesh indexed by g-points
 		(ff,gg)=nearest_scipy(slon,slat,stree,bounds) ## indices to flattened granule array
-		vfire=np.reshape(fire,np.prod(fire.shape)) ## flaten the fire detection array
+		vfire=np.ravel(fire) ## flaten the fire detection array
 		gfire=vfire[gg]   # the part withing the fire mesh bounds
 		fi=gfire >= 7  # where fire detected - low, nominal or high confidence (all the fire data in the granule)
 		ffi=ff[fi] # indices in the fire mesh where the fire detections are
@@ -177,7 +176,7 @@ def process_detections(data,fxlon,fxlat,time_num,bounds=None):
 			if 'burned' in sdata[gran][1].keys():
 				# if burned scar exists, set the mask in the burned scar pixels
 				burned=sdata[gran][1]['burned']
-				bm=ff[np.reshape(burned,np.prod(burned.shape))[gg]]
+				bm=ff[np.ravel(burned)[gg]]
 				T[bm]=ti
 
 		if nofi.any(): # set L at no-fire points and not masked

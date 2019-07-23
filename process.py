@@ -98,7 +98,9 @@ bounds_exists = exist(bounds_file)
 if len(sys.argv) != 4 and (not bounds_exists) and (not satellite_exists):
 	print 'Error: python %s wrfout start_time days' % sys.argv[0]
 	print '	* wrfout - string, wrfout file of WRF-SFIRE simulation'
-	print '	* start_time - string, YYYYMMDDHHMMSS where: '
+	print '		OR coordinates bounding box - floats separated by comas:'
+	print '			min_lon,max_lon,min_lat,max_lat'
+	print '	* start_time - string, YYYYMMDDHHMMSS where:'
 	print '		YYYY - year'
 	print '		MM - month'
 	print '		DD - day'
@@ -106,7 +108,7 @@ if len(sys.argv) != 4 and (not bounds_exists) and (not satellite_exists):
 	print '		MM - minute'
 	print '		SS - second'
 	print '	* days - float, number of days of simulation (can be less than a day)'
-	print 'or link an existent file %s or %s' % (satellite_file,bounds_file)
+	print 'OR link an existent file %s or %s' % (satellite_file,bounds_file)
 	sys.exit(0)
 
 t_init = time()
@@ -129,19 +131,34 @@ else:
 		data,fxlon,fxlat,time_num = sl.load(satellite_file)
 		bbox = [fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
 	else:
-		print '>> Reading the fire mesh <<'
+		argument = sys.argv[1].split(',')
+		if len(argument) > 1:
+			print '>> Creating the fire mesh <<'
+			dlon = .01
+			dlat = .005
+			bounds = map(float,argument)
+			fxlon,fxlat = np.meshgrid(np.arange(bounds[0],bounds[1],dlon),
+							np.arange(bounds[2],bounds[3],dlat))
+			maxsize = 500
+			coarsening=np.int(1+np.max(fxlon.shape)/maxsize)
+			fxlon = fxlon[0::coarsening,0::coarsening]
+			fxlat = fxlat[0::coarsening,0::coarsening]
+			bbox = [fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
+			print 'min max longitude latitude %s' % bbox
+		else:
+			print '>> Reading the fire mesh <<'
+			sys.stdout.flush()
+			fxlon,fxlat,bbox,time_esmf = read_fire_mesh(argument[0])
+
+		print ''
+		print '>> Retrieving satellite data <<'
 		sys.stdout.flush()
-		fxlon,fxlat,bbox,time_esmf = read_fire_mesh(sys.argv[1])
 		# converting times to ISO
 		dti = dt.datetime.strptime(sys.argv[2],'%Y%m%d%H%M%S')
 		time_start_iso = '%d-%02d-%02dT%02d:%02d:%02dZ' % (dti.year,dti.month,dti.day,dti.hour,dti.minute,dti.second)
 		dtf = dti+dt.timedelta(days=float(sys.argv[3]))
 		time_final_iso = '%d-%02d-%02dT%02d:%02d:%02dZ' % (dtf.year,dtf.month,dtf.day,dtf.hour,dtf.minute,dtf.second)
 		time_iso = (time_start_iso,time_final_iso)
-
-		print ''
-		print '>> Retrieving satellite data <<'
-		sys.stdout.flush()
 		data = retrieve_af_data(bbox,time_iso)
 		if igns:
 			data.update(process_ignitions(igns,bbox,time=time_iso))
@@ -175,7 +192,7 @@ else:
 		print 'writting KML with fire detections'
 		keys = ['latitude','longitude','brightness','scan','track','acq_date','acq_time','satellite','instrument','confidence','bright_t31','frp','scan_angle']
 		dkeys = ['lat_fire','lon_fire','brig_fire','scan_fire','track_fire','acq_date','acq_time','sat_fire','instrument','conf_fire','t31_fire','frp_fire','scan_angle_fire']
-		prods = {'AF':'Active Fires','FRP':'Fire Radiative Power','TF':'Temporal Fire coloring'}
+		prods = {'AF':'Active Fires','FRP':'Fire Radiative Power','TF':'Temporal Fire coloring','AFN':'Active Fires New'}
 		# filter out perimeter, ignition, and forecast information (too many pixels)
 		regex = re.compile(r'^((?!(PER_A|IGN_A|FOR_A)).)*$')
 		nsdata = [d for d in sdata if regex.match(d[0])]
@@ -185,8 +202,8 @@ else:
 		json = sdata2json(nsdata,keys,dkeys,N)
 		# write KML file from json notation
 		json2kml(json,fire_file,bbox,prods)
+	print ''
 	if gearth_exists or not plot_observed:
-		print ''
 		print '>> File %s already created! <<' % gearth_file
 	else:
 		# creating KMZ overlay of each information
@@ -224,7 +241,14 @@ else:
 	print ''
 	print '>> Processing satellite data <<'
 	sys.stdout.flush()
-	result = process_detections(data,fxlon,fxlat,time_num,bbox)
+	try:
+		maxsize
+	except NameError:
+		maxsize = None
+	if maxsize:
+		result = process_detections(data,fxlon,fxlat,time_num,bbox,maxsize)
+	else:
+		result = process_detections(data,fxlon,fxlat,time_num,bbox)
 	# Taking necessary variables from result dictionary
 	scale = result['time_scale_num']
 	time_num_granules = result['time_num_granules']
@@ -255,8 +279,8 @@ print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if conf is None or not dyn_pen:
-	C = 100.
-	kgam = 100.
+	C = 1000.
+	kgam = 1000.
 else:
 	C = np.power(c,3)/1000.
 	kgam = 10.

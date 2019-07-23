@@ -26,7 +26,7 @@ time_iso = (time_start_iso,time_final_iso)
 bounds = (float(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5]),float(sys.argv[6]))
 fxlon,fxlat = np.meshgrid(np.arange(bounds[0],bounds[1],dlon),
             np.arange(bounds[2],bounds[3],dlat))
-maxsize=1200
+maxsize = 500
 coarsening=np.int(1+np.max(fxlon.shape)/maxsize)
 fxlon = fxlon[0::coarsening,0::coarsening]
 fxlat = fxlat[0::coarsening,0::coarsening]
