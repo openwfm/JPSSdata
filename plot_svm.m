@@ -33,9 +33,9 @@ if nargin == 2
     ll(tt) = nan;
     low = true;
     figure
-    scatter3(r.dxlon(~isnan(uu)), r.dxlat(~isnan(uu)), uu(~isnan(uu)), 'r*')
+    scatter3(r.dxlon(~isnan(uu)), r.dxlat(~isnan(uu)), uu(~isnan(uu)), 'r.')
     hold on
-    scatter3(r.dxlon(~isnan(ll)), r.dxlat(~isnan(ll)), ll(~isnan(ll)), 'g*')
+    scatter3(r.dxlon(~isnan(ll)), r.dxlat(~isnan(ll)), ll(~isnan(ll)), 'g.')
 end
 if nargin == 3
     zoom = varargin{3};
@@ -44,14 +44,14 @@ end
 dd = .1;
 bb = [min(r.dxlon(~isnan(uu)))-dd, max(r.dxlon(~isnan(uu)))+dd, min(r.dxlat(~isnan(uu)))-dd, max(r.dxlat(~isnan(uu)))+dd];
 figure
-scatter3(r.dxlon(~isnan(uu)), r.dxlat(~isnan(uu)), uu(~isnan(uu)), 'r*')
+scatter3(r.dxlon(~isnan(uu)), r.dxlat(~isnan(uu)), uu(~isnan(uu)), 'r.')
 hold on
 if low
-    scatter3(r.dxlon(~isnan(ll)), r.dxlat(~isnan(ll)), ll(~isnan(ll)), 'g*')
+    scatter3(r.dxlon(~isnan(ll)), r.dxlat(~isnan(ll)), ll(~isnan(ll)), 'g.')
     hold on
 else
     ml = logical((r.dxlon >= bb(1)).*(r.dxlon <= bb(2)).*(r.dxlat >= bb(3)).*(r.dxlat <= bb(4)));
-    scatter3(r.dxlon(ml), r.dxlat(ml), ll(ml), 'g*')
+    scatter3(r.dxlon(ml), r.dxlat(ml), ll(ml), 'g.')
     hold on
 end
 contour3(r.fxlon,r.fxlat,r.Z,100)
@@ -66,10 +66,10 @@ if zoom
     kk = 10;
     zz = [min(r.Z(:))-.5 min(r.Z(:))+1.5];
     figure
-    scatter3(r.dxlon(~isnan(uu)), r.dxlat(~isnan(uu)), uu(~isnan(uu)), 'r*')
+    scatter3(r.dxlon(~isnan(uu)), r.dxlat(~isnan(uu)), uu(~isnan(uu)), 'r.')
     hold on
     if low
-        scatter3(r.dxlon(~isnan(ll)), r.dxlat(~isnan(ll)), ll(~isnan(ll)), 'g*')
+        scatter3(r.dxlon(~isnan(ll)), r.dxlat(~isnan(ll)), ll(~isnan(ll)), 'g.')
         hold on
     end
     contour3(r.fxlon(1:kk:end,1:kk:end),r.fxlat(1:kk:end,1:kk:end),r.Z(1:kk:end,1:kk:end),500)
@@ -82,7 +82,7 @@ if zoom
 end
 
 figure
-scatter3(r.dxlon(~isnan(uu)), r.dxlat(~isnan(uu)), uu(~isnan(uu)), 'r*')
+scatter3(r.dxlon(~isnan(uu)), r.dxlat(~isnan(uu)), uu(~isnan(uu)), 'r.')
 hold on
 contour3(r.fxlon,r.fxlat,r.Z,100)
 title('Support-vector machine: Fire detections vs fire arrival time')

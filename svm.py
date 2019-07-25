@@ -365,17 +365,17 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # number of horizontal nodes per observation (if fire_grid==None)
     hN = 5
     # creation of under artificial lower bounds in the pre-processing
-    artil = False
-    # if artil = True: resolution of artificial upper bounds vertical to the fire detections
-    hartil = .1
+    artil = True
+    # if artil = True: resolution of artificial lower bounds vertical to the ground detections
+    hartil = .2
     # creation of over artificial upper bounds in the pre-processing
     artiu = True
-    # if artiu = True: resolution of artificial lower bounds vertical to the ground detections
-    hartiu = .1
+    # if artiu = True: resolution of artificial upper bounds vertical to the fire detections
+    hartiu = .05
     # creation of an artifitial mesh of down lower bounds
     downarti = True
     # if downarti = True: below min of z direction for lower bound artifitial creation
-    dminz = .1
+    dminz = .05
     # if downarti = True: confidence level of the artificial lower bounds
     confal = 100.
     # creation of an artifitial mesh of top upper bounds

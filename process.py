@@ -262,13 +262,12 @@ T = np.array(result['T']).astype(float)
 
 if 'C' in result.keys():
 	conf = np.array(result['C'])
+	if 'Cg' in result.keys():
+		conf = (np.array(result['Cg']),conf)
+	else:
+		conf = (10*np.ones(L.shape),conf)
 else:
 	conf = None
-
-if 'Cg' in result.keys():
-	conf = (np.array(result['Cg']),conf)
-else:
-	conf = (10*np.ones(L.shape),conf)
 
 print ''
 print '>> Preprocessing the data <<'
@@ -279,8 +278,8 @@ print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if conf is None or not dyn_pen:
-	C = 1e6
-	kgam = 1e5
+	C = 5e1
+	kgam = 5e1
 else:
 	C = np.power(c,3)
 	kgam = 10000.
@@ -295,7 +294,7 @@ tign_g = np.array(F[2])*float(tscale)+scale[0]-time_num_interval[0]
 # Creating the dictionary with the results
 svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
 		'fxlon': F[0], 'fxlat': F[1], 'Z': F[2],
-		'tign_g': tign_g,
+		'tign_g': tign_g, 'C': C, 'kgam': kgam,
 		'tscale': tscale, 'time_num_granules': time_num_granules,
 		'time_scale_num': scale, 'time_num': time_num_interval}
 # Save resulting file
