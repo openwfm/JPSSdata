@@ -278,8 +278,8 @@ print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if conf is None or not dyn_pen:
-	C = 5e1
-	kgam = 5e1
+	C = 1e3
+	kgam = 1e1
 else:
 	C = np.power(c,3)
 	kgam = 10000.
