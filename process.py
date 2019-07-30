@@ -69,6 +69,8 @@ plot_observed = False
 only_fire = False
 # dynamic penalization term
 dyn_pen = False
+# if dyn_pen = False: 5-fold cross validation for C and gamma?
+search = True
 
 # if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
 # examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
@@ -279,11 +281,12 @@ print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if conf is None or not dyn_pen:
 	C = 1e3
-	kgam = 1e1
+	kgam = 1e2
 else:
 	C = np.power(c,3)
-	kgam = 10000.
-F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat))
+	kgam = 1e4
+	search = False
+F = SVM3(X,y,C=C,kgam=kgam,search=search,fire_grid=(lon,lat))
 
 print ''
 print '>> Saving the results <<'

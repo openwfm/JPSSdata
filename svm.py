@@ -7,6 +7,7 @@
 #       conda install scikit-image
 
 from sklearn import svm
+from sklearn.model_selection import GridSearchCV
 from scipy import interpolate, spatial
 import matplotlib.pyplot as plt
 import matplotlib.font_manager
@@ -320,7 +321,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
 
     return F
 
-def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
+def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=None):
     """
     3D SuperVector Machine analysis and plot
 
@@ -381,7 +382,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
     # creation of an artifitial mesh of down lower bounds
     downarti = True
     # if downarti = True: below min of z direction for lower bound artifitial creation
-    dminz = .05
+    dminz = .1
     # if downarti = True: confidence level of the artificial lower bounds
     confal = 100.
     # creation of an artifitial mesh of top upper bounds
@@ -555,13 +556,14 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
             print e
 
     # Reescaling gamma to include more detailed results
-    gamma = kgam / (n_features * X.std())
+    gamma = 1. / (n_features * X.std())
     print 'gamma =', gamma
 
-    # Creating the SVM model
+    # Creating the SVM model and fitting the data using Super Vector Machine technique
     print '>> Creating the SVM model...'
     sys.stdout.flush()
     if using_weights:
+        gamma = kgam*gamma
         # Compute class balanced weights
         cls, _ = np.unique(y, return_inverse=True)
         class_weight = compute_class_weight("balanced", cls, y)
@@ -569,19 +571,33 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
         arg = '-g %.15g -w%01d %.15g -w%01d %.15g -m 1000 -h 0' % (gamma, cls[0], class_weight[0],
                                             cls[1], class_weight[1])
         param = svm_parameter(arg)
-    else:
-        clf = svm.SVC(C=C, kernel="rbf", gamma=gamma, cache_size=1000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
-        print clf
-
-    # Fitting the data using Super Vector Machine technique
-    print '>> Fitting the SVM model...'
-    sys.stdout.flush()
-    t_1 = time()
-    if using_weights:
+        print '>> Fitting the SVM model...'
+        t_1 = time()
         clf = svm_train(prob,param)
+        t_2 = time()
     else:
-        clf.fit(X, y)
-    t_2 = time()
+        t_1 = time()
+        if search:
+            print '>> Searching for best value of C and gamma...'
+            # Grid Search
+            # Parameter Grid
+            param_grid = {'C': np.logspace(-2,5,8), 'gamma': gamma*np.logspace(-1,6,8)}
+            # Make grid search classifier
+            grid_search = GridSearchCV(svm.SVC(cache_size=2000,class_weight="balanced",probability=True), param_grid, n_jobs=-1, verbose=1, cv=5, iid=False)
+            print '>> Fitting the SVM model...'
+            # Train the classifier
+            grid_search.fit(X, y)
+            print "Best Parameters:\n", grid_search.best_params_
+            clf = grid_search.best_estimator_
+            print "Best Estimators:\n", clf
+        else:
+            gamma = kgam*gamma
+            clf = svm.SVC(C=C, kernel="rbf", gamma=gamma, cache_size=2000, class_weight="balanced") # default kernel: exp(-gamma||x-x'||^2)
+            print clf
+            print '>> Fitting the SVM model...'
+            # Fitting the data using Super Vector Machine technique
+            clf.fit(X, y)
+        t_2 = time()
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
 
     if not using_weights:
@@ -749,6 +765,7 @@ def SVM3(X, y, C=1., kgam=1., norm=True, fire_grid=None, weights=None):
 if __name__ == "__main__":
     # Experiment to do
     exp = 1
+    search = False
 
     # Defining ground and fire detections
     def exp1():
@@ -778,4 +795,4 @@ if __name__ == "__main__":
     y = np.concatenate((-np.ones(len(Xg)), np.ones(len(Xf))))
 
     # Running SVM classification
-    SVM3(X,y,C=C,kgam=kgam)
+    SVM3(X,y,C=C,kgam=kgam,search=search)
