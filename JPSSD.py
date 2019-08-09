@@ -107,19 +107,21 @@ def search_archive(url,prod,time,grans):
             js=requests.get(u+'.json').json()
             for j in js:
                 arg=np.argwhere(np.array(ids)=='.'.join(j['name'].split('.')[1:3]))
-                if arg.size!=0:
+                if arg.size:
                     ar=arg[0][0]
                     g=Dict(j)
                     g.links=[{'href':u+'/'+g.name}]
                     g.time_start=grans[ar]["time_start"]
                     g.time_end=grans[ar]["time_end"]
+                    g.dataset_id='Archive download: unknown dataset id'
+                    g.producer_granule_id=j['name']
                     granules.append(g)
         except Exception as e:
             "warning: some JSON request failed"
     print "%s gets %s hits in this range" % (prod.split('/')[-1],len(granules))
     return granules
 
-def get_meta(bbox,time,maxg=50,burned=False):
+def get_meta(bbox,time,maxg=50,burned=False,high=False):
     """
     Get all the meta data from the API for all the necessary products
 
@@ -148,8 +150,14 @@ def get_meta(bbox,time,maxg=50,burned=False):
     granules.VNP14=search_api("VNP14",bbox,time,maxg)
     #VNP03MODLL: VIIRS geolocation data, res 750m
     granules.VNP03=search_api("VNP03MODLL",bbox,time,maxg)
-    #VNP14hi: VIIRS fire data, res 375m
-    #granules.VNP14hi=search_api("VNP14IMGTDL_NRT",bbox,time,maxg)
+    #VNP14HR: VIIRS fire data, res 375m
+    #granules.VNP14HR=search_api("VNP14IMGTDL_NRT",bbox,time,maxg) # any results in API
+    if high:
+        url="https://ladsweb.modaps.eosdis.nasa.gov/archive/allData" # base url
+        prod="5000/NPP_IMFTS_L1"
+        granules.VNP03HR=search_archive(url,prod,time,granules.VNP03)
+        prod="5000/VNP14IMG" # product
+        granules.VNP14HR=search_archive(url,prod,time,granules.VNP03HR)
     if burned:
         #VNP09: VIIRS Atmospherically corrected surface reflectance
         url="https://ladsweb.modaps.eosdis.nasa.gov/archive/allData" # base url
@@ -469,7 +477,7 @@ def read_goes_files(files):
     """
     Read the files for GOES products - geolocation and fire data already included (OS)
 
-     remove :param files: pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
+    :param files: pair with geolocation (03) and fire (14) file names for MODIS products (MOD or MYD)
     :param bounds: spatial bounds tuple (lonmin,lonmax,latmin,latmax)
     :return ret: dictionary with Latitude, Longitude and fire mask arrays read
 
@@ -692,7 +700,7 @@ def download_GOES16(time):
             print 'download failed with error %s' % e
     return bucket
 
-def retrieve_af_data(bbox,time,burned=False):
+def retrieve_af_data(bbox,time,burned=False,high=False):
     """
     Retrieve the data in a bounding box coordinates and time interval and save it in a Matlab structure inside the out.mat Matlab file
 
@@ -718,7 +726,7 @@ def retrieve_af_data(bbox,time,burned=False):
     print maxg
 
     # Get data
-    granules=get_meta(bbox,time,maxg,burned=burned)
+    granules=get_meta(bbox,time,maxg,burned=burned,high=high)
     #print 'medatada found:\n' + json.dumps(granules,indent=4, separators=(',', ': '))
 
     # Eliminating the NRT data (repeated always)
