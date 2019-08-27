@@ -1,4 +1,4 @@
-# a simple utility to save to file and load back 
+# a simple utility to save to file and load back
 import pickle
 
 def save(obj,file):
@@ -14,8 +14,8 @@ def load(file):
     :param file: file name
     :return: the object read
     """
-    with open(file) as f:
+    with open(file,'r') as f:
        return pickle.load(f)
-    
 
-    
+
+
