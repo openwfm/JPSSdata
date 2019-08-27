@@ -19,4 +19,4 @@ class Dict(dict):
             raise AttributeError(item)
 
     def __setattr__(self, item, value):
-    self[item] = value
+        self[item] = value
