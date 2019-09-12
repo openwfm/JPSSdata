@@ -20,10 +20,10 @@
 #		*) Save observed data information in 'data' file.
 #	2) Methods from interpolation.py, JPSSD.py, and plot_pixels.py files:
 #		*) Write KML file 'fire_detections.kml' with fire detection pixels (satellite, ignitions and perimeters).
-#		*) Write KMZ file 'googlearth.kmz' with saved images and KML file of observed data.
+#		*) Write KMZ file 'googlearth.kmz' with saved images and KML file of observed data (set plot_observed = True).
 #	3) Method process_detections from setup.py file:
 #		*) Sort all the granules from all the sources in time order.
-#		*) Construct upper and lower bounds using a mask to prevent ground after fire.
+#		*) Construct upper and lower bounds using a mask to prevent clear ground after fire.
 #		*) Save results in 'results.mat' file.
 #	4) Methods preprocess_data_svm and SVM3 from svm.py file:
 #		*) Preprocess bounds as an input of Support Vector Machine method.
@@ -58,19 +58,22 @@ from contour2kml import contour2kml
 import saveload as sl
 from utils import Dict
 from scipy.io import loadmat, savemat
+from scipy import interpolate
 import numpy as np
 import datetime as dt
 import sys, os, re
 from time import time
 
-# plot observed information
+# plot observed information (googlearth.kmz with png files)
 plot_observed = False
-# if plot_observed = True: only fire?
+# if plot_observed = True: only fire detections?
 only_fire = False
 # dynamic penalization term
 dyn_pen = False
 # if dyn_pen = False: 5-fold cross validation for C and gamma?
-search = True
+search = False
+# interpolate the results into fire mesh (if apply to spinup case)
+fire_interp = True
 
 # if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
 # examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
@@ -126,6 +129,10 @@ if bounds_exists:
 	time_num_interval = result['time_num'][0]
 	lon = np.array(result['fxlon']).astype(float)
 	lat = np.array(result['fxlat']).astype(float)
+	if 'ofxlon' in result.keys():
+		fxlon = result['ofxlon']
+		fxlat = result['ofxlat']
+
 else:
 	if satellite_exists:
 		print '>> File %s already created! Skipping satellite retrieval <<' % satellite_file
@@ -205,9 +212,12 @@ else:
 		# write KML file from json notation
 		json2kml(json,fire_file,bbox,prods)
 	print ''
-	if gearth_exists or not plot_observed:
+	if gearth_exists:
 		print '>> File %s already created! <<' % gearth_file
+	elif not plot_observed:
+		print '>> Creation of %s skipped (set plot_observed = True) <<' % gearth_file
 	else:
+		print '>> Generating KMZ with png overlays for Google Earth <<'
 		# creating KMZ overlay of each information
 		# create the Basemap to plot into
 		bmap = Basemap(projection='merc',llcrnrlat=bbox[2], urcrnrlat=bbox[3], llcrnrlon=bbox[0], urcrnrlon=bbox[1])
@@ -280,11 +290,11 @@ print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if conf is None or not dyn_pen:
-	C = 1e3
-	kgam = 1e2
+	C = 1e4
+	kgam = 1e3
 else:
 	C = np.power(c,3)
-	kgam = 1e4
+	kgam = 1e3
 	search = False
 F = SVM3(X,y,C=C,kgam=kgam,search=search,fire_grid=(lon,lat))
 
@@ -300,6 +310,22 @@ svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
 		'tign_g': tign_g, 'C': C, 'kgam': kgam,
 		'tscale': tscale, 'time_num_granules': time_num_granules,
 		'time_scale_num': scale, 'time_num': time_num_interval}
+# Interpolation of tign_g
+if fire_interp:
+	try:
+		print '>> Interpolating the results in the fire mesh'
+		t_interp_1 = time()
+		points = np.c_[np.ravel(F[0]),np.ravel(F[1])]
+		values = np.ravel(tign_g)
+		tign_g_interp = interpolate.griddata(points,values,(fxlon,fxlat))
+		t_interp_2 = time()
+		print 'elapsed time: %ss.' % str(abs(t_interp_2-t_interp_1))
+		svm.update({'fxlon_interp': fxlon, 'fxlat_interp': fxlat,
+			'tign_g_interp': tign_g_interp})
+	except:
+		print 'Warning: longitudes and latitudes from the original grid are not defined...'
+		print '%s file is not compatible with fire_interp=True! Run again the experiment from the begining.' % bounds_file
+
 # Save resulting file
 savemat(svm_file, mdict=svm)
 print 'The results are saved in svm.mat file'

@@ -35,6 +35,8 @@ def process_detections(data,fxlon,fxlat,time_num,bounds=None,maxsize=500):
 	conf_nofire=70. # In absence of nofire confidence, value for nofire confidence (satellite data)
 	burn=False # Using or not the burned scar product
 
+	ofxlon = np.copy(fxlon)
+	ofxlat = np.copy(fxlat)
 	print 'mesh shape %s %s' % fxlon.shape
 	coarsening=np.int(1+np.max(fxlon.shape)/maxsize)
 	print 'maximum size is %s, coarsening %s' % (maxsize, coarsening)
@@ -256,16 +258,13 @@ def process_detections(data,fxlon,fxlat,time_num,bounds=None,maxsize=500):
 
 	print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_scale_num[0]
 
+	result = {'U': U, 'L': L, 'T': T, 'fxlon': fxlon, 'fxlat': fxlat,
+		'time_num': time_num, 'time_scale_num' : time_scale_num,
+		'time_num_granules': tt, 'ofxlon': ofxlon, 'ofxlat': ofxlat}
 	if confm:
 		C=np.transpose(np.reshape(C,fxlon.shape))
 		Cg=np.transpose(np.reshape(Cg,fxlon.shape))
-		result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat,
-		'time_num':time_num, 'time_scale_num' : time_scale_num,
-		'time_num_granules' : tt, 'C':C, 'Cg': Cg}
-	else:
-		result = {'U':U, 'L':L, 'T':T, 'fxlon': fxlon, 'fxlat': fxlat,
-		'time_num':time_num, 'time_scale_num' : time_scale_num,
-		'time_num_granules' : tt}
+		result.update({'C': C, 'Cg': Cg})
 
 	sio.savemat('result.mat', mdict=result)
 

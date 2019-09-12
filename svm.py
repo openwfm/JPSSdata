@@ -65,24 +65,65 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     mk = tt==scale[1]-scale[0]
     # Masking upper bounds outside the mask
     uu[mk] = np.nan
-    # Creating maximum value considered of the upper bounds
-    nuu = uu[~np.isnan(uu)]
-    muu = nuu.max() # could be a different value like a mean value
-    # Create a mask with lower bound less than the previous maximum upper bound value
-    with np.errstate(invalid='ignore'):
-        low = (ll <= muu)
-    if low.sum() > 10000:
-        # Create a mask with all False of low size
-        mask = np.repeat(False,len(low[low == True]))
-        # Take just a subset of the nodes
-        clear_level = 50
-        mask[0::clear_level] = True
-        # Mask the subset
-        low[low == True] = mask
-    # Eliminate all the previous elements from the mask
-    mk[low] = False
-    # Masking lower bounds outside the mask
-    ll[mk] = np.nan
+
+    # Creating minimum value for the upper bounds
+    muu = uu[~np.isnan(uu)].min()
+    # Creating maximum value for the lower bounds
+    mll = ll[~np.isnan(ll)].max()
+
+    ### Reduction of the density of lower bounds
+    # Creation of low bounds mask (True values are going to turn Nan's in lower bound data)
+    lmk = np.copy(mk)
+    ## Reason: We do not care about lower bounds below the upper bounds which are far from the upper bounds
+    # temporary lower mask, all False (values of the mask where the mask is False, inside the fire mask)
+    tlmk = lmk[~mk]
+    # set to True all the bounds less than floor of minimum of upper bounds in fire mask
+    tlmk[~np.isnan(ll[~mk])] = (ll[~mk][~np.isnan(ll[~mk])] < np.floor(muu))
+    # set lower mask from temporary mask
+    lmk[~mk] = tlmk
+    ## Reason: Coarsening of the lower bounds below the upper bounds to create balance
+    # create coarsening of the lower bound data below the upper bounds to be similar amount that upper bounds
+    kk = (~np.isnan(ll[~lmk])).sum()/(~np.isnan(uu)).sum()
+    if kk:
+        # temporary lower mask, all True (values of the lower mask where the lower mask is False, set to True)
+        tlmk = ~lmk[~lmk]
+        # only set a subset of the lower mask values to False (coarsening)
+        tlmk[::kk] = False
+        # set lower mask form temporary mask
+        lmk[~lmk] = tlmk
+    ## Reason: We care about the maximum lower bounds which are not below upper bounds
+    # temporary lower mask, all True (values of the mask where the mask is True, outside the fire mask)
+    tlmk = lmk[mk]
+    # temporary lower mask 2, all True (subset of the previous mask where the lower bounds is not Nan)
+    t2lmk = tlmk[~np.isnan(ll[mk])]
+    # set to False in the temporary lower mask 2 where lower bounds have maximum value
+    t2lmk[ll[mk][~np.isnan(ll[mk])] == mll] = False
+    # set temporary lower mask from temporary lower mask 2
+    tlmk[~np.isnan(ll[mk])] = t2lmk
+    # set lower mask from temporary lower mask
+    lmk[mk] = tlmk
+    ## Reason: Coarsening of the not maximum lower bounds not below the upper bounds to create balance
+    # set subset outside of the fire mask for the rest
+    # create coarsening of the not maximum lower bounds not below the upper bounds to be similar amount that the current number of lower bounds
+    kk = (ll[mk][~np.isnan(ll[mk])] < mll).sum()/(~np.isnan(ll[~lmk])).sum()
+    if kk:
+        # temporary lower mask, values of the current lower mask outside of the original fire mask
+        tlmk = lmk[mk]
+        # temporary lower mask 2, subset of the previous mask where the lower bound is not Nan
+        t2lmk = tlmk[~np.isnan(ll[mk])]
+        # temporary lower mask 3, subset of the previous mask where the lower bounds are not maximum
+        t3lmk = t2lmk[ll[mk][~np.isnan(ll[mk])] < mll]
+        # coarsening of the temporary lower mask 3
+        t3lmk[::kk] = False
+        # set the temporary lower mask 2 from the temporary lower mask 3
+        t2lmk[ll[mk][~np.isnan(ll[mk])] < mll] = t3lmk
+        # set the temporary lower mask from the temporary lower mask 2
+        tlmk[~np.isnan(ll[mk])] = t2lmk
+        # set the lower mask from the temporary lower mask
+        lmk[mk] = tlmk
+
+    # Masking lower bounds from previous lower mask
+    ll[lmk] = np.nan
 
     # Values different than NaN in the upper and lower bounds
     um = np.array(~np.isnan(uu))
@@ -348,37 +389,35 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
 
     # Plot options
     # plot original data
-    plot_data = True
+    plot_data = False
     # plot scaled data with artificial data
-    plot_scaled = True
+    plot_scaled = False
     # plot decision volume
     plot_decision = False
     # plot polynomial approximation
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = True
+    plot_supports = False
     # plot resulting fire arrival time vs detections
-    plot_result = True
+    plot_result = False
 
     # Other options
     # number of vertical nodes per observation
     vN = 1
-    # interpolate into the original fire mesh
-    interp = False
     # if not Nans in the data are wanted (all Nans are going to be replaced by the maximum value)
     notnan = True
 
     # Options better to not change
-    # number of horizontal nodes per observation (if fire_grid==None)
+    # number of horizontal nodes per observation (it is used if fire_grid==None)
     hN = 5
     # creation of under artificial lower bounds in the pre-processing
     artil = True
     # if artil = True: resolution of artificial lower bounds vertical to the ground detections
-    hartil = .2
+    hartil = .1
     # creation of over artificial upper bounds in the pre-processing
     artiu = True
     # if artiu = True: resolution of artificial upper bounds vertical to the fire detections
-    hartiu = .05
+    hartiu = .1
     # creation of an artifitial mesh of down lower bounds
     downarti = True
     # if downarti = True: below min of z direction for lower bound artifitial creation
@@ -581,7 +620,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             print '>> Searching for best value of C and gamma...'
             # Grid Search
             # Parameter Grid
-            param_grid = {'C': np.logspace(-2,5,8), 'gamma': gamma*np.logspace(-1,6,8)}
+            param_grid = {'C': np.logspace(0,5,6), 'gamma': gamma*np.logspace(0,5,6)}
             # Make grid search classifier
             grid_search = GridSearchCV(svm.SVC(cache_size=2000,class_weight="balanced",probability=True), param_grid, n_jobs=-1, verbose=1, cv=5, iid=False)
             print '>> Fitting the SVM model...'
@@ -722,17 +761,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
 	if notnan:
 	    FFz[np.isnan(FFz)] = oX2.max()
 	    FFz = np.minimum(FFz, oX2.max())
-
-    if (not fire_grid is None) and (interp):
-        print '>> Interpolating the results in the fire mesh'
-        Flon = fire_grid[0]
-        Flat = fire_grid[1]
-        points = np.c_[np.ravel(Fx),np.ravel(Fy)]
-        values = np.ravel(Fz)
-        Ffire = interpolate.griddata(points,values,(Flon,Flat))
-        FF = [Flon,Flat,Ffire]
-    else:
-        FF = [FFx,FFy,FFz]
+    FF = [FFx,FFy,FFz]
 
     # Plot the fire arrival time resulting from the SVM classification
     if plot_result:
