@@ -25,7 +25,7 @@
 #		*) Sort all the granules from all the sources in time order.
 #		*) Construct upper and lower bounds using a mask to prevent clear ground after fire.
 #		*) Save results in 'results.mat' file.
-#	4) Methods preprocess_data_svm and SVM3 from svm.py file:
+#	4) Methods preprocess_result_svm and SVM3 from svm.py file:
 #		*) Preprocess bounds as an input of Support Vector Machine method.
 #		*) Run Support Vector Machine method.
 #		*) Save results in svm.mat file.
@@ -50,7 +50,7 @@ from interpolation import sort_dates
 from setup import process_detections
 from infrared_perimeters import process_ignitions, process_infrared_perimeters
 from forecast import process_forecast_wrfout
-from svm import preprocess_data_svm, SVM3
+from svm import preprocess_result_svm, SVM3
 from mpl_toolkits.basemap import Basemap
 from plot_pixels import basemap_scatter_mercator, create_kml
 from contline import get_contour_verts
@@ -284,7 +284,7 @@ else:
 print ''
 print '>> Preprocessing the data <<'
 sys.stdout.flush()
-X,y,c = preprocess_data_svm(lon,lat,U,L,T,scale,time_num_granules,C=conf)
+X,y,c = preprocess_result_svm(lon,lat,U,L,T,scale,time_num_granules,C=conf)
 
 print ''
 print '>> Running Support Vector Machine <<'

@@ -20,7 +20,66 @@ from infrared_perimeters import process_infrared_perimeters
 import sys
 import saveload as sl
 
-def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
+def preprocess_data_svm(data, scale):
+    """
+    Preprocess satellite data from JPSSD to use in Support Vector Machine directly
+    (without any interpolation as space-time 3D points)
+
+    :param data: dictionary of satellite data from JPSSD
+    :param scale: time scales
+    :return X: matrix of features for SVM
+    :return y: vector of labels for SVM
+    :return c: vector of confidence level for SVM
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com), 2019-09-24
+    """
+
+    # minim fire confidence level to take into account
+    minconf = 70.
+    # confidence of ground detections
+    gconf = 70.
+
+    # scale from seconds to days
+    tscale = 24.*3600.
+
+    detlon = np.concatenate([d['lon_fire'] for d in data.itervalues()])
+    detlat = np.concatenate([d['lat_fire'] for d in data.itervalues()])
+    bb = (detlon.min(),detlon.max(),detlat.min(),detlat.max())
+    dc = (bb[1]-bb[0],bb[3]-bb[2])
+    bf = (bb[0]-dc[0]*.5,bb[1]+dc[0]*.5,bb[2]-dc[1]*.5,bb[3]+dc[1]*.5)
+    print bf
+
+    # process all the points as space-time 3D nodes
+    XX = [[],[]]
+    cf = []
+    for gran in data.items():
+        tt = (gran[1]['time_num']-scale[0])/tscale
+        conf = gran[1]['conf_fire']>=minconf
+        xf = np.c_[(gran[1]['lon_fire'][conf],gran[1]['lat_fire'][conf],np.repeat(tt,conf.sum()))]
+        XX[0].append(xf)
+        mask = np.logical_and(gran[1]['lon_nofire'] >= bf[0],
+                np.logical_and(gran[1]['lon_nofire'] <= bf[1],
+                 np.logical_and(gran[1]['lat_nofire'] >= bf[2],
+                                 gran[1]['lat_nofire'] <= bf[3])))
+        xg = np.c_[(gran[1]['lon_nofire'][mask],gran[1]['lat_nofire'][mask],np.repeat(tt,mask.sum()))]
+        xg.shape
+        coarse = np.int(1+len(xg)/(5*max(len(xf),20)))
+        XX[1].append(xg[::coarse])
+        cf.append(gran[1]['conf_fire'][conf])
+
+    Xf = np.concatenate(tuple(XX[0]))
+    Xg = np.concatenate(tuple(XX[1]))
+    X = np.concatenate((Xg,Xf))
+    y = np.concatenate((-np.ones(len(Xg)),np.ones(len(Xf))))
+    c = np.concatenate((gconf*np.ones(len(Xg)),np.concatenate(tuple(cf))))
+    print 'shape X: ', X.shape
+    print 'shape y: ', y.shape
+    print 'shape c: ', c.shape
+
+    return X,y,c
+
+def preprocess_result_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     """
     Preprocess satellite data from JPSSD and setup to use in Support Vector Machine
 
@@ -33,6 +92,7 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
     :param time_num_granules: times of the granules
     :return X: matrix of features for SVM
     :return y: vector of labels for SVM
+    :return c: vector of confidence level for SVM
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2019-04-01
@@ -413,7 +473,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
     # creation of under artificial lower bounds in the pre-processing
     artil = True
     # if artil = True: resolution of artificial lower bounds vertical to the ground detections
-    hartil = .1
+    hartil = .2
     # creation of over artificial upper bounds in the pre-processing
     artiu = True
     # if artiu = True: resolution of artificial upper bounds vertical to the fire detections
