@@ -64,7 +64,7 @@ def preprocess_data_svm(data, scale):
                                  gran[1]['lat_nofire'] <= bf[3])))
         xg = np.c_[(gran[1]['lon_nofire'][mask],gran[1]['lat_nofire'][mask],np.repeat(tt,mask.sum()))]
         xg.shape
-        coarse = np.int(1+len(xg)/(5*max(len(xf),20)))
+        coarse = np.int(1+len(xg)/min(1e3,5*max(len(xf),20)))
         XX[1].append(xg[::coarse])
         cf.append(gran[1]['conf_fire'][conf])
 
