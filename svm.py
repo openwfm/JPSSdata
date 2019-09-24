@@ -54,17 +54,21 @@ def preprocess_data_svm(data, scale):
     XX = [[],[]]
     cf = []
     for gran in data.items():
+        print '> processing granule %s' % gran[0]
         tt = (gran[1]['time_num']-scale[0])/tscale
         conf = gran[1]['conf_fire']>=minconf
         xf = np.c_[(gran[1]['lon_fire'][conf],gran[1]['lat_fire'][conf],np.repeat(tt,conf.sum()))]
+        print 'fire detections: %d' % len(xf)
         XX[0].append(xf)
         mask = np.logical_and(gran[1]['lon_nofire'] >= bf[0],
                 np.logical_and(gran[1]['lon_nofire'] <= bf[1],
                  np.logical_and(gran[1]['lat_nofire'] >= bf[2],
                                  gran[1]['lat_nofire'] <= bf[3])))
         xg = np.c_[(gran[1]['lon_nofire'][mask],gran[1]['lat_nofire'][mask],np.repeat(tt,mask.sum()))]
+        print 'no fire detections: %d' % len(xf)
         xg.shape
-        coarse = np.int(1+len(xg)/min(1e3,5*max(len(xf),20)))
+        coarse = np.int(1+len(xg)/min(500,5*max(len(xf),20)))
+        print 'no fire detections: %d' % len(xg[::coarse])
         XX[1].append(xg[::coarse])
         cf.append(gran[1]['conf_fire'][conf])
 
