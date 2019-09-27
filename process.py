@@ -4,40 +4,48 @@
 # Driver python code to estimate fire arrival time using Active Fire Satellite Data
 #
 # INPUTS
-# In the existence of a 'data' satellite granules file and/or 'results.mat' bounds file, any input is necessary.
-# Otherwise:
-# 	wrfout - path to a simulation wrfout file (containing FXLON and FXLAT coordinates).
+# In the existence of a 'data' satellite granules file and/or 'results' bounds file, any input is necessary.
+# Otherwise: python process.py coord start_time days
+# 	coord - path to a simulation wrfout file (containing FXLON and FXLAT coordinates)
+#           OR coordinates bounding box, floats separated by comas: min_lon,max_lon,min_lat,max_lat
 #	start_time - date string with format: YYYYMMDDHHMMSS
 # 	days - length of the simulation in decimal days
 #
 # OVERFLOW
-# 	1) Methods from JPSSD.py and infrared_perimeters.py file:
+# 	1) Data acquisition: Methods from JPSSD.py and infrared_perimeters.py file.
 # 		*) Find granules overlaping fire domain and time interval.
 #		*) Download Active Satellite Data.
 #		*) Read and process Active Satellite Data files.
 # 		*) Process ignitions.
 #		*) Read and process infrared perimeters files.
 #		*) Save observed data information in 'data' file.
-#	2) Methods from interpolation.py, JPSSD.py, and plot_pixels.py files:
+#	2) Visualization of input data: Methods from interpolation.py, JPSSD.py, and plot_pixels.py files.
 #		*) Write KML file 'fire_detections.kml' with fire detection pixels (satellite, ignitions and perimeters).
 #		*) Write KMZ file 'googlearth.kmz' with saved images and KML file of observed data (set plot_observed = True).
-#	3) Method process_detections from setup.py file:
-#		*) Sort all the granules from all the sources in time order.
-#		*) Construct upper and lower bounds using a mask to prevent clear ground after fire.
-#		*) Save results in 'results.mat' file.
-#	4) Methods preprocess_result_svm and SVM3 from svm.py file:
-#		*) Preprocess bounds as an input of Support Vector Machine method.
+#	3) Pre-process data for SVM:
+#       a) Method process_detections from setup.py file and method preprocess_result_svm from svm.py file (if cloud = False):
+#		     *) Sort all the granules from all the sources in time order.
+#		     *) Construct upper and lower bounds using a mask to prevent clear ground after fire.
+#		     *) Save results in 'result' and 'result.mat' files.
+#            *) Preprocess bounds as an input of Support Vector Machine method.
+#       b) Method preprocess_data_svm from svm.py file (if cloud = True):
+#            *) Define save ground and fire detections as 3D space-time cloud of points.
+#            *) Remove density of detections to be able to run SVM.
+#            *) Save results in 'result' and 'result.mat' files.
+#	4) Fire arrival time estimation using SVM: Method SVM3 from svm.py file.
 #		*) Run Support Vector Machine method.
-#		*) Save results in svm.mat file.
-#	5) Methods from contline.py and contour2kml.py files:
+#		*) Save results in 'svm' and 'svm.mat' files.
+#	5) Visualization of the SVM results: Methods from contline.py and contour2kml.py files.
 #		*) Construct a smooth contour line representation of the fire arrival time.
 #		*) Write the contour lines in a KML file called 'perimeters_svm.kml'.
 #
 # OUTPUTS
 #	- 'data': binary file containing satellite granules information.
-#	- 'result.mat': matlab file containing upper and lower bounds (U and L) from satellite data.
+#	- 'result.mat': matlab file containing upper and lower bounds (U and L).
+#   - 'result': binary file containing upper and lower bouds (U and L) or data points for SVM.
 # 	- 'svm.mat': matlab file containing the solution to the Support Vector Machine execution.
-#				 Contains estimation of the fire arrival time in tign_g variable.
+#                Contains estimation of the fire arrival time in the fire mesh in tign_g_interp variable.
+#   - 'svm': binary file containing the solution to the Support Vector Machine execution explained above.
 #	- 'fire_detections.kml': KML file with fire detection pixels (satellite, ignitions and perimeters).
 #	- 'googlearth.kmz': KMZ file with saved images and KML file of observed data.
 #	- 'perimeters_svm.kml': KML file with perimeters from estimation of the fire arrival time using SVM.
@@ -50,7 +58,7 @@ from interpolation import sort_dates
 from setup import process_detections
 from infrared_perimeters import process_ignitions, process_infrared_perimeters
 from forecast import process_forecast_wrfout
-from svm import preprocess_result_svm, SVM3
+from svm import preprocess_result_svm, preprocess_data_svm, SVM3
 from mpl_toolkits.basemap import Basemap
 from plot_pixels import basemap_scatter_mercator, create_kml
 from contline import get_contour_verts
@@ -73,7 +81,9 @@ dyn_pen = False
 # if dyn_pen = False: 5-fold cross validation for C and gamma?
 search = False
 # interpolate the results into fire mesh (if apply to spinup case)
-fire_interp = True
+fire_interp = False
+# using cloud of temporal-spatial nodes or bounds matrices
+cloud = True
 
 # if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
 # examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
@@ -119,7 +129,7 @@ if len(sys.argv) != 4 and (not bounds_exists) and (not satellite_exists):
 t_init = time()
 
 print ''
-if bounds_exists:
+if bounds_exists and not cloud:
 	print '>> File %s already created! Skipping all satellite processing <<' % bounds_file
 	print 'Loading from %s...' % bounds_file
 	result = loadmat(bounds_file)
@@ -250,52 +260,66 @@ else:
 		# eliminate images and KML after creation of KMZ
 		os.system('rm doc.kml *_A*_*.png')
 
+
 	print ''
 	print '>> Processing satellite data <<'
 	sys.stdout.flush()
-	try:
-		maxsize
-	except NameError:
-		maxsize = None
-	if maxsize:
-		result = process_detections(data,fxlon,fxlat,time_num,bbox,maxsize)
+	if cloud:
+		maxsize = 500
+		coarsening=np.int(1+np.max(fxlon.shape)/maxsize)
+		lon = fxlon[::coarsening,::coarsening]
+		lat = fxlat[::coarsening,::coarsening]
+		sdata = sort_dates(data)
+		time_num_granules = [ dd[1]['time_num'] for dd in sdata ]
+		time_num_interval = time_num
+		scale = [time_num[0]-0.5*(time_num[1]-time_num[0]),time_num[1]+2*(time_num[1]-time_num[0])]
+		X,y,c = preprocess_data_svm(data,scale)
 	else:
-		result = process_detections(data,fxlon,fxlat,time_num,bbox)
-	# Taking necessary variables from result dictionary
-	scale = result['time_scale_num']
-	time_num_granules = result['time_num_granules']
-	time_num_interval = result['time_num']
-	lon = np.array(result['fxlon']).astype(float)
-	lat = np.array(result['fxlat']).astype(float)
+		try:
+			maxsize
+		except NameError:
+			maxsize = None
+		if maxsize:
+			result = process_detections(data,fxlon,fxlat,time_num,bbox,maxsize)
+		else:
+			result = process_detections(data,fxlon,fxlat,time_num,bbox)
+		# Taking necessary variables from result dictionary
+		scale = result['time_scale_num']
+		time_num_granules = result['time_num_granules']
+		time_num_interval = result['time_num']
+		lon = np.array(result['fxlon']).astype(float)
+		lat = np.array(result['fxlat']).astype(float)
 
-U = np.array(result['U']).astype(float)
-L = np.array(result['L']).astype(float)
-T = np.array(result['T']).astype(float)
+if not cloud:
+	U = np.array(result['U']).astype(float)
+	L = np.array(result['L']).astype(float)
+	T = np.array(result['T']).astype(float)
 
-if 'C' in result.keys():
-	conf = np.array(result['C'])
-	if 'Cg' in result.keys():
-		conf = (np.array(result['Cg']),conf)
+	if 'C' in result.keys():
+		conf = np.array(result['C'])
+		if 'Cg' in result.keys():
+			conf = (np.array(result['Cg']),conf)
+		else:
+			conf = (10*np.ones(L.shape),conf)
 	else:
-		conf = (10*np.ones(L.shape),conf)
-else:
-	conf = None
+		conf = None
 
-print ''
-print '>> Preprocessing the data <<'
-sys.stdout.flush()
-X,y,c = preprocess_result_svm(lon,lat,U,L,T,scale,time_num_granules,C=conf)
+	print ''
+	print '>> Preprocessing the data <<'
+	sys.stdout.flush()
+	X,y,c = preprocess_result_svm(lon,lat,U,L,T,scale,time_num_granules,C=conf)
 
 print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
-if conf is None or not dyn_pen:
-	C = 1e4
-	kgam = 1e3
-else:
+if dyn_pen:
 	C = np.power(c,3)
-	kgam = 1e3
+	kgam = np.sqrt(len(y))/4.
 	search = False
+else:
+	kgam = np.sqrt(len(y))/4.
+	C = kgam*1e2
+
 F = SVM3(X,y,C=C,kgam=kgam,search=search,fire_grid=(lon,lat))
 
 print ''
@@ -305,11 +329,14 @@ tscale = 24*3600 # scale from seconds to days
 # Fire arrival time in seconds from the begining of the simulation
 tign_g = np.array(F[2])*float(tscale)+scale[0]-time_num_interval[0]
 # Creating the dictionary with the results
-svm = {'dxlon': lon, 'dxlat': lat, 'U': U/tscale, 'L': L/tscale,
+svm = {'dxlon': lon, 'dxlat': lat, 'X': X, 'y': y, 'c': c,
 		'fxlon': F[0], 'fxlat': F[1], 'Z': F[2],
 		'tign_g': tign_g, 'C': C, 'kgam': kgam,
 		'tscale': tscale, 'time_num_granules': time_num_granules,
 		'time_scale_num': scale, 'time_num': time_num_interval}
+if not cloud:
+	svm.update({'U': U/tscale, 'L': L/tscale})
+
 # Interpolation of tign_g
 if fire_interp:
 	try:
@@ -335,7 +362,7 @@ print '>> Computing contour lines of the fire arrival time <<'
 print 'Computing the contours...'
 try:
 	# Granules numeric times
-	Z = F[2]*tscale+scale[0]
+	Z = np.transpose(F[2])*tscale+scale[0]
 	# Creating contour lines
 	contour_data = get_contour_verts(F[0], F[1], Z, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
 	print 'Creating the KML file...'

@@ -794,18 +794,19 @@ def read_fire_mesh(filename):
     fm,fn = d.variables['FXLONG'][0,:,:].shape
     fm=fm-fm/(m+1)    # dimensions corrected for extra strip
     fn=fn-fn/(n+1)
-    fxlon = d.variables['FXLONG'][0,:fm,:fn] #  masking  extra strip
-    fxlat = d.variables['FXLAT'][0,:fm,:fn]
-    tign_g = d.variables['TIGN_G'][0,:fm,:fn]
+    fxlon = np.array(d.variables['FXLONG'][0,:fm,:fn]) #  masking  extra strip
+    fxlat = np.array(d.variables['FXLAT'][0,:fm,:fn])
     time_esmf = ''.join(d.variables['Times'][:][0])  # date string as YYYY-MM-DD_hh:mm:ss
-    d.close()
     bbox = [fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
     print 'min max longitude latitude %s'  % bbox
     print 'time (ESMF) %s' % time_esmf
 
     plot = False
     if plot:
+        tign_g = np.array(d.variables['TIGN_G'][0,:fm,:fn])
         plot_3D(fxlon,fxlat,tign_g)
+
+    d.close()
 
     return fxlon,fxlat,bbox,time_esmf
 

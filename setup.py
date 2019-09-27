@@ -252,27 +252,26 @@ def process_detections(data,fxlon,fxlat,time_num,bounds=None,maxsize=500):
 
 	print 'Saving results'
 	# Result
-	U=np.transpose(np.reshape(U-time_scale_num[0],fxlon.shape))
-	L=np.transpose(np.reshape(L-time_scale_num[0],fxlon.shape))
-	T=np.transpose(np.reshape(T-time_scale_num[0],fxlon.shape))
+	U=np.reshape(U-time_scale_num[0],fxlon.shape,'F')
+	L=np.reshape(L-time_scale_num[0],fxlon.shape,'F')
+	T=np.reshape(T-time_scale_num[0],fxlon.shape,'F')
 
 	print 'U L R are shifted so that zero there is time_scale_num[0] = %s' % time_scale_num[0]
 
-	result = {'U': U, 'L': L, 'T': T, 'fxlon': fxlon, 'fxlat': fxlat,
+	result = {'U': U, 'L': L, 'T': T,
+		'fxlon': fxlon, 'fxlat': fxlat,
 		'time_num': time_num, 'time_scale_num' : time_scale_num,
 		'time_num_granules': tt, 'ofxlon': ofxlon, 'ofxlat': ofxlat}
 	if confm:
-		C=np.transpose(np.reshape(C,fxlon.shape))
-		Cg=np.transpose(np.reshape(Cg,fxlon.shape))
+		C=np.reshape(C,fxlon.shape,'F')
+		Cg=np.reshape(Cg,fxlon.shape,'F')
 		result.update({'C': C, 'Cg': Cg})
 
 	sio.savemat('result.mat', mdict=result)
+	sl.save(result,'result')
 
 	print 'To visualize, run in Matlab the script plot_results.m'
 	print 'Multigrid using in fire_interpolation the script jpss_mg.m'
-
-	result['fxlon'] = np.transpose(result['fxlon'])
-	result['fxlat'] = np.transpose(result['fxlat'])
 
 	return result
 

@@ -58,7 +58,7 @@ def preprocess_data_svm(data, scale):
         tt = (gran[1]['time_num']-scale[0])/tscale
         conf = gran[1]['conf_fire']>=minconf
         xf = np.c_[(gran[1]['lon_fire'][conf],gran[1]['lat_fire'][conf],np.repeat(tt,conf.sum()))]
-        print 'fire detections: %d' % len(xf)
+        print 'fire detections: %g' % len(xf)
         XX[0].append(xf)
         mask = np.logical_and(gran[1]['lon_nofire'] >= bf[0],
                 np.logical_and(gran[1]['lon_nofire'] <= bf[1],
@@ -66,7 +66,7 @@ def preprocess_data_svm(data, scale):
                                  gran[1]['lat_nofire'] <= bf[3])))
         xg = np.c_[(gran[1]['lon_nofire'][mask],gran[1]['lat_nofire'][mask],np.repeat(tt,mask.sum()))]
         print 'no fire detections: %g' % len(xg)
-        coarsening = np.int(1+len(xg)/min(1e2,5*max(len(xf),20)))
+        coarsening = np.int(1+len(xg)/min(50,5*max(len(xf),5)))
         print 'coarsening: %d' % coarsening
         print 'no fire detections reduction: %g' % len(xg[::coarsening])
         XX[1].append(xg[::coarsening])
@@ -200,7 +200,7 @@ def preprocess_result_svm(lons, lats, U, L, T, scale, time_num_granules, C=None)
     ly = lat[lm]
     lz = ll[lm]
 
-    # Create the data to call SVM3 function from svm3test.py
+    # Create the data to call SVM3 function from svm.py
     X = np.c_[np.concatenate((lx,ux)),np.concatenate((ly,uy)),np.concatenate((lz,uz))]
     y = np.concatenate((-np.ones(len(lx)),np.ones(len(ux))))
     # Print the shape of the data
