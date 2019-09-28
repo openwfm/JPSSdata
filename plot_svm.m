@@ -71,7 +71,7 @@ else
     alpha = 0.3;
     set(h2, 'MarkerEdgeAlpha', alpha, 'MarkerFaceAlpha', alpha)
     hold on
-    contour3(r.fxlon,r.fxlat,r.Z',100)
+    contour3(r.fxlon,r.fxlat,r.Z,100)
     zlim([zmin,zmax]);
     title('Support-vector machine: Satellite detections vs fire arrival time')
     xlabel('Longitude')
@@ -81,7 +81,7 @@ else
     figure, 
     scatter3(r.X(fire,1), r.X(fire,2), r.X(fire,3), 'r.')
     hold on
-    contour3(r.fxlon,r.fxlat,r.Z',100)
+    contour3(r.fxlon,r.fxlat,r.Z,100)
     zlim([zmin,zmax]);
     title('Support-vector machine: Fire detections vs fire arrival time')
     xlabel('Longitude')

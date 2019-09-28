@@ -25,6 +25,7 @@ def contour2kml(data,kml_path):
                 <PolyStyle>
                         <color>%s</color>
                         <colorMode>%s</colorMode>
+                        <fill>0</fill>
                 </PolyStyle>""" % (c['PolyStyle']['color'],c['PolyStyle'].get('colorMode','random')))
            kml.write("\n</Style>")
        folder_name = data.get('folder_name',name)
@@ -42,7 +43,7 @@ def contour2kml(data,kml_path):
                                 <styleUrl>ColorStyle%s</styleUrl>
                                 <MultiGeometry>""" % (
                time_begin, time_begin, time_begin,idx))
-           for polygon in c['polygons']: 
+           for polygon in c['polygons']:
                kml.write("""
                                         <Polygon>
                                                 <outerBoundaryIs>

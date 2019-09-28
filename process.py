@@ -274,6 +274,7 @@ else:
 		time_num_interval = time_num
 		scale = [time_num[0]-0.5*(time_num[1]-time_num[0]),time_num[1]+2*(time_num[1]-time_num[0])]
 		X,y,c = preprocess_data_svm(data,scale)
+		sl.save((lon,lat,X,y,c,time_num_interval,scale,time_num_granules,scale,fxlon,fxlat),'result')
 	else:
 		try:
 			maxsize
