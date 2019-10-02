@@ -159,7 +159,7 @@ def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=Fa
                 # regex of the polygons (or perimeters)
                 polygons = re.findall(r'<Polygon>(.*?)</Polygon>',f_str,re.DOTALL)
                 # for each polygon, regex of the coordinates
-                buckets = [re.split('\r\n\s+',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in polygons]
+                buckets = [re.split(r'\n\s+',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in polygons]
                 # array of arrays with each polygon coordinates
                 coordinates = [[np.array(re.split(',',b)[0:2]).astype(float) for b in bucket] for bucket in buckets]
             except Exception as e:

@@ -36,7 +36,7 @@ def preprocess_data_svm(data, scale):
     """
 
     # minim fire confidence level to take into account
-    minconf = 70.
+    minconf = 80.
     # confidence of ground detections
     gconf = 70.
 
@@ -66,8 +66,8 @@ def preprocess_data_svm(data, scale):
                                  gran[1]['lat_nofire'] <= bf[3])))
         xg = np.c_[(gran[1]['lon_nofire'][mask],gran[1]['lat_nofire'][mask],np.repeat(tt,mask.sum()))]
         print 'no fire detections: %g' % len(xg)
-        coarsening = np.int(1+len(xg)/min(50,5*max(len(xf),5)))
-        print 'coarsening: %d' % coarsening
+        coarsening = np.int(1+len(xg)/min(50,5*max(len(xf),1)))
+        print 'no fire coarsening: %d' % coarsening
         print 'no fire detections reduction: %g' % len(xg[::coarsening])
         XX[1].append(xg[::coarsening])
         cf.append(gran[1]['conf_fire'][conf])
@@ -475,11 +475,11 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
     # number of horizontal nodes per observation (it is used if fire_grid==None)
     hN = 5
     # creation of under artificial lower bounds in the pre-processing
-    artil = True
+    artil = False
     # if artil = True: resolution of artificial lower bounds vertical to the ground detections
     hartil = .2
     # creation of over artificial upper bounds in the pre-processing
-    artiu = True
+    artiu = False
     # if artiu = True: resolution of artificial upper bounds vertical to the fire detections
     hartiu = .1
     # creation of an artifitial mesh of down lower bounds

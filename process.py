@@ -153,15 +153,11 @@ else:
 		argument = sys.argv[1].split(',')
 		if len(argument) > 1:
 			print '>> Creating the fire mesh <<'
-			dlon = .01
+			dlon = .005
 			dlat = .005
 			bounds = map(float,argument)
 			fxlon,fxlat = np.meshgrid(np.arange(bounds[0],bounds[1],dlon),
 							np.arange(bounds[2],bounds[3],dlat))
-			maxsize = 500
-			coarsening=np.int(1+np.max(fxlon.shape)/maxsize)
-			fxlon = fxlon[0::coarsening,0::coarsening]
-			fxlat = fxlat[0::coarsening,0::coarsening]
 			bbox = [fxlon.min(),fxlon.max(),fxlat.min(),fxlat.max()]
 			print 'min max longitude latitude %s' % bbox
 		else:
