@@ -8,8 +8,6 @@ import time
 from JPSSD import time_num2iso
 from contour2kml import contour2kml
 from scipy.ndimage import gaussian_filter
-import os
-import sys
 
 def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6, gauss_filter=True, plot_contours=False, col_repr=False, levels_gran=False):
     fig = plt.figure()
@@ -125,6 +123,7 @@ def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour
     return data
 
 if __name__ == "__main__":
+    import os,sys
     result_file = 'result.mat'
     mgout_file = 'mgout.mat'
     if os.path.isfile(result_file) and os.access(result_file,os.R_OK) and os.path.isfile(mgout_file) and os.access(mgout_file,os.R_OK):

@@ -9,14 +9,12 @@ import sys
 import re
 import glob
 import netCDF4 as nc
-from cmr import CollectionQuery, GranuleQuery
 from pyhdf.SD import SD, SDC
 from utils import *
 import scipy.io as sio
 import h5py
 import datetime
 import time
-import pandas as pd
 import matplotlib.colors as colors
 from itertools import groupby
 from subprocess import check_output, call
@@ -36,6 +34,7 @@ def search_api(sname,bbox,time,maxg=50,platform="",version=""):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
+    from cmr import GranuleQuery
     api = GranuleQuery()
     if not version:
         if not platform:
@@ -401,6 +400,7 @@ def read_viirs375_files(path,bounds):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-10-23
     """
+    import pandas as pd
     # Opening files if they exist
     f1=glob.glob(path+'/fire_archive_*.csv')
     f2=glob.glob(path+'/fire_nrt_*.csv')
@@ -872,6 +872,7 @@ def write_csv(d,bounds):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
+    import pandas as pd
     df=pd.DataFrame(data=d)
     df=df[(df['longitude']>bounds[0]) & (df['longitude']<bounds[1]) & (df['latitude']>bounds[2]) & (df['latitude']<bounds[3])]
     df.to_csv('fire_detections.csv', encoding='utf-8', index=False)
