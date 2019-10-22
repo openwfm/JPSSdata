@@ -1122,7 +1122,7 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                             lat=latitude[p]
                             lon=longitude[p]
                             conf=confidence[p]
-                            if conf >= maxconf:
+                            if conf >= minconf:
                                 frp=frps[p]
                                 angle=angles[p]
                                 scan=scans[p]
