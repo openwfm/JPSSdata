@@ -15,7 +15,9 @@ def load(file):
     :return: the object read
     """
     with open(file,'rb') as f:
-       return pickle.load(f)
-
-
-
+        try:
+            # python 2
+            return pickle.load(f)
+        except ImportError:
+            # python 3
+            return pickle.load(f,encoding='latin1')
