@@ -347,8 +347,8 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             fig.suptitle("Decision volume")
-            col = [(0, 0, 1), (.5, .5, .5), (1, 0, 0)]
-            cm = colors.LinearSegmentedColormap.from_list('BuRd',col,N=100)
+            col = [(0, 1, 0), (.5, .5, .5), (1, 0, 0)]
+            cm = colors.LinearSegmentedColormap.from_list('GrRdD',col,N=100)
             midpoint = 1 - ZZ.max() / (ZZ.max() + abs(ZZ.min()))
             shiftedcmap = shiftedColorMap(cm, midpoint=midpoint, name='shifted')
             X = np.ravel(xx)
@@ -518,7 +518,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             fig.suptitle("Plotting the original data to fit")
-            ax.scatter(X0, X1, X2, c=y, cmap=cm_GR, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
+            ax.scatter(X0, X1, X2, c=y, cmap=cm_GR, s=5, edgecolors='k', vmin=y.min(), vmax=y.max())
             ax.set_xlabel("Longitude")
             ax.set_ylabel("Latitude")
             ax.set_zlabel("Time (days)")
@@ -648,7 +648,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             fig.suptitle("Plotting the data scaled to fit")
-            ax.scatter(X0, X1, X2, c=y, cmap=cm_GR, s=20, edgecolors='k', vmin=y.min(), vmax=y.max())
+            ax.scatter(X0, X1, X2, c=y, cmap=cm_GR, s=5, edgecolors='k', vmin=y.min(), vmax=y.max())
             ax.set_xlabel("Longitude normalized")
             ax.set_ylabel("Latitude normalized")
             ax.set_zlabel("Time normalized")
@@ -767,7 +767,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             # plotting no-support vectors (smaller)
             ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=cm_GR, s=.5, vmin=y.min(), vmax=y.max(), alpha=.1)
             # plotting support vectors (bigger)
-            ax.scatter(supp_vec[:, 0], supp_vec[:, 1], supp_vec[:, 2], c=y[supp_ind], cmap=cm_GR, s=20, edgecolors='k', alpha=.2);
+            ax.scatter(supp_vec[:, 0], supp_vec[:, 1], supp_vec[:, 2], c=y[supp_ind], cmap=cm_GR, s=5, edgecolors='k', alpha=.2);
             ax.set_xlim(xx.min(),xx.max())
             ax.set_ylim(yy.min(),yy.max())
             ax.set_zlim(zz.min(),zz.max())
