@@ -101,6 +101,7 @@ satellite_file = 'data'
 fire_file = 'fire_detections.kml'
 gearth_file = 'googlearth.kmz'
 bounds_file = 'result.mat'
+cloud_file = 'result'
 svm_file = 'svm.mat'
 contour_file = 'perimeters_svm.kml'
 
@@ -111,8 +112,9 @@ satellite_exists = exist(satellite_file)
 fire_exists = exist(fire_file)
 gearth_exists = exist(gearth_file)
 bounds_exists = exist(bounds_file)
+cloud_exists = exist(cloud_file)
 
-if len(sys.argv) != 4 and (not bounds_exists) and (not satellite_exists):
+if len(sys.argv) != 4 and (not bounds_exists) and (not satellite_exists) and (not cloud_exists):
 	print 'Error: python %s wrfout start_time days' % sys.argv[0]
 	print '	* wrfout - string, wrfout file of WRF-SFIRE simulation'
 	print '		OR coordinates bounding box - floats separated by comas:'
@@ -144,7 +146,10 @@ if bounds_exists and not cloud:
 	if 'ofxlon' in result.keys():
 		fxlon = result['ofxlon']
 		fxlat = result['ofxlat']
-
+elif cloud_exists and cloud:
+	print '>> File %s already created! Skipping all satellite processing <<' % cloud_file
+	print 'Loading from %s...' % cloud_file
+	lon,lat,X,y,c,time_num_interval,scale,time_num_granules,scale,fxlon,fxlat = sl.load(cloud_file)
 else:
 	if satellite_exists:
 		print '>> File %s already created! Skipping satellite retrieval <<' % satellite_file
@@ -313,10 +318,10 @@ print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if dyn_pen:
 	C = np.power(c,3)
-	kgam = np.sqrt(len(y))/4.
+	kgam = np.sqrt(len(y))/5.
 	search = False
 else:
-	kgam = np.sqrt(len(y))/4.
+	kgam = np.sqrt(len(y))/5.
 	C = kgam*1e2
 
 F = SVM3(X,y,C=C,kgam=kgam,search=search,fire_grid=(lon,lat))
