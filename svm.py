@@ -347,7 +347,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             fig.suptitle("Decision volume")
-            col = [(0, 1, 0), (.5, .5, .5), (1, 0, 0)]
+            col = [(0, .5, 0), (.5, .5, .5), (.5, 0, 0)]
             cm = colors.LinearSegmentedColormap.from_list('GrRdD',col,N=100)
             midpoint = 1 - ZZ.max() / (ZZ.max() + abs(ZZ.min()))
             shiftedcmap = shiftedColorMap(cm, midpoint=midpoint, name='shifted')
@@ -445,7 +445,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
 
     t_init = time()
 
-    col = [(0, 1, 0), (1, 0, 0)]
+    col = [(0, .5, 0), (.5, 0, 0)]
     cm_GR = colors.LinearSegmentedColormap.from_list('GrRd',col,N=2)
     col = [(1, 0, 0), (.25, 0, 0)]
     cm_Rds = colors.LinearSegmentedColormap.from_list('Rds',col,N=100)
@@ -478,7 +478,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
     # if artil = True: resolution of artificial lower bounds vertical to the ground detections
     hartil = .2
     # creation of over artificial upper bounds in the pre-processing
-    artiu = False
+    artiu = True
     # if artiu = True: resolution of artificial upper bounds vertical to the fire detections
     hartiu = .1
     # creation of an artifitial mesh of down lower bounds
@@ -518,7 +518,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             fig.suptitle("Plotting the original data to fit")
-            ax.scatter(X0, X1, X2, c=y, cmap=cm_GR, s=5, edgecolors='k', vmin=y.min(), vmax=y.max())
+            ax.scatter(X0, X1, X2, c=y, cmap=cm_GR, s=1, alpha=.5, vmin=y.min(), vmax=y.max())
             ax.set_xlabel("Longitude")
             ax.set_ylabel("Latitude")
             ax.set_zlabel("Time (days)")
@@ -648,7 +648,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             fig.suptitle("Plotting the data scaled to fit")
-            ax.scatter(X0, X1, X2, c=y, cmap=cm_GR, s=5, edgecolors='k', vmin=y.min(), vmax=y.max())
+            ax.scatter(X0, X1, X2, c=y, cmap=cm_GR, s=1, alpha=.5, vmin=y.min(), vmax=y.max())
             ax.set_xlabel("Longitude normalized")
             ax.set_ylabel("Latitude normalized")
             ax.set_zlabel("Time normalized")
@@ -765,9 +765,9 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             ms = np.isin(rr,supp_ind)
             nsupp = rr[~ms]
             # plotting no-support vectors (smaller)
-            ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=cm_GR, s=.5, vmin=y.min(), vmax=y.max(), alpha=.1)
+            ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=cm_GR, s=.5, alpha=.5, vmin=y.min(), vmax=y.max(), alpha=.1)
             # plotting support vectors (bigger)
-            ax.scatter(supp_vec[:, 0], supp_vec[:, 1], supp_vec[:, 2], c=y[supp_ind], cmap=cm_GR, s=5, edgecolors='k', alpha=.2);
+            ax.scatter(supp_vec[:, 0], supp_vec[:, 1], supp_vec[:, 2], c=y[supp_ind], cmap=cm_GR, s=1, alpha=.7, edgecolors='k', alpha=.2);
             ax.set_xlim(xx.min(),xx.max())
             ax.set_ylim(yy.min(),yy.max())
             ax.set_zlim(zz.min(),zz.max())
@@ -835,7 +835,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             fig.suptitle("Plotting the 3D graph function of a SVM")
             FFx, FFy, FFz = np.array(FF[0]), np.array(FF[1]), np.array(FF[2])
             # plotting original data
-            ax.scatter(oX0, oX1, oX2, c=oy, cmap=cm_GR, s=2, vmin=y.min(), vmax=y.max())
+            ax.scatter(oX0, oX1, oX2, c=oy, cmap=cm_GR, s=1, alpha=.5, vmin=y.min(), vmax=y.max())
             # plotting fire arrival time
             ax.plot_wireframe(FFx, FFy, FFz, color='orange', alpha=.5)
             ax.set_xlabel("Longitude")
