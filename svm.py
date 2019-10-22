@@ -20,13 +20,14 @@ from infrared_perimeters import process_infrared_perimeters
 import sys
 import saveload as sl
 
-def preprocess_data_svm(data, scale):
+def preprocess_data_svm(data, scale, minconf=80.):
     """
     Preprocess satellite data from JPSSD to use in Support Vector Machine directly
     (without any interpolation as space-time 3D points)
 
     :param data: dictionary of satellite data from JPSSD
     :param scale: time scales
+    :param minconf: optional, minim fire confidence level to take into account
     :return X: matrix of features for SVM
     :return y: vector of labels for SVM
     :return c: vector of confidence level for SVM
@@ -35,8 +36,6 @@ def preprocess_data_svm(data, scale):
     Angel Farguell (angel.farguell@gmail.com), 2019-09-24
     """
 
-    # minim fire confidence level to take into account
-    minconf = 80.
     # confidence of ground detections
     gconf = 70.
 

@@ -1011,7 +1011,7 @@ def copyto(partial_path,kml):
         for line in part:
             kml.write(line)
 
-def json2kml(d,kml_path,bounds,prods,opt='granule'):
+def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
     """
     Creates a KML file kml_path from a dictionary d
 
@@ -1122,88 +1122,89 @@ def json2kml(d,kml_path,bounds,prods,opt='granule'):
                             lat=latitude[p]
                             lon=longitude[p]
                             conf=confidence[p]
-                            frp=frps[p]
-                            angle=angles[p]
-                            scan=scans[p]
-                            track=tracks[p]
-                            timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
-                            timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
+                            if conf >= maxconf:
+                                frp=frps[p]
+                                angle=angles[p]
+                                scan=scans[p]
+                                track=tracks[p]
+                                timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
+                                timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
 
-                            if prod == 'NF':
-                                kml.write('<Placemark>\n<name>Ground detection square</name>\n')
-                                kml.write('<description>\nlongitude:   %s\n' % lon
-                                                      +  'latitude:    %s\n' % lat
-                                                      +  'time:        %s\n' % timedescr
-                                                      +  'satellite:   %s\n' % satellite[p]
-                                                      +  'instrument:  %s\n' % instrument[p]
-                                                      +  'scan angle:  %s\n' % angle
-                                                      +  'along-scan:  %s\n' % scan
-                                                      +  'along-track: %s\n' % track
-                                        + '</description>\n')
-                            else:
-                                kml.write('<Placemark>\n<name>Fire detection square</name>\n')
-                                kml.write('<description>\nlongitude:   %s\n' % lon
-                                                      +  'latitude:    %s\n' % lat
-                                                      +  'time:        %s\n' % timedescr
-                                                      +  'satellite:   %s\n' % satellite[p]
-                                                      +  'instrument:  %s\n' % instrument[p]
-                                                      +  'confidence:  %s\n' % conf
-                                                      +  'FRP:         %s\n' % frp
-                                                      +  'scan angle:  %s\n' % angle
-                                                      +  'along-scan:  %s\n' % scan
-                                                      +  'along-track: %s\n' % track
-                                        + '</description>\n')
-                            kml.write('<TimeStamp><when>%s</when></TimeStamp>\n' % timestamp)
-                            if prod == 'AF':
-                                if conf < 30:
-                                    kml.write('<styleUrl> modis_conf_low </styleUrl>\n')
-                                elif conf < 80:
-                                    kml.write('<styleUrl> modis_conf_med </styleUrl>\n')
+                                if prod == 'NF':
+                                    kml.write('<Placemark>\n<name>Ground detection square</name>\n')
+                                    kml.write('<description>\nlongitude:   %s\n' % lon
+                                                          +  'latitude:    %s\n' % lat
+                                                          +  'time:        %s\n' % timedescr
+                                                          +  'satellite:   %s\n' % satellite[p]
+                                                          +  'instrument:  %s\n' % instrument[p]
+                                                          +  'scan angle:  %s\n' % angle
+                                                          +  'along-scan:  %s\n' % scan
+                                                          +  'along-track: %s\n' % track
+                                            + '</description>\n')
                                 else:
-                                    kml.write('<styleUrl> modis_conf_high </styleUrl>\n')
-                            elif prod == 'TF':
-                                kml.write('<Style>\n'+'<PolyStyle>\n'
-                                            +'<color>%s</color>\n' % cols[t]
-                                            +'<outline>0</outline>\n'+'</PolyStyle>\n'
-                                            +'</Style>\n')
-                            elif prod == 'FRP':
-                                frpx = min(40,np.ceil(frp/10.)-1)
-                                kml.write('<styleUrl> %s </styleUrl>\n' % frp_style[frpx] )
-                            elif prod == 'NF':
-                                kml.write('<styleUrl> no_fire </styleUrl>\n')
-                            elif prod == 'AFN':
-                                if conf < 30:
+                                    kml.write('<Placemark>\n<name>Fire detection square</name>\n')
+                                    kml.write('<description>\nlongitude:   %s\n' % lon
+                                                          +  'latitude:    %s\n' % lat
+                                                          +  'time:        %s\n' % timedescr
+                                                          +  'satellite:   %s\n' % satellite[p]
+                                                          +  'instrument:  %s\n' % instrument[p]
+                                                          +  'confidence:  %s\n' % conf
+                                                          +  'FRP:         %s\n' % frp
+                                                          +  'scan angle:  %s\n' % angle
+                                                          +  'along-scan:  %s\n' % scan
+                                                          +  'along-track: %s\n' % track
+                                            + '</description>\n')
+                                kml.write('<TimeStamp><when>%s</when></TimeStamp>\n' % timestamp)
+                                if prod == 'AF':
+                                    if conf < 30:
+                                        kml.write('<styleUrl> modis_conf_low </styleUrl>\n')
+                                    elif conf < 80:
+                                        kml.write('<styleUrl> modis_conf_med </styleUrl>\n')
+                                    else:
+                                        kml.write('<styleUrl> modis_conf_high </styleUrl>\n')
+                                elif prod == 'TF':
                                     kml.write('<Style>\n'+'<PolyStyle>\n'
-                                            +'<color>7000ffff</color>\n'
-                                            +'<outline>0</outline>\n'+'</PolyStyle>\n'
-                                            +'</Style>\n')
-                                elif conf < 80:
-                                    kml.write('<Style>\n'+'<PolyStyle>\n'
-                                            +'<color>7000a5ff</color>\n'
-                                            +'<outline>0</outline>\n'+'</PolyStyle>\n'
-                                            +'</Style>\n')
-                                else:
-                                    kml.write('<Style>\n'+'<PolyStyle>\n'
-                                            +'<color>700000ff</color>\n'
-                                            +'<outline>0</outline>\n'+'</PolyStyle>\n'
-                                            +'</Style>\n')
+                                                +'<color>%s</color>\n' % cols[t]
+                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'</Style>\n')
+                                elif prod == 'FRP':
+                                    frpx = min(40,np.ceil(frp/10.)-1)
+                                    kml.write('<styleUrl> %s </styleUrl>\n' % frp_style[frpx] )
+                                elif prod == 'NF':
+                                    kml.write('<styleUrl> no_fire </styleUrl>\n')
+                                elif prod == 'AFN':
+                                    if conf < 30:
+                                        kml.write('<Style>\n'+'<PolyStyle>\n'
+                                                +'<color>7000ffff</color>\n'
+                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'</Style>\n')
+                                    elif conf < 80:
+                                        kml.write('<Style>\n'+'<PolyStyle>\n'
+                                                +'<color>7000a5ff</color>\n'
+                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'</Style>\n')
+                                    else:
+                                        kml.write('<Style>\n'+'<PolyStyle>\n'
+                                                +'<color>700000ff</color>\n'
+                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'</Style>\n')
 
-                            kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
+                                kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
 
-                            km_lon=km_lat/np.cos(lat*np.pi/180)  # 1 km in longitude
+                                km_lon=km_lat/np.cos(lat*np.pi/180)  # 1 km in longitude
 
-                            sq_track_size_km=track
-                            sq2_lat=km_lat * sq_track_size_km/2
-                            sq_scan_size_km=scan
-                            sq2_lon=km_lon * sq_scan_size_km/2
+                                sq_track_size_km=track
+                                sq2_lat=km_lat * sq_track_size_km/2
+                                sq_scan_size_km=scan
+                                sq2_lon=km_lon * sq_scan_size_km/2
 
-                            kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
-                            kml.write('%s,%s,0\n' % (lon - sq2_lon, lat + sq2_lat))
-                            kml.write('%s,%s,0\n' % (lon + sq2_lon, lat + sq2_lat))
-                            kml.write('%s,%s,0\n' % (lon + sq2_lon, lat - sq2_lat))
-                            kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
+                                kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
+                                kml.write('%s,%s,0\n' % (lon - sq2_lon, lat + sq2_lat))
+                                kml.write('%s,%s,0\n' % (lon + sq2_lon, lat + sq2_lat))
+                                kml.write('%s,%s,0\n' % (lon + sq2_lon, lat - sq2_lat))
+                                kml.write('%s,%s,0\n' % (lon - sq2_lon, lat - sq2_lat))
 
-                            kml.write('</coordinates>\n</LinearRing>\n</outerBoundaryIs>\n</Polygon>\n</Placemark>\n')
+                                kml.write('</coordinates>\n</LinearRing>\n</outerBoundaryIs>\n</Polygon>\n</Placemark>\n')
                         kml.write('</Folder>\n')
 
                 kml.write('</Folder>\n')

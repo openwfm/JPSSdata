@@ -84,6 +84,8 @@ search = False
 fire_interp = False
 # using cloud of temporal-spatial nodes or bounds matrices
 cloud = True
+# minimum confidence level for the satellite pixels to be considered
+minconf = 70.
 
 # if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
 # examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
@@ -216,7 +218,7 @@ else:
 		# transform dictionary notation to json notation
 		json = sdata2json(nsdata,keys,dkeys,N)
 		# write KML file from json notation
-		json2kml(json,fire_file,bbox,prods)
+		json2kml(json,fire_file,bbox,prods,minconf=minconf)
 	print ''
 	if gearth_exists:
 		print '>> File %s already created! <<' % gearth_file
@@ -269,7 +271,7 @@ else:
 		time_num_granules = [ dd[1]['time_num'] for dd in sdata ]
 		time_num_interval = time_num
 		scale = [time_num[0]-0.5*(time_num[1]-time_num[0]),time_num[1]+2*(time_num[1]-time_num[0])]
-		X,y,c = preprocess_data_svm(data,scale)
+		X,y,c = preprocess_data_svm(data,scale,minconf=minconf)
 		sl.save((lon,lat,X,y,c,time_num_interval,scale,time_num_granules,scale,fxlon,fxlat),'result')
 	else:
 		try:

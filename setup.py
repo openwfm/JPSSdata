@@ -9,7 +9,7 @@ from utils import Dict
 from interpolation import sort_dates, nearest_scipy, neighbor_indices_ball, neighbor_indices_pixel, neighbor_indices_ellipse
 import os, sys, time, itertools
 
-def process_detections(data,fxlon,fxlat,time_num,bounds=None,maxsize=500):
+def process_detections(data,fxlon,fxlat,time_num,bounds=None,maxsize=500,confl=0.):
 	"""
 	Process detections to obtain upper and lower bounds
 
@@ -17,6 +17,9 @@ def process_detections(data,fxlon,fxlat,time_num,bounds=None,maxsize=500):
 	:param fxlon: longitude coordinates of the fire mesh (from wrfout)
 	:param fxlat: latitude coordinates of the fire mesh (from wrfout)
 	:param time_num: numerical value of the starting and ending time
+	:param bounds: optional, spatial bounds to consider (lon_min,lon_max,lat_min,lat_max)
+	:param maxsize: optional, maxsize of the mesh in both directions
+	:param confl: optional, minimum confidence level for the pixels
 	:return result: upper and lower bounds with some parameters
 
 	Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
@@ -29,7 +32,6 @@ def process_detections(data,fxlon,fxlat,time_num,bounds=None,maxsize=500):
 	mt=2 # Mask technique, mt=1: Ball -- mt=2: Pixel -- mt=3: Ellipse
 	dist=8 # If mt=1 (ball neighbours), radius of the balls is R=sqrt(2*dist^2)
 	mm=5 # If mt=3 (ellipse neighbours), larger ellipses constant: (x/a)^2+(x/b)^2<=mm
-	confl=0. # Minimum confidence level for the pixels
 	confa=False # Histogram plot of the confidence level distribution
 	confm=True # Store confidence of each fire and ground detection
 	conf_nofire=70. # In absence of nofire confidence, value for nofire confidence (satellite data)
