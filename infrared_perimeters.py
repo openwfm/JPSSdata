@@ -135,7 +135,7 @@ def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=Fa
                 # read name of the file
                 name = re.findall(r'<name>(.*?)</name>',f_str,re.DOTALL)[0]
                 # read date of the perimeter
-                date = re.match(r'.*([0-9]+)-([0-9]+)-([0-9]+) ([0-9]{2})([0-9]{2})',name).groups()
+                date = re.match(r'.* ([0-9]+)-([0-9]+)-([0-9]+) ([0-9]{2})([0-9]{2})',name).groups()
                 date = (date[2],date[0],date[1],date[3],date[4])
                 # create ISO time of the date
                 time_iso = '%04d-%02d-%02dT%02d:%02d:00' % tuple([ int(d) for d in date ])
@@ -159,9 +159,9 @@ def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=Fa
                 # regex of the polygons (or perimeters)
                 polygons = re.findall(r'<Polygon>(.*?)</Polygon>',f_str,re.DOTALL)
                 # for each polygon, regex of the coordinates
-                buckets = [re.split(r'\n\s+',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in polygons]
+                buckets = [re.split(r'\s',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in polygons]
                 # array of arrays with each polygon coordinates
-                coordinates = [[np.array(re.split(',',b)[0:2]).astype(float) for b in bucket] for bucket in buckets]
+                coordinates = [[np.array(re.split(',',b)[0:2]).astype(float) for b in bucket if b is not ''] for bucket in buckets]
             except Exception as e:
                 print 'Error: file %s has not proper structure.' % file
                 print 'Exception: %s.' % e
@@ -235,7 +235,7 @@ def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=Fa
 
 if __name__ == "__main__":
     # Experiment to do
-    exp = 1
+    exp = 3
     # Plot perimeters as created
     plot = True
 
@@ -252,9 +252,15 @@ if __name__ == "__main__":
         igns = ([-112.676039],[40.339372],['2013-08-10T20:00:00Z'])
         perims = './patch/perim'
         return bounds, time_iso, igns, perims
+    def saddleridge():
+        bounds = (-118.60684204101562, -118.35965728759766, 34.226539611816406, 34.43047332763672)
+        time_iso = ('2019-10-10T00:00:00Z', '2019-10-15T00:00:00Z')
+        igns = None
+        perims = './saddleridge/perim'
+        return bounds, time_iso, igns, perims
 
     # Creating the options
-    options = {1: pioneer, 2: patch}
+    options = {1: pioneer, 2: patch, 3: saddleridge}
 
     # Defining the option depending on the experiment
     bounds, time_iso, igns, perims = options[exp]()

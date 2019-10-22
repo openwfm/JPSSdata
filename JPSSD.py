@@ -132,7 +132,7 @@ def get_meta(bbox,time,maxg=50,burned=False,high=False):
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2018-09-17
     """
-    granules=Dict([]);
+    granules=Dict([])
     #MOD14: MODIS Terra fire data
     granules.MOD14=search_api("MOD14",bbox,time,maxg,"Terra")
     #MOD03: MODIS Terra geolocation data
