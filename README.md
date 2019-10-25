@@ -1,12 +1,40 @@
 # JPPSdata
 ### Usage Support Vector Machine:
 
+### Usage SVM:
+Run process.py as:
+
+	$ python process.py wrfout start_time days
+
+OR
+
+	$ python lon1,lon2,lat1,lat2 wrfout start_time days
+
+	Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a binary file called 'data'. It creates as well a KML file with all the fire detections called 'fire_detections.kml'. After that, it runs a postprocessing of the data creating an intermediate binary file called 'result'. Finally, it estimates the fire arrival time using SVM machine learning technique, creating an output file 'svm.mat' with the results.
+
+	The input variales are:
+
+	- coord:  string:
+				1) link to the wrfout file of WRF-SFIRE simulation or
+				2) bounding box coordinates separated by commas
+					lon1,lon2,lat1,lat2
+	- start_time - string, YYYYMMDDHHMMSS where:
+		- YYYY - year
+		- MM - month
+		- DD - day
+		- HH - hour
+		- MM - minute
+		- SS - second
+	- days: number, number of days of simulation (can be decimal).
+
+For different configurations of the run, create file called 'conf.json' using similar structure than 'conf_example.json' file.
+
 ### Usage L2 minimization:
 1) Run case.py as:
 
 	$ python case.py wrfout start_time days
 
-	Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a text file called 'data'. It creates as well a csv file and a KML file with all the detections called 'fire_detections.csv' and 'fire_detections.kml'. It is also created a KML file with the ground detections called 'nofire.kml'. The input variales are:
+	Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a binary file called 'data'. It creates as well a csv file and a KML file with all the detections called 'fire_detections.csv' and 'fire_detections.kml'. It is also created a KML file with the ground detections called 'nofire.kml'. The input variales are:
 
 	- wrfout:  string, link to the wrfout file of WRF-SFIRE simulation.
 	- start_time - string, YYYYMMDDHHMMSS where:
@@ -56,7 +84,7 @@ University of Colorado Denver
 *A subproject in the [OpenWFM project](https://github.com/openwfm) with support from NASA NNX13AH59G and NSF 1664175
 ### To do:
 - add download ability (completed)
-- download only certain leaves of the overall tree structure
+- download only certain leaves of the overall tree structure (completed)
 - reconcile data from M?D14 with geolocation data from M?D03 (completed)
 - extend MODIS search to VIIRS (completed)
 - continue translating ncvarinfo to proper python grammar
@@ -64,6 +92,8 @@ University of Colorado Denver
 - integrate in WRFXPY  https://github.com/openwfm/wrfxpy
 
 ### Contains:
+- process.py drives all the simulation from acquiring the data, preprocessing the data, and running SVM.
+- svm.py runs SVM in a 3D mesh and estimates fire arrival time as the minimum zero of the 3D boundary.
 - JPPSD.py gather data from MODIS/VIIRS for a given time window and bounding box
 - get_af_data.py a test driver for JPSSD.py to download all data for a given window
 - GOES16.py filters and downloads GOES satellite files from AWS

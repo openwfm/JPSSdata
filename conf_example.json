@@ -1,0 +1,41 @@
+{
+  "method_settings": {
+    "dyn_pen": false,
+    "search": false,
+    "fire_interp": false,
+    "cloud": true,
+    "minconf": 70,
+    "svm_settings": {
+        "norm": true,
+        "notnan": true,
+        "artil": false,
+        "hartil": 0.2,
+        "artiu": true,
+        "hartiu": 0.1,
+        "downarti": true,
+        "dminz": 0.1,
+        "confal": 100,
+        "toparti": false,
+        "dmaxz": 0.1,
+        "confau": 100
+    }
+  },
+  "plot_settings": {
+    "plot_observed": false,
+    "only_fire": false,
+    "plot_svm": {
+        "plot_data": false,
+        "plot_scaled": false,
+        "plot_decision": false,
+        "plot_poly": false,
+        "plot_supports": false,
+        "plot_result": false
+    }
+  },
+  "data_paths": {
+    "igns": null,
+    "perim_path": "",
+    "forecast_path": ""
+  },
+  "appkey": "0781F0CE-F117-11E9-A9F0-3B2BA14C1506"
+}

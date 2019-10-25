@@ -1,10 +1,10 @@
 # process.py
 #
 # DESCRIPTION
-# Driver python code to estimate fire arrival time using Active Fire Satellite Data
+# Driver python code to estimate fire arrival time using L2 Active Fire Satellite Data
 #
 # INPUTS
-# In the existence of a 'data' satellite granules file and/or 'results' bounds file, any input is necessary.
+# In the existence of a 'data' satellite granules file and/or 'result' preprocessed data file, any input is necessary.
 # Otherwise: python process.py coord start_time days
 # 	coord - path to a simulation wrfout file (containing FXLON and FXLAT coordinates)
 #           OR coordinates bounding box, floats separated by comas: min_lon,max_lon,min_lat,max_lat
@@ -64,7 +64,7 @@ from plot_pixels import basemap_scatter_mercator, create_kml
 from contline import get_contour_verts
 from contour2kml import contour2kml
 import saveload as sl
-from utils import Dict
+from utils import Dict, load_cfg
 from scipy.io import loadmat, savemat
 from scipy import interpolate
 import numpy as np
@@ -72,30 +72,9 @@ import datetime as dt
 import sys, os, re
 from time import time
 
-# plot observed information (googlearth.kmz with png files)
-plot_observed = False
-# if plot_observed = True: only fire detections?
-only_fire = False
-# dynamic penalization term
-dyn_pen = False
-# if dyn_pen = False: 5-fold cross validation for C and gamma?
-search = False
-# interpolate the results into fire mesh (if apply to spinup case)
-fire_interp = False
-# using cloud of temporal-spatial nodes or bounds matrices
-cloud = True
-# minimum confidence level for the satellite pixels to be considered
-minconf = 70.
-
-# if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
-# examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
-igns = None
-# if infrared perimeters: path to KML files
-# examples: perim_path = './pioneer/perim'
-perim_path = ''
-# if forecast wrfout: path to netcdf wrfout forecast file
-# example: forecast_path = './patch/wrfout_patch'
-forecast_path = ''
+cfg = load_cfg()
+print 'configuration: ', cfg
+locals().update(cfg)
 
 satellite_file = 'data'
 fire_file = 'fire_detections.kml'
@@ -181,7 +160,7 @@ else:
 		dtf = dti+dt.timedelta(days=float(sys.argv[3]))
 		time_final_iso = '%d-%02d-%02dT%02d:%02d:%02dZ' % (dtf.year,dtf.month,dtf.day,dtf.hour,dtf.minute,dtf.second)
 		time_iso = (time_start_iso,time_final_iso)
-		data = retrieve_af_data(bbox,time_iso)
+		data = retrieve_af_data(bbox,time_iso,appkey=appkey)
 		if igns:
 			data.update(process_ignitions(igns,bbox,time=time_iso))
 		if perim_path:
@@ -324,7 +303,7 @@ else:
 	kgam = np.sqrt(len(y))/5.
 	C = kgam*1e2
 
-F = SVM3(X,y,C=C,kgam=kgam,search=search,fire_grid=(lon,lat))
+F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat),**svm_settings)
 
 print ''
 print '>> Saving the results <<'

@@ -20,6 +20,21 @@ from infrared_perimeters import process_infrared_perimeters
 import sys
 import saveload as sl
 
+def verify_inputs(params):
+    required_args = [("search", False), ("norm", True),
+        ("notnan", True), ("artil", False), ("hartil", 0.2),
+        ("artiu", True), ("hartiu", 0.1), ("downarti", True),
+        ("dminz", 0.1), ("confal", 100), ("toparti", False),
+        ("dmaxz", 0.1), ("confau", 100), ("plot_data", False),
+        ("plot_scaled", False), ("plot_decision", False),
+        ("plot_poly", False), ("plot_supports", False),
+        ("plot_result", False)]
+    # check each argument that should exist
+    for key, default in required_args:
+        if key not in params:
+            params.update({key: default})
+    return params
+
 def preprocess_data_svm(data, scale, minconf=80.):
     """
     Preprocess satellite data from JPSSD to use in Support Vector Machine directly
@@ -348,14 +363,15 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
             ax = fig.gca(projection='3d')
             fig.suptitle("Decision volume")
             col = [(0, .5, 0), (.5, .5, .5), (.5, 0, 0)]
-            cm = colors.LinearSegmentedColormap.from_list('GrRdD',col,N=100)
+            cm = colors.LinearSegmentedColormap.from_list('GrRdD',col,N=50)
             midpoint = 1 - ZZ.max() / (ZZ.max() + abs(ZZ.min()))
             shiftedcmap = shiftedColorMap(cm, midpoint=midpoint, name='shifted')
-            X = np.ravel(xx)
-            Y = np.ravel(yy)
-            T = np.ravel(zz)
-            kk = 50
-            p = ax.scatter(X[0::kk], Y[0::kk], T[0::kk], c=ZZ[0::kk], s=.1, alpha=.4, cmap=shiftedcmap)
+            kk = 1+np.divide(xx.shape,50)
+            X = np.ravel(xx[::kk[0],::kk[1],::kk[2]])
+            Y = np.ravel(yy[::kk[0],::kk[1],::kk[2]])
+            T = np.ravel(zz[::kk[0],::kk[1],::kk[2]])
+            CC = np.ravel(Z[::kk[0],::kk[1],::kk[2]])
+            p = ax.scatter(X, Y, T, c=CC, s=.1, alpha=.5, cmap=shiftedcmap)
             cbar = fig.colorbar(p)
             cbar.set_label('decision function value', rotation=270, labelpad=20)
             ax.add_collection3d(mesh)
@@ -425,16 +441,15 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
 
     return F
 
-def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=None):
+def SVM3(X, y, C=1., kgam=1., fire_grid=None, **params):
     """
     3D SuperVector Machine analysis and plot
 
     :param X: Training vectors, where n_samples is the number of samples and n_features is the number of features.
     :param y: Target values
-    :param C: Weight to not having outliers (argument of svm.SVC class), optional
-    :param kgam: Scalar multiplier for gamma (capture more details increasing it)
-    :param norm: Normalize the data in the interval (0,1) in all the directions, optional
-    :param fire_grid: The longitud and latitude grid where to have the fire arrival time
+    :param C: Penalization (argument of svm.SVC class), optional
+    :param kgam: Scalar multiplier for gamma (capture more details increasing it), optional
+    :param fire_grid: The longitud and latitude grid where to have the fire arrival time, optional
     :return F: tuple with (longitude grid, latitude grid, fire arrival time grid)
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
@@ -442,6 +457,8 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
     Modified version of:
     https://scikit-learn.org/stable/auto_examples/svm/plot_iris.html#sphx-glr-auto-examples-svm-plot-iris-py
     """
+    # add default values for parameters not specified
+    params = verify_inputs(params)
 
     t_init = time()
 
@@ -450,49 +467,11 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
     col = [(1, 0, 0), (.25, 0, 0)]
     cm_Rds = colors.LinearSegmentedColormap.from_list('Rds',col,N=100)
 
-    # Plot options
-    # plot original data
-    plot_data = False
-    # plot scaled data with artificial data
-    plot_scaled = False
-    # plot decision volume
-    plot_decision = False
-    # plot polynomial approximation
-    plot_poly = False
-    # plot full hyperplane vs detections with support vectors
-    plot_supports = False
-    # plot resulting fire arrival time vs detections
-    plot_result = False
-
-    # Other options
+    # if fire_grid==None: creation of the grid options
     # number of vertical nodes per observation
     vN = 1
-    # if not Nans in the data are wanted (all Nans are going to be replaced by the maximum value)
-    notnan = True
-
-    # Options better to not change
-    # number of horizontal nodes per observation (it is used if fire_grid==None)
+    # number of horizontal nodes per observation
     hN = 5
-    # creation of under artificial lower bounds in the pre-processing
-    artil = False
-    # if artil = True: resolution of artificial lower bounds vertical to the ground detections
-    hartil = .2
-    # creation of over artificial upper bounds in the pre-processing
-    artiu = True
-    # if artiu = True: resolution of artificial upper bounds vertical to the fire detections
-    hartiu = .1
-    # creation of an artifitial mesh of down lower bounds
-    downarti = True
-    # if downarti = True: below min of z direction for lower bound artifitial creation
-    dminz = .1
-    # if downarti = True: confidence level of the artificial lower bounds
-    confal = 100.
-    # creation of an artifitial mesh of top upper bounds
-    toparti = False
-    # if toparti = True: proportion over max of z direction for upper bound artifitial creation
-    dmaxz = .1
-    # if toparti = True: confidence level of the artificial upper bounds
-    confau = 100.
 
     # using different weights for the data
     if isinstance(C,(list,tuple,np.ndarray)):
@@ -513,7 +492,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
 
     # Visualization of the data
     X0, X1, X2 = X[:, 0], X[:, 1], X[:, 2]
-    if plot_data:
+    if params['plot_data']:
         try:
             fig = plt.figure()
             ax = fig.gca(projection='3d')
@@ -528,7 +507,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             print e
 
     # Normalization of the data into [0,1]^3
-    if norm:
+    if params['norm']:
         xmin = X0.min()
         xlen = X0.max() - X0.min()
         x0 = np.divide(X0 - xmin, xlen)
@@ -544,7 +523,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
         X[:, 2] = X2
 
     # Creation of fire and ground artificial detections
-    if artil or artiu or toparti or downarti:
+    if params['artil'] or params['artiu'] or params['toparti'] or params['downarti']:
         # Extreme values at z direction
         minz = X[:, 2].min()
         maxz = X[:, 2].max()
@@ -553,9 +532,9 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
         fu = X[y==np.unique(y)[1]]
 
         # Artifitial extensions of the lower bounds
-        if artil:
+        if params['artil']:
             # Create artificial lower bounds
-            flz = np.array([ np.unique(np.append(np.arange(f[2],minz,-hartil),f[2])) for f in fl ])
+            flz = np.array([ np.unique(np.append(np.arange(f[2],params['minz'],-params['hartil']),f[2])) for f in fl ])
             # Definition of new ground detections after artificial detections added
             Xg = np.concatenate([ np.c_[(np.repeat(fl[k][0],len(flz[k])),np.repeat(fl[k][1],len(flz[k])),flz[k])] for k in range(len(flz)) ])
             if using_weights:
@@ -568,9 +547,9 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
                 Cg = cl
 
         # Artifitial extensions of the upper bounds
-        if artiu:
+        if params['artiu']:
             # Create artificial upper bounds
-            fuz = np.array([ np.unique(np.append(np.arange(f[2],maxz,hartiu),f[2])) for f in fu ])
+            fuz = np.array([ np.unique(np.append(np.arange(f[2],maxz,params['hartiu']),f[2])) for f in fu ])
             # Definition of new fire detections after artificial detections added
             Xf = np.concatenate([ np.c_[(np.repeat(fu[k][0],len(fuz[k])),np.repeat(fu[k][1],len(fuz[k])),fuz[k])] for k in range(len(fuz)) ])
             # Define new confidence levels
@@ -584,19 +563,19 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
                 Cf = cu
 
         # Bottom artificial lower bounds
-        if downarti:
+        if params['downarti']:
             # Creation of the x,y new mesh of artificial lower bounds
             xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
                 np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
             # All the artificial new mesh are going to be below the data
-            zng = np.repeat(minz-dminz,len(np.ravel(xn)))
+            zng = np.repeat(minz-params['dminz'],len(np.ravel(xn)))
             # Artifitial lower bounds
             Xga = np.c_[np.ravel(xn),np.ravel(yn),np.ravel(zng)]
             # Definition of new ground detections after down artificial lower detections
             Xgn = np.concatenate((Xg,Xga))
             # Definition of new confidence level
             if using_weights:
-                Cga = np.ones(len(Xga))*confal
+                Cga = np.ones(len(Xga))*params['confal']
                 Cgn = np.concatenate((Cg,Cga))
         else:
             Xgn = Xg
@@ -604,19 +583,19 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
                 Cgn = Cg
 
         # Top artificial upper bounds
-        if toparti:
+        if params['toparti']:
             # Creation of the x,y new mesh of artificial upper bounds
             xn, yn = np.meshgrid(np.linspace(X[:, 0].min(), X[:, 0].max(), 20),
                                 np.linspace(X[:, 1].min(), X[:, 1].max(), 20))
             # All the artificial new mesh are going to be over the data
-            znf = np.repeat(maxz+dmaxz,len(np.ravel(xn)))
+            znf = np.repeat(maxz+params['dmaxz'],len(np.ravel(xn)))
             # Artifitial upper bounds
             Xfa = np.c_[np.ravel(xn),np.ravel(yn),np.ravel(znf)]
             # Definition of new fire detections after top artificial upper detections
             Xfn = np.concatenate((Xf,Xfa))
             # Definition of new confidence level
             if using_weights:
-                Cfa = np.ones(len(Xfa))*confau
+                Cfa = np.ones(len(Xfa))*params['confau']
                 Cfn = np.concatenate((Cf,Cfa))
         else:
             Xfn = Xf
@@ -643,7 +622,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
     print 'n_features =', n_features
 
     # Visualization of scaled data
-    if plot_scaled:
+    if params['plot_scaled']:
         try:
             fig = plt.figure()
             ax = fig.gca(projection='3d')
@@ -679,7 +658,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
         t_2 = time()
     else:
         t_1 = time()
-        if search:
+        if params['search']:
             print '>> Searching for best value of C and gamma...'
             # Grid Search
             # Parameter Grid
@@ -742,12 +721,12 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
     # Computing the 2D fire arrival time, F
     print '>> Computing the 2D fire arrival time, F...'
     sys.stdout.flush()
-    F = frontier(clf, xx, yy, zz, plot_decision=plot_decision, plot_poly=plot_poly, using_weights=using_weights)
+    F = frontier(clf, xx, yy, zz, plot_decision=params['plot_decision'], plot_poly=params['plot_poly'], using_weights=using_weights)
 
     print '>> Creating final results...'
     sys.stdout.flush()
     # Plotting the Separating Hyperplane of the SVM classification with the support vectors
-    if plot_supports:
+    if params['plot_supports']:
         try:
             if using_weights:
                 supp_ind = np.sort(clf.get_sv_indices())-1
@@ -759,15 +738,15 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             ax = fig.gca(projection='3d')
             fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
             # plotting the separating hyperplane
-            ax.plot_wireframe(F[0], F[1], F[2], color='orange', alpha=.5)
+            ax.plot_wireframe(F[0], F[1], F[2], color='orange', alpha=.4)
             # computing the indeces where no support vectors
             rr = np.array(range(len(y)))
             ms = np.isin(rr,supp_ind)
             nsupp = rr[~ms]
             # plotting no-support vectors (smaller)
-            ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=cm_GR, s=.5, vmin=y.min(), vmax=y.max(), alpha=.1)
+            ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=cm_GR, s=1, vmin=y.min(), vmax=y.max(), alpha=.2)
             # plotting support vectors (bigger)
-            ax.scatter(supp_vec[:, 0], supp_vec[:, 1], supp_vec[:, 2], c=y[supp_ind], cmap=cm_GR, s=1, edgecolors='k', alpha=.2);
+            ax.scatter(supp_vec[:, 0], supp_vec[:, 1], supp_vec[:, 2], c=y[supp_ind], cmap=cm_GR, s=3, edgecolors='k', linewidth=.5, alpha=.3);
             ax.set_xlim(xx.min(),xx.max())
             ax.set_ylim(yy.min(),yy.max())
             ax.set_zlim(zz.min(),zz.max())
@@ -780,12 +759,12 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             print e
 
     # Plot the fire arrival time resulting from the SVM classification normalized
-    if plot_result:
+    if params['plot_result']:
         try:
             Fx, Fy, Fz = np.array(F[0]), np.array(F[1]), np.array(F[2])
             with np.errstate(invalid='ignore'):
                 Fz[Fz > X2.max()] = np.nan
-            if notnan:
+            if params['notnan']:
                 Fz[np.isnan(Fz)] = X2.max()
                 Fz = np.minimum(Fz, X2.max())
             fig = plt.figure()
@@ -808,7 +787,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
             print e
 
     # Translate the result again into initial data scale
-    if norm:
+    if params['norm']:
         f0 = F[0] * xlen + xmin
         f1 = F[1] * ylen + ymin
         f2 = F[2] * zlen + zmin
@@ -821,13 +800,13 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
     with np.errstate(invalid='ignore'):
     	FFz[FFz > oX2.max()] = np.nan
 
-	if notnan:
+	if params['notnan']:
 	    FFz[np.isnan(FFz)] = oX2.max()
 	    FFz = np.minimum(FFz, oX2.max())
     FF = [FFx,FFy,FFz]
 
     # Plot the fire arrival time resulting from the SVM classification
-    if plot_result:
+    if params['plot_result']:
         try:
             # Plotting the result
             fig = plt.figure()

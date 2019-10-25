@@ -29,7 +29,7 @@ if isfield(r,'U')
     set(h1, 'MarkerEdgeAlpha', alpha, 'MarkerFaceAlpha', alpha)
     hold on
     ml = logical((r.dxlon >= bb(1)).*(r.dxlon <= bb(2)).*(r.dxlat >= bb(3)).*(r.dxlat <= bb(4)));
-    S = repmat(5,sum(sum(ml)),1);
+    S = repmat(2,sum(sum(ml)),1);
     C = repmat([0.2,0.7,0.2],sum(sum(ml)),1);
     h2 = scatter3(r.dxlon(ml), r.dxlat(ml), ll(ml), S, C, 'filled');
     alpha = 0.3;

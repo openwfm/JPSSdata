@@ -10,7 +10,7 @@ import re
 import glob
 import netCDF4 as nc
 from pyhdf.SD import SD, SDC
-from utils import *
+from utils import Dict
 import scipy.io as sio
 import h5py
 import datetime
@@ -621,7 +621,7 @@ def read_data(files,file_metadata,bounds):
     return data
 
 
-def download(granules):
+def download(granules, appkey=None):
     """
     Download files as listed in the granules metadata
 
@@ -651,7 +651,10 @@ def download(granules):
             chunk_size = 1024*1024
             s = 0
             print 'downloading %s as %s' % (url,filename)
-            r = requests.get(url, stream=True)
+            if appkey:
+                r = requests.get(url, stream=True, headers={"Authorization": "Bearer %s" % appkey})
+            else:
+                r = requests.get(url, stream=True)
             if r.status_code == 200:
                 content_size = int(r.headers['Content-Length'])
                 print 'downloading %s as %s size %sB' % (url, filename, content_size)
@@ -700,7 +703,7 @@ def download_GOES16(time):
             print 'download failed with error %s' % e
     return bucket
 
-def retrieve_af_data(bbox,time,burned=False,high=False):
+def retrieve_af_data(bbox,time,burned=False,high=False,appkey=None):
     """
     Retrieve the data in a bounding box coordinates and time interval and save it in a Matlab structure inside the out.mat Matlab file
 
@@ -736,7 +739,7 @@ def retrieve_af_data(bbox,time,burned=False,high=False):
     for k,g in granules.items():
         print 'Downloading %s files' % k
         sys.stdout.flush()
-        file_metadata.update(download(g))
+        file_metadata.update(download(g,appkey=appkey))
         #print "download g:"
         #print g
 
