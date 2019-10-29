@@ -333,7 +333,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
     t_1 = time()
     if using_weights:
         from libsvm_weights.python.svmutil import svm_predict
-        _, _, p_vals = svm_predict([], XX, clf)
+        _, _, p_vals = svm_predict([], XX, clf, '-q')
         ZZ = np.array([p[0] for p in p_vals])
     else:
         ZZ = clf.decision_function(XX)
@@ -459,6 +459,7 @@ def SVM3(X, y, C=1., kgam=1., fire_grid=None, **params):
     """
     # add default values for parameters not specified
     params = verify_inputs(params)
+    print 'svm params: ',params
 
     t_init = time()
 
@@ -836,13 +837,13 @@ def SVM3(X, y, C=1., kgam=1., fire_grid=None, **params):
 if __name__ == "__main__":
     # Experiment to do
     exp = 1
-    search = False
+    search = True
 
     # Defining ground and fire detections
     def exp1():
         Xg = [[0, 0, 0], [2, 2, 0], [2, 0, 0], [0, 2, 0]]
         Xf = [[0, 0, 1], [1, 1, 0], [2, 2, 1], [2, 0, 1], [0, 2, 1]]
-        C = np.concatenate((10.*np.ones(len(Xg)),100.*np.ones(len(Xf))))
+        C = 10.
         kgam = 1.
         return Xg, Xf, C, kgam
     def exp2():
@@ -866,4 +867,4 @@ if __name__ == "__main__":
     y = np.concatenate((-np.ones(len(Xg)), np.ones(len(Xf))))
 
     # Running SVM classification
-    SVM3(X,y,C=C,kgam=kgam,search=search)
+    SVM3(X,y,C=C,kgam=kgam,search=search,plot_result=True)

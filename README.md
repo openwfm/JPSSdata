@@ -1,7 +1,20 @@
 # JPPSdata
-### Usage Support Vector Machine:
 
-### Usage SVM:
+### Requirements
+
+	1) Install Anaconda 3:
+		wget https://repo.continuum.io/archive/Anaconda3-2019.10-Linux-x86_64.sh
+		chmod +x Anaconda3-2019.10-Linux-x86_64.sh
+		./Anaconda3-2019.10-Linux-x86_64.sh
+
+	2) Create anaconda environment named jpssdata:
+		conda create -n jpssdata python=2.7 basemap netcdf4 scikit-learn scikit-image h5py pandas
+
+	3) Download other necessary packages:
+		conda install -c conda-forge pyhdf
+		pip install python-cmr
+
+### Usage Support Vector Machine (SVM):
 Run process.py as:
 
 	$ python process.py wrfout start_time days
@@ -28,6 +41,8 @@ OR
 	- days: number, number of days of simulation (can be decimal).
 
 For different configurations of the run, create file called 'conf.json' using similar structure than 'conf_example.json' file.
+
+There is also an example.sh bash script which needs to be run in Kinspeak or change the wrfout path to some existent wrfout file.
 
 ### Usage L2 minimization:
 1) Run case.py as:
