@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # binary files
-rm data perimeters 2> /dev/null
+rm data result perimeters decision 2> /dev/null
 # matlab files
-rm result.mat result svm.mat 2> /dev/null
+rm result.mat svm.mat 2> /dev/null
 # kml files
 rm fire_detections.kml nofire.kml perimeters_svm.kml 2> /dev/null
 # kmz files

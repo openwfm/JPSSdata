@@ -80,7 +80,7 @@ def preprocess_data_svm(data, scale, minconf=80.):
                                  gran[1]['lat_nofire'] <= bf[3])))
         xg = np.c_[(gran[1]['lon_nofire'][mask],gran[1]['lat_nofire'][mask],np.repeat(tt,mask.sum()))]
         print 'no fire detections: %g' % len(xg)
-        coarsening = np.int(1+len(xg)/min(50,10*max(len(xf),1)))
+        coarsening = np.int(1+len(xg)/min(100,20*max(len(xf),1)))
         print 'no fire coarsening: %d' % coarsening
         print 'no fire detections reduction: %g' % len(xg[::coarsening])
         XX[1].append(xg[::coarsening])
@@ -739,15 +739,15 @@ def SVM3(X, y, C=1., kgam=1., fire_grid=None, **params):
             ax = fig.gca(projection='3d')
             fig.suptitle("Plotting the 3D Separating Hyperplane of an SVM")
             # plotting the separating hyperplane
-            ax.plot_wireframe(F[0], F[1], F[2], color='orange', alpha=.4)
+            ax.plot_surface(F[0], F[1], F[2], color='orange', alpha=.3)
             # computing the indeces where no support vectors
             rr = np.array(range(len(y)))
             ms = np.isin(rr,supp_ind)
             nsupp = rr[~ms]
             # plotting no-support vectors (smaller)
-            ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=cm_GR, s=1, vmin=y.min(), vmax=y.max(), alpha=.2)
+            ax.scatter(X0[nsupp], X1[nsupp], X2[nsupp], c=y[nsupp], cmap=cm_GR, s=.5, vmin=y.min(), vmax=y.max(), alpha=.1)
             # plotting support vectors (bigger)
-            ax.scatter(supp_vec[:, 0], supp_vec[:, 1], supp_vec[:, 2], c=y[supp_ind], cmap=cm_GR, s=3, edgecolors='k', linewidth=.5, alpha=.3);
+            ax.scatter(supp_vec[:, 0], supp_vec[:, 1], supp_vec[:, 2], c=y[supp_ind], cmap=cm_GR, s=10, edgecolors='k', linewidth=.5, alpha=.5);
             ax.set_xlim(xx.min(),xx.max())
             ax.set_ylim(yy.min(),yy.max())
             ax.set_zlim(zz.min(),zz.max())

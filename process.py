@@ -247,8 +247,8 @@ else:
 	print '>> Processing satellite data <<'
 	sys.stdout.flush()
 	if cloud:
-		maxsize = 500
-		coarsening=np.int(1+np.max(fxlon.shape)/maxsize)
+		maxsize = 1000
+		coarsening = np.int(1+np.max(fxlon.shape)/maxsize)
 		lon = fxlon[::coarsening,::coarsening]
 		lat = fxlat[::coarsening,::coarsening]
 		sdata = sort_dates(data)

@@ -632,7 +632,7 @@ def download(granules, appkey=None):
     Jan Mandel (jan.mandel@ucdenver.edu) 2018-09-17
     """
     file_metadata = {}
-    for granule in granules:
+    for gn,granule in enumerate(granules):
         #print json.dumps(granule,indent=4, separators=(',', ': '))
         url = granule['links'][0]['href']
         filename=os.path.basename(urlparse.urlsplit(url).path)
@@ -664,11 +664,15 @@ def download(granules, appkey=None):
                         s =  s + len(chunk)
                         print('downloaded %sB  of %sB' % (s, content_size))
             else:
-                print 'cannot connect to %s' % url
-                print 'web request status code %s' % r.status_code
-                print 'Make sure you have file ~/.netrc permission 600 with the content'
-                print 'machine urs.earthdata.nasa.gov\nlogin yourusername\npassword yourpassword'
-                sys.exit(1)
+                if gn == 0:
+                    print 'cannot connect to %s' % url
+                    print 'web request status code %s' % r.status_code
+                    print 'Make sure you have file ~/.netrc permission 600 with the content'
+                    print 'machine urs.earthdata.nasa.gov\nlogin yourusername\npassword yourpassword'
+                    sys.exit(1)
+                else:
+                    print 'something happened when trying to download %s with status code %s' % (url,r.status_code)
+
         except Exception as e:
             print 'download failed with error %s' % e
     return file_metadata
