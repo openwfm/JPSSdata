@@ -57,7 +57,7 @@ from JPSSD import read_fire_mesh, retrieve_af_data, sdata2json, json2kml, time_i
 from interpolation import sort_dates
 from setup import process_detections
 from infrared_perimeters import process_ignitions, process_infrared_perimeters
-from forecast import process_forecast_wrfout
+from forecast import process_forecast_wrfout, process_forecast_slides_wrfout
 from svm import preprocess_result_svm, preprocess_data_svm, SVM3
 from mpl_toolkits.basemap import Basemap
 from plot_pixels import basemap_scatter_mercator, create_kml
@@ -128,7 +128,7 @@ if bounds_exists and not cloud:
 elif cloud_exists and cloud:
 	print '>> File %s already created! Skipping all satellite processing <<' % cloud_file
 	print 'Loading from %s...' % cloud_file
-	lon,lat,X,y,c,time_num_interval,scale,time_num_granules,scale,fxlon,fxlat = sl.load(cloud_file)
+	lon,lat,X,y,c,time_num_interval,time_num_granules,scale,fxlon,fxlat = sl.load(cloud_file)
 else:
 	if satellite_exists:
 		print '>> File %s already created! Skipping satellite retrieval <<' % satellite_file
@@ -165,8 +165,8 @@ else:
 			data.update(process_ignitions(igns,bbox,time=time_iso))
 		if perim_path:
 			data.update(process_infrared_perimeters(perim_path,bbox,time=time_iso))
-		if forecast_path:
-			data.update(process_forecast_wrfout(forecast_path,bbox,time=time_iso))
+		if forecast_path and not cloud:
+			data.update(process_forecast_slides_wrfout(forecast_path,bbox,time=time_iso))
 
 		if data:
 			print ''
@@ -256,7 +256,12 @@ else:
 		time_num_interval = time_num
 		scale = [time_num[0]-0.5*(time_num[1]-time_num[0]),time_num[1]+2*(time_num[1]-time_num[0])]
 		X,y,c = preprocess_data_svm(data,scale,minconf=minconf)
-		sl.save((lon,lat,X,y,c,time_num_interval,scale,time_num_granules,scale,fxlon,fxlat),'result')
+		if forecast_path:
+			Xf,yf,cf = process_forecast_wrfout(forecast_path,scale)
+			X = np.concatenate((X,Xf))
+			y = np.concatenate((y,yf))
+			c = np.concatenate((c,cf))
+		sl.save((lon,lat,X,y,c,time_num_interval,time_num_granules,scale,fxlon,fxlat),'result')
 	else:
 		try:
 			maxsize

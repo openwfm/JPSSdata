@@ -5,10 +5,71 @@ from JPSSD import time_iso2num, time_iso2datetime, time_datetime2iso
 from utils import Dict
 import re, glob, sys, os
 
-
-def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=3600.,plot=False):
+def process_tign_g(lon,lat,tign_g,ctime,scale,epsilon=5,plot=False):
     """
-    Process forecast from lon, lat, and tign_g
+    Process forecast from lon, lat, and tign_g as 3D data points
+
+    :param lon: array of longitudes
+    :param lat: array of latitudes
+    :param tign_g: array of fire arrival time
+    :param ctime: time char in wrfout of the last fire arrival time
+    :param scale: numerical time in seconds of start and end of simulation
+    :param epsilon: optional, epsilon in seconds to define the separation of artificial data
+    :param plot: optional, plotting results
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com) and James Haley, 2019-06-05
+    """
+
+    # confidences
+    conf_ground = 100
+    conf_fire = 500
+    
+    # ctime transformations
+    ctime_iso = ctime.replace('_','T')
+    ctime_datetime = time_iso2datetime(ctime_iso)
+    tscale = 3600.*24.
+
+    # tign_g as data points smaller than maximum tign_g
+    t1d = np.ravel(tign_g)
+    etime = t1d.max()
+    mask = t1d < etime
+    x1d = np.ravel(lon)[mask]
+    y1d = np.ravel(lat)[mask]
+    t1d = t1d[mask]
+
+    # compute time as days from start of the simulation
+    tt = (np.array([time_iso2num(time_datetime2iso(
+                        ctime_datetime-timedelta(seconds=float(etime-T)))) 
+                            for T in t1d])-scale[0])/tscale
+
+    # define forecast artificial data points
+    fground = np.c_[x1d.ravel(),y1d.ravel(),tt.ravel() - epsilon/tscale]
+    ffire = np.c_[x1d.ravel(),y1d.ravel(),tt.ravel() + epsilon/tscale]
+    X = np.concatenate((fground,ffire))
+    y = np.concatenate((-np.ones(len(fground)),np.ones(len(ffire))))
+    c = np.concatenate((conf_ground*np.ones(len(fground)),conf_fire*np.ones(len(ffire))))
+
+    # plot results
+    if plot:
+        col = [(0, .5, 0), (.5, 0, 0)]
+        cm_GR = colors.LinearSegmentedColormap.from_list('GrRd',col,N=2)
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax.scatter(X[:, 0], X[:, 1], X[:, 2], 
+                    c=y, cmap=cm_GR, s=1, alpha=.5, 
+                    vmin=y.min(), vmax=y.max())
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_zlabel("Fire arrival time [days]")
+        plt.show()
+
+    return X,y,c
+
+
+def process_tign_g_slices(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=3600.,plot=False):
+    """
+    Process forecast as slices on time from lon, lat, and tign_g
 
     :param lon: array of longitudes
     :param lat: array of latitudes
@@ -105,12 +166,11 @@ def process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file='',dt_for=3600.
 
     return forecast
 
-def process_forecast_wrfout(wrfout_file,bounds,plot=False):
+def read_forecast_wrfout(wrfout_file):
     """
-    Process forecast from a wrfout.
+    Read forecast from a wrfout.
 
-    :param dst: path to wrfout file
-    :param bounds: coordinate bounding box filtering to
+    :param wrfout_file: path to wrfout file
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
     Angel Farguell (angel.farguell@gmail.com), 2019-06-05
@@ -148,13 +208,45 @@ def process_forecast_wrfout(wrfout_file,bounds,plot=False):
     sy = data.dimensions['south_north_subgrid'].size/data.dimensions['south_north_stag'].size
     dx = DX/sx
     dy = DY/sy
-    # create forecast
-    forecast = process_tign_g(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file=wrfout_file,plot=plot)
     # close netcdf file
     data.close()
+    return lon,lat,tign_g,bounds,ctime,dx,dy
+
+def process_forecast_slides_wrfout(wrfout_file,bounds,plot=False):
+    """
+    Process forecast from a wrfout.
+
+    :param wrfout_file: path to wrfout file
+    :param bounds: coordinate bounding box filtering to
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com), 2019-06-05
+    """
+
+    # read forecast from wrfout
+    lon,lat,tign_g,bounds,ctime,dx,dy = read_forecast_wrfout(wrfout_file)
+    # create forecast
+    forecast = process_tign_g_slices(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file=wrfout_file,plot=plot)
 
     return forecast
 
+def process_forecast_wrfout(wrfout_file,scale,epsilon=5):
+    """
+    Process forecast from a wrfout.
+
+    :param wrfout_file: path to wrfout file
+    :param scale: numerical time in seconds of start and end of simulation
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com), 2019-06-05
+    """
+
+    # read forecast from wrfout
+    lon,lat,tign_g,bounds,ctime,dx,dy = read_forecast_wrfout(wrfout_file)
+    # create forecast
+    X,y,c = process_tign_g(lon,lat,tign_g,ctime,scale,epsilon=epsilon,plot=plot)
+
+    return X,y,c
 
 if __name__ == "__main__":
     import saveload as sl
@@ -164,7 +256,7 @@ if __name__ == "__main__":
         plot = True
         bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
         dst = './patch/wrfout_patch'
-        f = process_forecast_wrfout(dst,bounds,plot=plot)
+        f = process_forecast_slides_wrfout(dst,bounds,plot=plot)
         sl.save(f,'forecast')
     else:
         from infrared_perimeters import process_ignitions
@@ -173,7 +265,7 @@ if __name__ == "__main__":
         plot = False
         ideal = sl.load(dst)
         kk = 4
-        data = process_tign_g(ideal['lon'][::kk,::kk],ideal['lat'][::kk,::kk],ideal['tign_g'][::kk,::kk],ideal['bounds'],ideal['ctime'],ideal['dx'],ideal['dy'],wrfout_file='ideal',dt_for=ideal['dt'],plot=plot)
+        data = process_tign_g_slices(ideal['lon'][::kk,::kk],ideal['lat'][::kk,::kk],ideal['tign_g'][::kk,::kk],ideal['bounds'],ideal['ctime'],ideal['dx'],ideal['dy'],wrfout_file='ideal',dt_for=ideal['dt'],plot=plot)
         if 'point' in ideal.keys():
             p = [[ideal['point'][0]],[ideal['point'][1]],[ideal['point'][2]]]
             data.update(process_ignitions(p,ideal['bounds']))

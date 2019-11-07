@@ -77,7 +77,7 @@ else
     xlabel('Longitude')
     ylabel('Latitude')
     zlabel('Time (days)')
-    
+
     figure, 
     scatter3(r.X(fire,1), r.X(fire,2), r.X(fire,3), 'r.')
     hold on

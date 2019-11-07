@@ -535,7 +535,7 @@ def SVM3(X, y, C=1., kgam=1., fire_grid=None, **params):
         # Artifitial extensions of the lower bounds
         if params['artil']:
             # Create artificial lower bounds
-            flz = np.array([ np.unique(np.append(np.arange(f[2],params['minz'],-params['hartil']),f[2])) for f in fl ])
+            flz = np.array([ np.unique(np.append(np.arange(f[2],minz,-params['hartil']),f[2])) for f in fl ])
             # Definition of new ground detections after artificial detections added
             Xg = np.concatenate([ np.c_[(np.repeat(fl[k][0],len(flz[k])),np.repeat(fl[k][1],len(flz[k])),flz[k])] for k in range(len(flz)) ])
             if using_weights:
