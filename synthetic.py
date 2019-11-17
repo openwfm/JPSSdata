@@ -6,7 +6,7 @@ from svm import SVM3
 from scipy.io import savemat
 from scipy import interpolate
 
-def plot_case(xx,yy,tign_g,X_satellite=None):
+def plot_case(xx,yy,tign_g,X_satellite=None,show=False):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     ax.contour(xx,yy,tign_g,30)
@@ -16,9 +16,12 @@ def plot_case(xx,yy,tign_g,X_satellite=None):
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("T")
-    plt.savefig('syn_case.png')
+    if show:
+        plt.show()
+    else:
+        plt.savefig('syn_case.png')
 
-def plot_data(X,y):
+def plot_data(X,y,show=False):
     col = [(0, .5, 0), (.5, 0, 0)]
     cm_GR = colors.LinearSegmentedColormap.from_list('GrRd',col,N=2)
     fig = plt.figure()
@@ -29,7 +32,11 @@ def plot_data(X,y):
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("T")
-    plt.savefig('syn_data.png')
+    if show:
+        plt.show()
+    else:
+        plt.savefig('syn_data.png')
+
 
 def cone_point(xx,yy,nx,ny):
     cx = nx*.5

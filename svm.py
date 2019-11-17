@@ -52,16 +52,17 @@ def preprocess_data_svm(data, scale, minconf=80.):
     """
 
     # confidence of ground detections
-    gconf = 70.
+    gconf = 95.
 
     # scale from seconds to days
     tscale = 24.*3600.
 
     detlon = np.concatenate([d['lon_fire'] for d in data.itervalues()])
     detlat = np.concatenate([d['lat_fire'] for d in data.itervalues()])
-    bb = (detlon.min(),detlon.max(),detlat.min(),detlat.max())
+    confs = np.concatenate([d['conf_fire'] for d in data.itervalues()])
+    bb = (detlon[confs > minconf].min(),detlon[confs > minconf].max(),detlat[confs > minconf].min(),detlat[confs > minconf].max())
     dc = (bb[1]-bb[0],bb[3]-bb[2])
-    bf = (bb[0]-dc[0]*.5,bb[1]+dc[0]*.5,bb[2]-dc[1]*.5,bb[3]+dc[1]*.5)
+    bf = (bb[0]-dc[0]*.3,bb[1]+dc[0]*.3,bb[2]-dc[1]*.3,bb[3]+dc[1]*.3)
     print bf
 
     # process all the points as space-time 3D nodes
@@ -80,7 +81,7 @@ def preprocess_data_svm(data, scale, minconf=80.):
                                  gran[1]['lat_nofire'] <= bf[3])))
         xg = np.c_[(gran[1]['lon_nofire'][mask],gran[1]['lat_nofire'][mask],np.repeat(tt,mask.sum()))]
         print 'no fire detections: %g' % len(xg)
-        coarsening = np.int(1+len(xg)/min(100,20*max(len(xf),1)))
+        coarsening = 1 #np.int(1+len(xg)/min(100,20*max(len(xf),1)))
         print 'no fire coarsening: %d' % coarsening
         print 'no fire detections reduction: %g' % len(xg[::coarsening])
         XX[1].append(xg[::coarsening])
@@ -94,6 +95,8 @@ def preprocess_data_svm(data, scale, minconf=80.):
     print 'shape X: ', X.shape
     print 'shape y: ', y.shape
     print 'shape c: ', c.shape
+    print 'len fire: ', len(X[y==1])
+    print 'len ground: ', len(X[y==-1])
 
     return X,y,c
 

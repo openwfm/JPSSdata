@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
+import matplotlib.colors as colors
 import numpy as np
 from datetime import timedelta
 from JPSSD import time_iso2num, time_iso2datetime, time_datetime2iso
 from utils import Dict
 import re, glob, sys, os
 
-def process_tign_g(lon,lat,tign_g,ctime,scale,epsilon=5,plot=False):
+def process_tign_g(lon,lat,tign_g,ctime,scale,time_num,epsilon=5,plot=False):
     """
     Process forecast from lon, lat, and tign_g as 3D data points
 
@@ -13,7 +15,8 @@ def process_tign_g(lon,lat,tign_g,ctime,scale,epsilon=5,plot=False):
     :param lat: array of latitudes
     :param tign_g: array of fire arrival time
     :param ctime: time char in wrfout of the last fire arrival time
-    :param scale: numerical time in seconds of start and end of simulation
+    :param scale: numerical time scale in seconds of start and end of simulation
+    :param time_num: numerical time interval in seconds of start and end of simulation
     :param epsilon: optional, epsilon in seconds to define the separation of artificial data
     :param plot: optional, plotting results
 
@@ -22,8 +25,8 @@ def process_tign_g(lon,lat,tign_g,ctime,scale,epsilon=5,plot=False):
     """
 
     # confidences
-    conf_ground = 100
-    conf_fire = 500
+    conf_ground = 30.
+    conf_fire = 30.
     
     # ctime transformations
     ctime_iso = ctime.replace('_','T')
@@ -52,6 +55,13 @@ def process_tign_g(lon,lat,tign_g,ctime,scale,epsilon=5,plot=False):
 
     # plot results
     if plot:
+        from contline import get_contour_verts
+        from contour2kml import contour2kml
+        tt = np.array([time_iso2num(time_datetime2iso(
+                        ctime_datetime-timedelta(seconds=float(etime-T)))) 
+                            for T in np.ravel(tign_g)])
+        data = get_contour_verts(lon, lat, np.reshape(tt,tign_g.shape), time_num, contour_dt_hours=6, contour_dt_init=24, contour_dt_final=12)
+        contour2kml(data,'perimeters_forecast.kml')
         col = [(0, .5, 0), (.5, 0, 0)]
         cm_GR = colors.LinearSegmentedColormap.from_list('GrRd',col,N=2)
         fig = plt.figure()
@@ -210,7 +220,7 @@ def read_forecast_wrfout(wrfout_file):
     dy = DY/sy
     # close netcdf file
     data.close()
-    return lon,lat,tign_g,bounds,ctime,dx,dy
+    return lon,lat,tign_g,ctime,dx,dy
 
 def process_forecast_slides_wrfout(wrfout_file,bounds,plot=False):
     """
@@ -224,13 +234,13 @@ def process_forecast_slides_wrfout(wrfout_file,bounds,plot=False):
     """
 
     # read forecast from wrfout
-    lon,lat,tign_g,bounds,ctime,dx,dy = read_forecast_wrfout(wrfout_file)
+    lon,lat,tign_g,ctime,dx,dy = read_forecast_wrfout(wrfout_file)
     # create forecast
     forecast = process_tign_g_slices(lon,lat,tign_g,bounds,ctime,dx,dy,wrfout_file=wrfout_file,plot=plot)
 
     return forecast
 
-def process_forecast_wrfout(wrfout_file,scale,epsilon=5):
+def process_forecast_wrfout(wrfout_file,scale,time_num,epsilon=5,plot=False):
     """
     Process forecast from a wrfout.
 
@@ -242,22 +252,35 @@ def process_forecast_wrfout(wrfout_file,scale,epsilon=5):
     """
 
     # read forecast from wrfout
-    lon,lat,tign_g,bounds,ctime,dx,dy = read_forecast_wrfout(wrfout_file)
+    lon,lat,tign_g,ctime,dx,dy = read_forecast_wrfout(wrfout_file)      
     # create forecast
-    X,y,c = process_tign_g(lon,lat,tign_g,ctime,scale,epsilon=epsilon,plot=plot)
+    X,y,c = process_tign_g(lon,lat,tign_g,ctime,scale,time_num,epsilon=epsilon,plot=plot)
+    print 'shape X_f: ', X.shape
+    print 'shape y_f: ', y.shape
+    print 'shape c_f: ', c.shape
+    print 'len fire: ', len(X[y==1])
+    print 'len ground: ', len(X[y==-1])
 
     return X,y,c
 
 if __name__ == "__main__":
     import saveload as sl
-    real = False
+    real = True
+    cloud = True
 
     if real:
         plot = True
-        bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
-        dst = './patch/wrfout_patch'
-        f = process_forecast_slides_wrfout(dst,bounds,plot=plot)
-        sl.save(f,'forecast')
+        if cloud:
+            time_num = [1376114400.0, 1376546400.0]
+            scale = [1375898400.0, 1377410400.0]
+            dst = './patch/wrfout_patch'
+            X,y,c = process_forecast_wrfout(dst,scale,time_num,plot=plot)
+            sl.save(dict({'X': X, 'y': y, 'c': c}),'forecast')
+        else:
+            bounds = (-113.85068, -111.89413, 39.677563, 41.156837)
+            dst = './patch/wrfout_patch'
+            f = process_forecast_slides_wrfout(dst,bounds,plot=plot)
+            sl.save(f,'forecast')
     else:
         from infrared_perimeters import process_ignitions
         from setup import process_detections

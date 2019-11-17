@@ -85,13 +85,15 @@ svm_file = 'svm.mat'
 contour_file = 'perimeters_svm.kml'
 
 def exist(path):
-	return (os.path.isfile(path) and os.access(path,os.R_OK))
+	return (os.path.exists(path) and os.access(path,os.R_OK))
 
 satellite_exists = exist(satellite_file)
 fire_exists = exist(fire_file)
 gearth_exists = exist(gearth_file)
 bounds_exists = exist(bounds_file)
 cloud_exists = exist(cloud_file)
+perim_exists = exist(perim_path)
+forecast_exists = exist(forecast_path)
 
 if len(sys.argv) != 4 and (not bounds_exists) and (not satellite_exists) and (not cloud_exists):
 	print 'Error: python %s wrfout start_time days' % sys.argv[0]
@@ -162,10 +164,17 @@ else:
 		time_iso = (time_start_iso,time_final_iso)
 		data = retrieve_af_data(bbox,time_iso,appkey=appkey)
 		if igns:
+			print ''
+			print '>> Creating ignitions <<'
+			print igns
 			data.update(process_ignitions(igns,bbox,time=time_iso))
-		if perim_path:
+		if perim_exists:
+			print ''
+			print '>> Getting perimeters from %s <<' % perim_path
 			data.update(process_infrared_perimeters(perim_path,bbox,time=time_iso))
-		if forecast_path and not cloud:
+		if forecast_exists and not cloud:
+			print ''
+			print '>> Getting forecast from %s <<' % forecast_path
 			data.update(process_forecast_slides_wrfout(forecast_path,bbox,time=time_iso))
 
 		if data:
@@ -247,7 +256,7 @@ else:
 	print '>> Processing satellite data <<'
 	sys.stdout.flush()
 	if cloud:
-		maxsize = 1000
+		maxsize = 500
 		coarsening = np.int(1+np.max(fxlon.shape)/maxsize)
 		lon = fxlon[::coarsening,::coarsening]
 		lat = fxlat[::coarsening,::coarsening]
@@ -256,8 +265,10 @@ else:
 		time_num_interval = time_num
 		scale = [time_num[0]-0.5*(time_num[1]-time_num[0]),time_num[1]+2*(time_num[1]-time_num[0])]
 		X,y,c = preprocess_data_svm(data,scale,minconf=minconf)
-		if forecast_path:
-			Xf,yf,cf = process_forecast_wrfout(forecast_path,scale)
+		if forecast_exists:
+			print ''
+			print '>> Getting forecast from %s <<' % forecast_path
+			Xf,yf,cf = process_forecast_wrfout(forecast_path,scale,time_num_granules)
 			X = np.concatenate((X,Xf))
 			y = np.concatenate((y,yf))
 			c = np.concatenate((c,cf))
@@ -301,12 +312,12 @@ print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if dyn_pen:
-	C = np.power(c,3)
-	kgam = np.sqrt(len(y))/5.
+	C = np.power(c,3)/1000.
+	kgam = np.sqrt(len(y))/10.
 	search = False
 else:
-	kgam = np.sqrt(len(y))/5.
-	C = kgam*1e2
+	kgam = np.sqrt(len(y))/12.
+	C = kgam*1000.
 
 F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat),**svm_settings)
 
@@ -317,13 +328,15 @@ tscale = 24*3600 # scale from seconds to days
 # Fire arrival time in seconds from the begining of the simulation
 tign_g = np.array(F[2])*float(tscale)+scale[0]-time_num_interval[0]
 # Creating the dictionary with the results
-svm = {'dxlon': lon, 'dxlat': lat, 'X': X, 'y': y, 'c': c,
-		'fxlon': F[0], 'fxlat': F[1], 'Z': F[2],
-		'tign_g': tign_g, 'C': C, 'kgam': kgam,
-		'tscale': tscale, 'time_num_granules': time_num_granules,
+svm = {'dxlon': np.array(lon), 'dxlat': np.array(lat), 
+		'X': np.array(X), 'y': np.array(y), 'c': np.array(c),
+		'fxlon': np.array(F[0]), 'fxlat': np.array(F[1]), 
+		'Z': np.array(F[2]), 'tign_g': np.array(tign_g), 
+		'C': C, 'kgam': kgam, 'tscale': tscale, 
+		'time_num_granules': time_num_granules, 
 		'time_scale_num': scale, 'time_num': time_num_interval}
 if not cloud:
-	svm.update({'U': U/tscale, 'L': L/tscale})
+	svm.update({'U': np.array(U)/tscale, 'L': np.array(L)/tscale})
 
 # Interpolation of tign_g
 if fire_interp:
@@ -335,8 +348,9 @@ if fire_interp:
 		tign_g_interp = interpolate.griddata(points,values,(fxlon,fxlat))
 		t_interp_2 = time()
 		print 'elapsed time: %ss.' % str(abs(t_interp_2-t_interp_1))
-		svm.update({'fxlon_interp': fxlon, 'fxlat_interp': fxlat,
-			'tign_g_interp': tign_g_interp})
+		svm.update({'fxlon_interp': np.array(fxlon), 
+			'fxlat_interp': np.array(fxlat),
+			'tign_g_interp': np.array(tign_g_interp)})
 	except:
 		print 'Warning: longitudes and latitudes from the original grid are not defined...'
 		print '%s file is not compatible with fire_interp=True! Run again the experiment from the begining.' % bounds_file
@@ -350,7 +364,7 @@ print '>> Computing contour lines of the fire arrival time <<'
 print 'Computing the contours...'
 try:
 	# Granules numeric times
-	Z = np.transpose(F[2])*tscale+scale[0]
+	Z = np.array(F[2])*tscale+scale[0]
 	# Creating contour lines
 	contour_data = get_contour_verts(F[0], F[1], Z, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
 	print 'Creating the KML file...'

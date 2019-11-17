@@ -1180,12 +1180,12 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                                 elif prod == 'NF':
                                     kml.write('<styleUrl> no_fire </styleUrl>\n')
                                 elif prod == 'AFN':
-                                    if conf < 30:
+                                    if conf < 80:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>7000ffff</color>\n'
                                                 +'<outline>0</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
-                                    elif conf < 80:
+                                    elif conf < 90:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>7000a5ff</color>\n'
                                                 +'<outline>0</outline>\n'+'</PolyStyle>\n'

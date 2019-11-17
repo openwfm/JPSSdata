@@ -55,6 +55,10 @@ else
     ground = (r.y==-1);
     fire = (r.y==1);
 
+    xmin = min(r.X(:,1));
+    xmax = max(r.X(:,1));
+    ymin = min(r.X(:,2));
+    ymax = max(r.X(:,2));
     zmin = min(r.X(:,3));
     zmax = max(r.X(:,3));
 
@@ -72,7 +76,7 @@ else
     set(h2, 'MarkerEdgeAlpha', alpha, 'MarkerFaceAlpha', alpha)
     hold on
     contour3(r.fxlon,r.fxlat,r.Z,100)
-    zlim([zmin,zmax]);
+    xlim([xmin,xmax]), ylim([ymin,ymax]), zlim([zmin,zmax]);
     title('Support-vector machine: Satellite detections vs fire arrival time')
     xlabel('Longitude')
     ylabel('Latitude')
@@ -82,7 +86,7 @@ else
     scatter3(r.X(fire,1), r.X(fire,2), r.X(fire,3), 'r.')
     hold on
     contour3(r.fxlon,r.fxlat,r.Z,100)
-    zlim([zmin,zmax]);
+    xlim([xmin,xmax]), ylim([ymin,ymax]), zlim([zmin,zmax]);
     title('Support-vector machine: Fire detections vs fire arrival time')
     xlabel('Longitude')
     ylabel('Latitude')
