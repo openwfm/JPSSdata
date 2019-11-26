@@ -49,6 +49,14 @@ def process_tign_g(lon,lat,tign_g,ctime,scale,time_num,epsilon=5,plot=False):
     # define forecast artificial data points
     fground = np.c_[x1d.ravel(),y1d.ravel(),tt.ravel() - epsilon/tscale]
     ffire = np.c_[x1d.ravel(),y1d.ravel(),tt.ravel() + epsilon/tscale]
+    
+    # coarsening
+    maxsize = 1e4
+    coarsening = np.int(1+len(ffire)/maxsize)
+    fground = fground[::coarsening,:]
+    ffire = ffire[::coarsening,:]
+    
+    # define output data
     X = np.concatenate((fground,ffire))
     y = np.concatenate((-np.ones(len(fground)),np.ones(len(ffire))))
     c = np.concatenate((conf_ground*np.ones(len(fground)),conf_fire*np.ones(len(ffire))))
@@ -255,16 +263,6 @@ def process_forecast_wrfout(wrfout_file,scale,time_num,epsilon=5,plot=False):
     lon,lat,tign_g,ctime,dx,dy = read_forecast_wrfout(wrfout_file)      
     # create forecast
     X,y,c = process_tign_g(lon,lat,tign_g,ctime,scale,time_num,epsilon=epsilon,plot=plot)
-    print 'shape X_f: ', X.shape
-    print 'shape y_f: ', y.shape
-    print 'shape c_f: ', c.shape
-    # coarsening
-    maxsize = 5e4
-    coarsening = np.int(1+len(y)/maxsize)
-    X = X[::coarsening,:]
-    y = y[::coarsening]
-    c = c[::coarsening]
-    print 'coarsening...'
     print 'shape X_f: ', X.shape
     print 'shape y_f: ', y.shape
     print 'shape c_f: ', c.shape
