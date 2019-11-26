@@ -258,6 +258,16 @@ def process_forecast_wrfout(wrfout_file,scale,time_num,epsilon=5,plot=False):
     print 'shape X_f: ', X.shape
     print 'shape y_f: ', y.shape
     print 'shape c_f: ', c.shape
+    # coarsening
+    maxsize = 5e4
+    coarsening = np.int(1+len(y)/maxsize)
+    X = X[::coarsening,:]
+    y = y[::coarsening]
+    c = c[::coarsening]
+    print 'coarsening...'
+    print 'shape X_f: ', X.shape
+    print 'shape y_f: ', y.shape
+    print 'shape c_f: ', c.shape
     print 'len fire: ', len(X[y==1])
     print 'len ground: ', len(X[y==-1])
 

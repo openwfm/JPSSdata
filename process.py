@@ -316,7 +316,7 @@ if dyn_pen:
 	kgam = np.sqrt(len(y))/10.
 	search = False
 else:
-	kgam = np.sqrt(len(y))/12.
+	kgam = np.sqrt(len(y))/10.
 	C = kgam*1000.
 
 F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat),**svm_settings)
