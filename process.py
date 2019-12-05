@@ -313,18 +313,20 @@ print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if dyn_pen:
 	C = np.power(c,3)/1000.
-	kgam = np.sqrt(len(y))/10.
+	kgam = np.sqrt(len(y))/12.
 	search = False
 else:
-	kgam = np.sqrt(len(y))/10.
+	kgam = np.sqrt(len(y))/12.
 	C = kgam*1000.
 
-F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat),**svm_settings)
+tscale = 24*3600 # scale from seconds to days
+it = (np.array(time_num_interval)-scale[0])/tscale # time interval in days
+
+F = SVM3(X,y,C=C,kgam=kgam,fire_grid=(lon,lat),it=it,**svm_settings)
 
 print ''
 print '>> Saving the results <<'
 sys.stdout.flush()
-tscale = 24*3600 # scale from seconds to days
 # Fire arrival time in seconds from the begining of the simulation
 tign_g = np.array(F[2])*float(tscale)+scale[0]-time_num_interval[0]
 # Creating the dictionary with the results
@@ -347,6 +349,9 @@ if fire_interp:
 		values = np.ravel(tign_g)
 		tign_g_interp = interpolate.griddata(points,values,(fxlon,fxlat))
 		t_interp_2 = time()
+		if notnan:
+			with np.errstate(invalid='ignore'):
+				tign_g_interp[np.isnan(tign_g_interp)] = np.nanmax(tign_g_interp)
 		print 'elapsed time: %ss.' % str(abs(t_interp_2-t_interp_1))
 		svm.update({'fxlon_interp': np.array(fxlon), 
 			'fxlat_interp': np.array(fxlat),

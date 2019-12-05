@@ -444,7 +444,7 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
 
     return F
 
-def SVM3(X, y, C=1., kgam=1., fire_grid=None, **params):
+def SVM3(X, y, C=1., kgam=1., fire_grid=None, it=None, **params):
     """
     3D SuperVector Machine analysis and plot
 
@@ -712,7 +712,10 @@ def SVM3(X, y, C=1., kgam=1., fire_grid=None, **params):
     else:
         fxlon = np.divide(fire_grid[0] - xmin, xlen)
         fxlat = np.divide(fire_grid[1] - ymin, ylen)
-        it = (X2.min(),X2.max())
+        if it is None:
+            it = (X2.min(),X2.max())
+        else:
+            it = np.divide(np.array(it) - zmin, zlen)
         vnodes = vN*nnodes
         sdim = (fxlon.shape[0],fxlon.shape[1],vnodes)
         print 'fire_grid_size = %dx%dx%d = %d' % (sdim + (np.prod(sdim),))
@@ -801,12 +804,9 @@ def SVM3(X, y, C=1., kgam=1., fire_grid=None, **params):
     oX0, oX1, oX2 = oX[:, 0], oX[:, 1], oX[:, 2]
     FFx, FFy, FFz = FF[0], FF[1], FF[2]
 
-    with np.errstate(invalid='ignore'):
-    	FFz[FFz > oX2.max()] = np.nan
-
-	if params['notnan']:
-	    FFz[np.isnan(FFz)] = oX2.max()
-	    FFz = np.minimum(FFz, oX2.max())
+    if params['notnan']:
+        with np.errstate(invalid='ignore'):
+            FFz[np.isnan(FFz)] = np.nanmax(FFz)
     FF = [FFx,FFy,FFz]
 
     # Plot the fire arrival time resulting from the SVM classification

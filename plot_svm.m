@@ -63,13 +63,13 @@ else
     zmax = max(r.X(:,3));
 
     figure,
-    S = repmat(5,sum(fire),1);
+    S = repmat(10,sum(fire),1);
     C = repmat([1,0,0],sum(fire),1);
     h1 = scatter3(r.X(fire,1),r.X(fire,2),r.X(fire,3),S,C,'filled');
     alpha = 0.7;
     set(h1, 'MarkerEdgeAlpha', alpha, 'MarkerFaceAlpha', alpha)
     hold on
-    S = repmat(5,sum(ground),1);
+    S = repmat(10,sum(ground),1);
     C = repmat([0.2,0.7,0.2],sum(ground),1);
     h2 = scatter3(r.X(ground,1),r.X(ground,2),r.X(ground,3),S,C,'filled');
     alpha = 0.3;

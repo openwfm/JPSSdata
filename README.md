@@ -21,13 +21,13 @@ Run process.py as:
 
 OR
 
-	$ python lon1,lon2,lat1,lat2 wrfout start_time days
+	$ python process.py lon1,lon2,lat1,lat2 start_time days
 
 	Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a binary file called 'data'. It creates as well a KML file with all the fire detections called 'fire_detections.kml'. After that, it runs a postprocessing of the data creating an intermediate binary file called 'result'. Finally, it estimates the fire arrival time using SVM machine learning technique, creating an output file 'svm.mat' with the results.
 
-	The input variales are:
+	The input variales from 'python process.py coord start_time days' are:
 
-	- coord:  string:
+	- coord: string:
 				1) link to the wrfout file of WRF-SFIRE simulation or
 				2) bounding box coordinates separated by commas
 					lon1,lon2,lat1,lat2
@@ -40,7 +40,13 @@ OR
 		- SS - second
 	- days: number, number of days of simulation (can be decimal).
 
-For different configurations of the run, create file called 'conf.json' using similar structure than 'conf_example.json' file.
+For different configurations of the run, create file called 'conf.json' using similar structure than 'conf_example.json' file. In order to find out what are the flags, look into 'utils.py' file.
+
+For running SVM using different weights depending on the confidence levels, run inside JPSSdata repository:
+
+	$ git clone https://github.com/Fergui/libsvm_weights
+
+and set 'dyn_pen' flag in 'conf.json' to true.
 
 There is also an example.sh bash script which needs to be run in Kinspeak or change the wrfout path to some existent wrfout file.
 
