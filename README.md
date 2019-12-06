@@ -23,7 +23,7 @@ OR
 
 	$ python process.py lon1,lon2,lat1,lat2 start_time days
 
-	Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a binary file called 'data'. It creates as well a KML file with all the fire detections called 'fire_detections.kml'. After that, it runs a postprocessing of the data creating an intermediate binary file called 'result'. Finally, it estimates the fire arrival time using SVM machine learning technique, creating an output file 'svm.mat' with the results.
+Generates the fire mesh, downloads all the granules in between the dates and intersecting with the fire mesh, reads all the important information inside them and saves everything in a binary file called 'data'. It creates as well a KML file with all the fire detections called 'fire_detections.kml'. After that, it runs a postprocessing of the data creating an intermediate binary file called 'result'. Finally, it estimates the fire arrival time using SVM machine learning technique, creating an output file 'svm.mat' with the results.
 
 	The input variales from 'python process.py coord start_time days' are:
 
@@ -40,7 +40,7 @@ OR
 		- SS - second
 	- days: number, number of days of simulation (can be decimal).
 
-For different configurations of the run, create file called 'conf.json' using similar structure than 'conf_example.json' file. In order to find out what are the flags, look into 'utils.py' file.
+For different configurations of the SVM run, create file called 'conf.json' using similar structure than in 'conf_example.json' file. In order to find out what are the flags, look into 'utils.py' file.
 
 For running SVM using different weights depending on the confidence levels, run inside JPSSdata repository:
 
