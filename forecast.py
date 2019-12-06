@@ -25,8 +25,8 @@ def process_tign_g(lon,lat,tign_g,ctime,scale,time_num,epsilon=5,plot=False):
     """
 
     # confidences
-    conf_ground = 30.
-    conf_fire = 30.
+    conf_ground = 25.
+    conf_fire = 25.
     
     # ctime transformations
     ctime_iso = ctime.replace('_','T')
@@ -51,7 +51,7 @@ def process_tign_g(lon,lat,tign_g,ctime,scale,time_num,epsilon=5,plot=False):
     ffire = np.c_[x1d.ravel(),y1d.ravel(),tt.ravel() + epsilon/tscale]
     
     # coarsening
-    maxsize = 1e4
+    maxsize = 5e3
     coarsening = np.int(1+len(ffire)/maxsize)
     fground = fground[::coarsening,:]
     ffire = ffire[::coarsening,:]
@@ -202,7 +202,7 @@ def read_forecast_wrfout(wrfout_file):
         print 'Warning: No netcdf file %s in the path' % wrfout_file
         return []
     # current time
-    ctime = ''.join(data['Times'][-1])
+    ctime = ''.join(data['Times'][0])
     # getting rid of strip
     atmlenx = len(data.dimensions['west_east'])
     atmleny = len(data.dimensions['south_north'])
