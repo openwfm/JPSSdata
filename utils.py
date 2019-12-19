@@ -57,8 +57,8 @@ def load_cfg():
     # Set default data paths
     try:
         # if ignitions are known: ([lons],[lats],[dates]) where lons and lats in degrees and dates in ESMF format
-        # examples: igns = ([100],[45],['2015-05-15T20:09:00']) or igns = ([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])
-        cfg.igns = f_cfg['data_paths'].get('igns',None)
+        # examples: "igns" : "([100],[45],['2015-05-15T20:09:00'])" or "igns" : "([100,105],[45,39],['2015-05-15T20:09:00','2015-05-15T23:09:00'])"
+        cfg.igns = eval(f_cfg['data_paths'].get('igns','None'))
         # if infrared perimeters: path to KML files
         # examples: perim_path = './pioneer/perim'
         cfg.perim_path = f_cfg['data_paths'].get('perim_path','')
