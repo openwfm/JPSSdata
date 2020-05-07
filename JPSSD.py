@@ -829,6 +829,7 @@ def process_data(path,bbox):
     """
     files = group_all(path)
     files_metadata = files2metadata(files)
+    data=Dict({})
     data.update(read_data(files.MOD,file_metadata.MOD,bounds))
     data.update(read_data(files.MYD,file_metadata.MYD,bounds))
     data.update(read_data(files.VNP,file_metadata.VNP,bounds))
