@@ -816,7 +816,7 @@ def files2metadata(files):
                 file_metadata[f1]["time_send"] = ncf.getncattr('EndTime')[:19].replace(' ','T')+'Z'
     return file_metadata
 
-def process_data(path,bbox):
+def process_data(path,bounds):
     """
     Process the data from a path in a bounding box coordinates 
 
