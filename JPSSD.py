@@ -782,8 +782,8 @@ def files2metadata(files):
                 f1 = os.path.basename(f.fire)
                 file_metadata[f0] = Dict([])
                 file_metadata[f1] = Dict([])
-                hdfg = SD(files.geo,SDC.READ)
-                hdff = SD(files.fire,SDC.READ)
+                hdfg = SD(f.geo,SDC.READ)
+                hdff = SD(f.fire,SDC.READ)
                 meta = hdfg.attributes()['CoreMetadata.0']
                 date = meta.split('RANGEBEGINNINGDATE')[1].split('VALUE')[1].split('=')[1].split('"')[1]
                 time = meta.split('RANGEBEGINNINGTIME')[1].split('VALUE')[1].split('=')[1].split('"')[1]
