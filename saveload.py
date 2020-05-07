@@ -18,6 +18,6 @@ def load(file):
         try:
             # python 2
             return pickle.load(f)
-        except ImportError:
+        except:
             # python 3
             return pickle.load(f,encoding='latin1')

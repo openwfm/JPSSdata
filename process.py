@@ -316,7 +316,7 @@ if dyn_pen:
 	kgam = np.sqrt(len(y))/12.
 	search = False
 else:
-	kgam = np.sqrt(len(y))/12.
+	kgam = np.sqrt(len(y))/2.
 	C = kgam*1000.
 
 tscale = 24*3600 # scale from seconds to days

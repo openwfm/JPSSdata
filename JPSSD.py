@@ -763,6 +763,78 @@ def retrieve_af_data(bbox,time,burned=False,high=False,appkey=None):
 
     return data
 
+def files2metadata(files):
+    """
+    Get necessary metadata information from granules
+
+    :param files: dictionary with MOD, MYD, and VNP keys and arrays of two files (geo and fire)
+    :return data: dictonary with all the data 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2020-05-07
+    """
+    file_metadata=Dict([])
+    for key in files.keys():
+        file_metadata[key]=Dict([])
+        if key in ['MOD','MYD']:
+            for f in files[key]:
+                f0 = os.path.basename(f.geo)
+                f1 = os.path.basename(f.fire)
+                file_metadata[f0] = Dict([])
+                file_metadata[f1] = Dict([])
+                hdfg = SD(files.geo,SDC.READ)
+                hdff = SD(files.fire,SDC.READ)
+                meta = hdfg.attributes()['CoreMetadata.0']
+                date = meta.split('RANGEBEGINNINGDATE')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                time = meta.split('RANGEBEGINNINGTIME')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                file_metadata[f0]["time_start"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[5:7],date[8:10],time[:2],time[3:5],time[6:8]]))
+                date = meta.split('RANGEENDINGDATE')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                time = meta.split('RANGEENDINGTIME')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                file_metadata[f0]["time_end"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[5:7],date[8:10],time[:2],time[3:5],time[6:8]]))
+                meta = hdff.attributes()['CoreMetadata.0']
+                date = meta.split('RANGEBEGINNINGDATE')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                time = meta.split('RANGEBEGINNINGTIME')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                file_metadata[f1]["time_start"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[5:7],date[8:10],time[:2],time[3:5],time[6:8]]))
+                date = meta.split('RANGEENDINGDATE')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                time = meta.split('RANGEENDINGTIME')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                file_metadata[f1]["time_end"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[5:7],date[8:10],time[:2],time[3:5],time[6:8]]))
+        if key == 'VNP':
+            for f in files[key]:
+                f0 = os.path.basename(f.geo)
+                f1 = os.path.basename(f.fire)
+                file_metadata[f0] = Dict([])
+                file_metadata[f1] = Dict([])
+                h5g = h5py.File(f.geo,'r')
+                ncf = nc.Dataset(f.fire,'r')
+                date = h5g['HDFEOS'].attrs['BeginningDate']
+                time = h5g['HDFEOS'].attrs['BeginningTime']
+                file_metadata[f0]["time_start"]='%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[4:6],date[6:8],time[:2],time[2:4],time[4:6]]))
+                date = h5g['HDFEOS'].attrs['EndingDate']
+                time = h5g['HDFEOS'].attrs['EndingTime']
+                file_metadata[f0]["time_end"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[4:6],date[6:8],time[:2],time[2:4],time[4:6]]))
+                file_metadata[f1]["time_start"] = ncf.getncattr('StartTime')[:19].replace(' ','T')+'Z'
+                file_metadata[f1]["time_send"] = ncf.getncattr('EndTime')[:19].replace(' ','T')+'Z'
+    return file_metadata
+
+def process_data(path,bbox):
+    """
+    Process the data from a path in a bounding box coordinates 
+
+    :param path: path where all the granules are downloaded
+    :param bbox: polygon with the search bounding box
+    :return data: dictonary with all the data and out.mat Matlab file with a Matlab structure of the dictionary
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2020-05-07
+    """
+    files = group_all(path)
+    files_metadata = files2metadata(files)
+    data.update(read_data(files.MOD,file_metadata.MOD,bounds))
+    data.update(read_data(files.MYD,file_metadata.MYD,bounds))
+    data.update(read_data(files.VNP,file_metadata.VNP,bounds))
+
+    return data
+
 def nrt_elimination(granules):
     """
     Cleaning all the NRT data which is repeated
