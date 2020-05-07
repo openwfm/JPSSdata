@@ -805,7 +805,7 @@ def files2metadata(files):
                 hdff.end()
         if key == 'VNP':
             for f in files[key]:
-                print "files " + files[key]
+                print "files=%s" % f
                 f0 = os.path.basename(f.geo)
                 f1 = os.path.basename(f.fire)
                 file_metadata[key][f0] = Dict([])
