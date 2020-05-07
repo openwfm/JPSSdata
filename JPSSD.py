@@ -828,7 +828,7 @@ def process_data(path,bbox):
     Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2020-05-07
     """
     files = group_all(path)
-    files_metadata = files2metadata(files)
+    file_metadata = files2metadata(files)
     data=Dict({})
     data.update(read_data(files.MOD,file_metadata.MOD,bounds))
     data.update(read_data(files.MYD,file_metadata.MYD,bounds))
