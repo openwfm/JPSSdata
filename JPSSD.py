@@ -1215,8 +1215,8 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                                 angle=angles[p]
                                 scan=scans[p]
                                 track=tracks[p]
-                                timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
-                                timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
+                                timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ':00Z'
+                                timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' :00UTC'
 
                                 if prod == 'NF':
                                     kml.write('<Placemark>\n<name>Ground detection square</name>\n')
@@ -1243,6 +1243,7 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                                                           +  'along-track: %s\n' % track
                                             + '</description>\n')
                                 kml.write('<TimeStamp><when>%s</when></TimeStamp>\n' % timestamp)
+                                kml.write('<Data name="FRP"><value>%f</value></Data>\n' % frp)
                                 if prod == 'AF':
                                     if conf < 30:
                                         kml.write('<styleUrl> modis_conf_low </styleUrl>\n')

@@ -7,45 +7,50 @@
 # In the existence of a 'data' satellite granules file and/or 'result' preprocessed data file, any input is necessary.
 # Otherwise: python process.py coord start_time days
 # 	coord - path to a simulation wrfout file (containing FXLON and FXLAT coordinates)
-#           OR coordinates bounding box, floats separated by comas: min_lon,max_lon,min_lat,max_lat
+#			OR coordinates bounding box, floats separated by comas: min_lon,max_lon,min_lat,max_lat
 #	start_time - date string with format: YYYYMMDDHHMMSS
 # 	days - length of the simulation in decimal days
 #
 # OVERFLOW
-# 	1) Data acquisition: Methods from JPSSD.py and infrared_perimeters.py file.
-# 		*) Find granules overlaping fire domain and time interval.
+#	1) Data acquisition: Methods from JPSSD.py, infrared_perimeters.py, and forecast.py files.
+#		*) Find granules overlaping fire domain and time interval.
 #		*) Download Active Satellite Data.
 #		*) Read and process Active Satellite Data files.
-# 		*) Process ignitions.
+#		*) Process ignitions.
 #		*) Read and process infrared perimeters files.
+#		*) Read and process forecast files.
 #		*) Save observed data information in 'data' file.
 #	2) Visualization of input data: Methods from interpolation.py, JPSSD.py, and plot_pixels.py files.
 #		*) Write KML file 'fire_detections.kml' with fire detection pixels (satellite, ignitions and perimeters).
 #		*) Write KMZ file 'googlearth.kmz' with saved images and KML file of observed data (set plot_observed = True).
 #	3) Pre-process data for SVM:
-#       a) Method process_detections from setup.py file and method preprocess_result_svm from svm.py file (if cloud = False):
-#		     *) Sort all the granules from all the sources in time order.
-#		     *) Construct upper and lower bounds using a mask to prevent clear ground after fire.
-#		     *) Save results in 'result' and 'result.mat' files.
-#            *) Preprocess bounds as an input of Support Vector Machine method.
-#       b) Method preprocess_data_svm from svm.py file (if cloud = True):
-#            *) Define save ground and fire detections as 3D space-time cloud of points.
-#            *) Remove density of detections to be able to run SVM.
-#            *) Save results in 'result' and 'result.mat' files.
+#		a) Method process_detections from setup.py file and method preprocess_result_svm from svm.py file (if cloud = False):
+#			*) Sort all the granules from all the sources in time order.
+#			*) Construct upper and lower bounds using a mask to prevent clear ground after fire.
+#			*) Save results in 'result' and 'result.mat' files.
+#			*) Preprocess bounds as an input of Support Vector Machine method.
+#		b) Method preprocess_data_svm from svm.py file (if cloud = True):
+#			*) Define save ground and fire detections as 3D space-time cloud of points.
+#			*) Remove density of detections to be able to run SVM.
+#			*) Save results in 'result' file.
 #	4) Fire arrival time estimation using SVM: Method SVM3 from svm.py file.
 #		*) Run Support Vector Machine method.
 #		*) Save results in 'svm' and 'svm.mat' files.
-#	5) Visualization of the SVM results: Methods from contline.py and contour2kml.py files.
-#		*) Construct a smooth contour line representation of the fire arrival time.
-#		*) Write the contour lines in a KML file called 'perimeters_svm.kml'.
+#	5) Visualization of the SVM results: 
+#		*) Google Earth: Methods from contline.py and contour2kml.py files.
+#			*) Construct a smooth contour line representation of the fire arrival time.
+#			*) Write the contour lines in a KML file called 'perimeters_svm.kml'.
+#		*) Matlab: Script plot_svm.m using svm.mat as an input.
+#			*) 3D scatter plot of save ground and fire detections (green and red respectively).
+#			*) 3D mesh plot of the fire arrival time.
 #
 # OUTPUTS
 #	- 'data': binary file containing satellite granules information.
 #	- 'result.mat': matlab file containing upper and lower bounds (U and L).
-#   - 'result': binary file containing upper and lower bouds (U and L) or data points for SVM.
-# 	- 'svm.mat': matlab file containing the solution to the Support Vector Machine execution.
-#                Contains estimation of the fire arrival time in the fire mesh in tign_g_interp variable.
-#   - 'svm': binary file containing the solution to the Support Vector Machine execution explained above.
+#	- 'result': binary file containing upper and lower bouds (U and L) or data points for SVM.
+#	- 'svm.mat': matlab file containing the solution to the Support Vector Machine execution.
+#				Contains estimation of the fire arrival time in the fire mesh in tign_g_interp variable.
+#	- 'svm': binary file containing the solution to the Support Vector Machine execution explained above.
 #	- 'fire_detections.kml': KML file with fire detection pixels (satellite, ignitions and perimeters).
 #	- 'googlearth.kmz': KMZ file with saved images and KML file of observed data.
 #	- 'perimeters_svm.kml': KML file with perimeters from estimation of the fire arrival time using SVM.
