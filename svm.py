@@ -75,7 +75,7 @@ def preprocess_data_svm(lons, lats, U, L, T, scale, time_num_granules, C=None):
         # Create a mask with all False of low size
         mask = np.repeat(False,len(low[low == True]))
         # Take just a subset of the nodes
-        clear_level = 50
+        clear_level = 500
         mask[0::clear_level] = True
         # Mask the subset
         low[low == True] = mask
@@ -348,17 +348,17 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
 
     # Plot options
     # plot original data
-    plot_data = True
+    plot_data = False
     # plot scaled data with artificial data
-    plot_scaled = True
+    plot_scaled = False
     # plot decision volume
     plot_decision = False
     # plot polynomial approximation
     plot_poly = False
     # plot full hyperplane vs detections with support vectors
-    plot_supports = True
+    plot_supports = False
     # plot resulting fire arrival time vs detections
-    plot_result = True
+    plot_result = False
 
     # Other options
     # number of vertical nodes per observation
@@ -378,7 +378,7 @@ def SVM3(X, y, C=1., kgam=1., search=False, norm=True, fire_grid=None, weights=N
     # creation of over artificial upper bounds in the pre-processing
     artiu = True
     # if artiu = True: resolution of artificial upper bounds vertical to the fire detections
-    hartiu = .05
+    hartiu = .2
     # creation of an artifitial mesh of down lower bounds
     downarti = True
     # if downarti = True: below min of z direction for lower bound artifitial creation
