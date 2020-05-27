@@ -1135,6 +1135,32 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
 
             copyto('kmls/partial1.kml',kml)
 
+            # write bounding box
+            kml.write('<Folder>\n'
+                +'<name>Bounding Box</name>\n'
+                +'<Placemark>\n'
+                +'<name>Bounds</name>\n'
+                +'<description>Bounding box of the fire detections</description>\n'
+                +'<Style>\n'
+                +'<LabelStyle><color>00000000</color><scale>0.000000</scale></LabelStyle>\n'
+                +'<LineStyle><color>ff0000e6</color><width>4.000000</width></LineStyle>\n'
+                +'<PolyStyle><color>00f0f0f0</color><outline>1</outline></PolyStyle>\n'
+                +'</Style>\n'
+                +'<MultiGeometry>\n'
+                +'<Polygon>\n'
+                +'<extrude>0</extrude><altitudeMode>clampToGround</altitudeMode>\n'
+                +'<outerBoundaryIs><LinearRing><coordinates>\n'
+                +'%s,%s,0\n' % (bounds[0],bounds[2])
+                +'%s,%s,0\n' % (bounds[1],bounds[2])
+                +'%s,%s,0\n' % (bounds[1],bounds[3])
+                +'%s,%s,0\n' % (bounds[0],bounds[3])
+                +'%s,%s,0\n' % (bounds[0],bounds[2])
+                +'</coordinates></LinearRing></outerBoundaryIs>\n'
+                +'</Polygon>\n'
+                +'</MultiGeometry>\n'
+                +'</Placemark>\n'
+                +'</Folder>\n')
+
             # set some constants
             r = 6378   # Earth radius
             km_lat = 180/(np.pi*r)  # 1km in degrees latitude
@@ -1265,17 +1291,17 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                                     if conf < 80:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>7000ffff</color>\n'
-                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'<outline>1</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
                                     elif conf < 90:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>7000a5ff</color>\n'
-                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'<outline>1</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
                                     else:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>700000ff</color>\n'
-                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'<outline>1</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
 
                                 kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
@@ -1297,7 +1323,6 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                         kml.write('</Folder>\n')
 
                 kml.write('</Folder>\n')
-
             kml.write('</Document>\n</kml>\n')
 
         print 'Created file %s' % kml_path

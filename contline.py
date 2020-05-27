@@ -9,7 +9,90 @@ from JPSSD import time_num2iso
 from contour2kml import contour2kml
 from scipy.ndimage import gaussian_filter
 
+def clean_polys(paths,bounds,plot=True):
+    npaths = []
+    maxd = .05
+    eps = 1e-5
+    dx = abs(bounds[1]-bounds[0])
+    dy = abs(bounds[3]-bounds[2])
+    xb = np.array(bounds[:2])
+    yb = np.array(bounds[2:])
+    for p in paths:
+        diff = np.abs(p[-1]-p[0])
+        if (diff>maxd).all() or (abs(diff[0]-dx)<eps or abs(diff[1]-dy)<eps):
+            x = [c[0] for c in p]
+            y = [c[1] for c in p]
+            xm = (x[0]+x[-1])/2
+            ym = (y[0]+y[-1])/2
+            xn = x[:]
+            yn = y[:]
+            x.append(p[0][0])
+            y.append(p[0][1])
+
+            if abs(diff[0]-dx)<eps:
+                ex = xn[-1]
+                ey = yb[np.argmin(abs(yb-xn[-1]))]
+                p = np.append(p,np.array([[ex,ey]]),axis=0)
+                ex = xn[0]
+                p = np.append(p,np.array([[ex,ey]]),axis=0)
+                #p = np.append(p,np.array([p[0]]),axis=0)
+                if False:
+                    plt.ion()
+                    plt.plot([xb[0],xb[0],xb[1],xb[1],xb[0]],[yb[0],yb[1],yb[1],yb[0],yb[0]],'k')
+                    plt.plot(x,y,'r')
+                    x = [c[0] for c in p]
+                    y = [c[1] for c in p]
+                    plt.plot(x,y,'g')
+                    plt.xlim(xb)
+                    plt.ylim(yb)
+                    plt.show()
+                    plt.pause(.001)
+                    plt.cla()
+            elif abs(diff[1]-dy)<eps:
+                #ex = xb[np.argmin(abs(xb-xn[-1]))]
+                ex = xb[0]
+                ey = yn[-1]
+                p = np.append(p,np.array([[ex,ey]]),axis=0)
+                ey = yn[0]
+                p = np.append(p,np.array([[ex,ey]]),axis=0)
+                #p = np.append(p,np.array([p[0]]),axis=0)
+                if plot:
+                    #plt.ion()
+                    plt.plot([xb[0],xb[0],xb[1],xb[1],xb[0]],[yb[0],yb[1],yb[1],yb[0],yb[0]],'k')
+                    plt.plot(x,y,'r')
+                    x = [c[0] for c in p]
+                    y = [c[1] for c in p]
+                    plt.plot(x,y,'g')
+                    plt.xlim(xb)
+                    plt.ylim(yb)
+                    plt.show()
+                    #plt.pause(.001)
+                    #plt.cla()
+            else:
+                ex = xb[np.argmin(abs(xm-xb))]
+                ey = yb[np.argmin(abs(ym-yb))]
+                p = np.append(p,np.array([[ex,ey]]),axis=0)
+                #p = np.append(p,np.array([p[0]]),axis=0)
+                if False:
+                    plt.ion()
+                    plt.plot([xb[0],xb[0],xb[1],xb[1],xb[0]],[yb[0],yb[1],yb[1],yb[0],yb[0]],'k')
+                    plt.plot(x,y,'r')
+                    x = [c[0] for c in p]
+                    y = [c[1] for c in p]
+                    plt.plot(xn,yn,'g')
+                    plt.xlim(xb)
+                    plt.ylim(yb)
+                    plt.show()
+                    plt.pause(.001)
+                    plt.cla()
+
+        else:
+            npaths.append(p)
+    return np.array(npaths)
+
 def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6, gauss_filter=True, plot_contours=False, col_repr=False, levels_gran=False):
+    bounds = (xx.min(),xx.max(),yy.min(),yy.max())
+    print bounds
     fig = plt.figure()
     # Computing the levels
     # Datetimes for the first and last granule
@@ -57,6 +140,7 @@ def get_contour_verts(xx, yy, zz, time_num_granules, contour_dt_hours=6, contour
                 # read all the vertices
                 paths.append(pp.vertices)
             contours.append(paths)
+            #contours.append(clean_polys(paths,bounds))
     else:
         # computing all the contours
         cn = plt.contour(xx,yy,zz,levels=levels)
