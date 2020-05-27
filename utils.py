@@ -29,7 +29,7 @@ def load_cfg():
     try:
         f_cfg = Dict(json.load(open('conf.json')))
     except IOError:
-        print 'Warning: any conf.json file specified, creating defaults...'
+        print('Warning: any conf.json file specified, creating defaults...')
         f_cfg = Dict([])
 
     # Set default method settings

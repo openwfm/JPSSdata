@@ -312,7 +312,7 @@ print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
 if dyn_pen:
-	C = np.power(c,3)/1000.
+	C = np.power(c,3)/100.
 	kgam = np.sqrt(len(y))/12.
 	search = False
 else:
