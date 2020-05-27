@@ -81,7 +81,7 @@ def preprocess_data_svm(data, scale, minconf=80.):
                                  gran[1]['lat_nofire'] <= bf[3])))
         xg = np.c_[(gran[1]['lon_nofire'][mask],gran[1]['lat_nofire'][mask],np.repeat(tt,mask.sum()))]
         print 'no fire detections: %g' % len(xg)
-        coarsening = 1 #np.int(1+len(xg)/min(100,20*max(len(xf),1)))
+        coarsening = 1 + max((len(xg)-len(xf))//50,0)
         print 'no fire coarsening: %d' % coarsening
         print 'no fire detections reduction: %g' % len(xg[::coarsening])
         XX[1].append(xg[::coarsening])

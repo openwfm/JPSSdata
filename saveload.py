@@ -14,10 +14,11 @@ def load(file):
     :param file: file name
     :return: the object read
     """
-    with open(file,'rb') as f:
-        try:
-            # python 2
+    try:
+        # python 2
+        with open(file,'rb') as f:
             return pickle.load(f)
-        except:
-            # python 3
+    except:
+        # python 3
+        with open(file,'rb') as f:
             return pickle.load(f,encoding='latin1')

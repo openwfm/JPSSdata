@@ -45,17 +45,13 @@ def contour2kml(data,kml_path):
                time_begin, time_begin, time_begin,idx))
            for polygon in c['polygons']:
                kml.write("""
-                                        <Polygon>
-                                                <outerBoundaryIs>
-                                                        <LinearRing>
-                                                                <coordinates>""")
+                                        <LineString>
+                                                  <coordinates>""")
                for segment in polygon:
                    kml.write("\n%s,%s,0" % tuple(segment))
                kml.write("""
-                                                                </coordinates>
-                                                        </LinearRing>
-                                                </outerBoundaryIs>
-                                        </Polygon>""")
+                                                  </coordinates>
+                                        </LineString>""")
            kml.write("""
                                 </MultiGeometry>
                         </Placemark>
