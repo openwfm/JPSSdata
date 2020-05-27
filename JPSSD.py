@@ -570,25 +570,25 @@ def read_data(files,file_metadata,bounds):
             print "id " + id
             if prefix=="MOD" or prefix=="MYD":
                 try:
-			item=read_modis_files(f,bounds)
-                	item.instrument="MODIS"
-		except Exception as e:
-			print 'WARNING: reading the files from MODIS failed with error %s' % e
-			continue
+                    item=read_modis_files(f,bounds)
+                    item.instrument="MODIS"
+                except Exception as e:
+                    print 'WARNING: reading the files from MODIS failed with error %s' % e
+                    continue
             elif prefix=="VNP":
-		try:
-                	item=read_viirs_files(f,bounds)
-                	item.instrument="VIIRS"
-		except Exception as e:
-                        print 'WARNING: reading the files from VIIRS failed with error %s' % e
-                        continue
+                try:
+                    item=read_viirs_files(f,bounds)
+                    item.instrument="VIIRS"
+                except Exception as e:
+                    print 'WARNING: reading the files from VIIRS failed with error %s' % e
+                    continue
             elif prefix=="OR":
-		try:
-                	item=read_goes_files(f)
-                	item.instrument="GOES"
-		except Exception as e:
-                        print 'WARNING: reading the files from GOES failed with error %s' % e
-                        continue
+                try:
+                    item=read_goes_files(f)
+                    item.instrument="GOES"
+                except Exception as e:
+                    print 'WARNING: reading the files from GOES failed with error %s' % e
+                    continue
             else:
                 print 'ERROR: the prefix of %s %s must be MOD, MYD, or VNP' % (f0,f1)
                 continue
@@ -760,6 +760,87 @@ def retrieve_af_data(bbox,time,burned=False,high=False,appkey=None):
     data.update(read_data(files.MYD,file_metadata,bounds))
     data.update(read_data(files.VNP,file_metadata,bounds))
     #data.update(read_data('VIIRS375','',bounds))
+
+    return data
+
+def files2metadata(files):
+    """
+    Get necessary metadata information from granules
+
+    :param files: dictionary with MOD, MYD, and VNP keys and arrays of two files (geo and fire)
+    :return data: dictonary with all the data 
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2020-05-07
+    """
+    print "processing files2metadata"
+    file_metadata=Dict([])
+    for key in files.keys():
+        print "key " + key
+        file_metadata[key]=Dict([])
+        if key in ['MOD','MYD']:
+            for f in files[key]:
+                print "files=%s" % f
+                f0 = os.path.basename(f.geo)
+                f1 = os.path.basename(f.fire)
+                file_metadata[key][f0] = Dict([])
+                file_metadata[key][f1] = Dict([])
+                hdfg = SD(f.geo,SDC.READ)
+                hdff = SD(f.fire,SDC.READ)
+                meta = hdfg.attributes()['CoreMetadata.0']
+                date = meta.split('RANGEBEGINNINGDATE')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                time = meta.split('RANGEBEGINNINGTIME')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                file_metadata[key][f0]["time_start"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[5:7],date[8:10],time[:2],time[3:5],time[6:8]]))
+                date = meta.split('RANGEENDINGDATE')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                time = meta.split('RANGEENDINGTIME')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                file_metadata[key][f0]["time_end"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[5:7],date[8:10],time[:2],time[3:5],time[6:8]]))
+                meta = hdff.attributes()['CoreMetadata.0']
+                date = meta.split('RANGEBEGINNINGDATE')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                time = meta.split('RANGEBEGINNINGTIME')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                file_metadata[key][f1]["time_start"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[5:7],date[8:10],time[:2],time[3:5],time[6:8]]))
+                date = meta.split('RANGEENDINGDATE')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                time = meta.split('RANGEENDINGTIME')[1].split('VALUE')[1].split('=')[1].split('"')[1]
+                file_metadata[key][f1]["time_end"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[5:7],date[8:10],time[:2],time[3:5],time[6:8]]))
+                hdfg.end()
+                hdff.end()
+        if key == 'VNP':
+            for f in files[key]:
+                print "files=%s" % f
+                f0 = os.path.basename(f.geo)
+                f1 = os.path.basename(f.fire)
+                file_metadata[key][f0] = Dict([])
+                file_metadata[key][f1] = Dict([])
+                h5g = h5py.File(f.geo,'r')
+                ncf = nc.Dataset(f.fire,'r')
+                date = h5g['HDFEOS'].attrs['BeginningDate']
+                time = h5g['HDFEOS'].attrs['BeginningTime']
+                file_metadata[key][f0]["time_start"]='%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[4:6],date[6:8],time[:2],time[2:4],time[4:6]]))
+                date = h5g['HDFEOS'].attrs['EndingDate']
+                time = h5g['HDFEOS'].attrs['EndingTime']
+                file_metadata[key][f0]["time_end"] = '%04d-%02d-%02dT%02d:%02d:%02dZ' % tuple(map(int,[date[:4],date[4:6],date[6:8],time[:2],time[2:4],time[4:6]]))
+                file_metadata[key][f1]["time_start"] = ncf.getncattr('StartTime')[:19].replace(' ','T')+'Z'
+                file_metadata[key][f1]["time_end"] = ncf.getncattr('EndTime')[:19].replace(' ','T')+'Z'
+                h5g.close()
+                ncf.close()
+    return file_metadata
+
+def process_data(path,bounds):
+    """
+    Process the data from a path in a bounding box coordinates 
+
+    :param path: path where all the granules are downloaded
+    :param bbox: polygon with the search bounding box
+    :return data: dictonary with all the data and out.mat Matlab file with a Matlab structure of the dictionary
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com) and Jan Mandel (jan.mandel@ucdenver.edu) 2020-05-07
+    """
+    files = group_all(path)
+    file_metadata = files2metadata(files)
+    data=Dict({})
+    data.update(read_data(files.MOD,file_metadata.MOD,bounds))
+    data.update(read_data(files.MYD,file_metadata.MYD,bounds))
+    data.update(read_data(files.VNP,file_metadata.VNP,bounds))
 
     return data
 
@@ -1054,6 +1135,32 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
 
             copyto('kmls/partial1.kml',kml)
 
+            # write bounding box
+            kml.write('<Folder>\n'
+                +'<name>Bounding Box</name>\n'
+                +'<Placemark>\n'
+                +'<name>Bounds</name>\n'
+                +'<description>Bounding box of the fire detections</description>\n'
+                +'<Style>\n'
+                +'<LabelStyle><color>00000000</color><scale>0.000000</scale></LabelStyle>\n'
+                +'<LineStyle><color>ff0000e6</color><width>4.000000</width></LineStyle>\n'
+                +'<PolyStyle><color>00f0f0f0</color><outline>1</outline></PolyStyle>\n'
+                +'</Style>\n'
+                +'<MultiGeometry>\n'
+                +'<Polygon>\n'
+                +'<extrude>0</extrude><altitudeMode>clampToGround</altitudeMode>\n'
+                +'<outerBoundaryIs><LinearRing><coordinates>\n'
+                +'%s,%s,0\n' % (bounds[0],bounds[2])
+                +'%s,%s,0\n' % (bounds[1],bounds[2])
+                +'%s,%s,0\n' % (bounds[1],bounds[3])
+                +'%s,%s,0\n' % (bounds[0],bounds[3])
+                +'%s,%s,0\n' % (bounds[0],bounds[2])
+                +'</coordinates></LinearRing></outerBoundaryIs>\n'
+                +'</Polygon>\n'
+                +'</MultiGeometry>\n'
+                +'</Placemark>\n'
+                +'</Folder>\n')
+
             # set some constants
             r = 6378   # Earth radius
             km_lat = 180/(np.pi*r)  # 1km in degrees latitude
@@ -1134,8 +1241,8 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                                 angle=angles[p]
                                 scan=scans[p]
                                 track=tracks[p]
-                                timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + 'Z'
-                                timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' UTC'
+                                timestamp=acq_date[p] + 'T' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ':00Z'
+                                timedescr=acq_date[p] + ' ' + acq_time[p][0:2] + ':' + acq_time[p][2:4] + ' :00UTC'
 
                                 if prod == 'NF':
                                     kml.write('<Placemark>\n<name>Ground detection square</name>\n')
@@ -1162,6 +1269,7 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                                                           +  'along-track: %s\n' % track
                                             + '</description>\n')
                                 kml.write('<TimeStamp><when>%s</when></TimeStamp>\n' % timestamp)
+                                kml.write('<Data name="FRP"><value>%f</value></Data>\n' % frp)
                                 if prod == 'AF':
                                     if conf < 30:
                                         kml.write('<styleUrl> modis_conf_low </styleUrl>\n')
@@ -1183,17 +1291,17 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                                     if conf < 80:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>7000ffff</color>\n'
-                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'<outline>1</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
                                     elif conf < 90:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>7000a5ff</color>\n'
-                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'<outline>1</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
                                     else:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>700000ff</color>\n'
-                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
+                                                +'<outline>1</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
 
                                 kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
@@ -1215,7 +1323,6 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                         kml.write('</Folder>\n')
 
                 kml.write('</Folder>\n')
-
             kml.write('</Document>\n</kml>\n')
 
         print 'Created file %s' % kml_path
