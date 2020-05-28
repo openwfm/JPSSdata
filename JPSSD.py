@@ -620,6 +620,38 @@ def read_data(files,file_metadata,bounds):
 
     return data
 
+def get_url(url, filename, max_retries=3, appkey=None):
+    """
+    General get URL recursive function
+
+    :param url: URL to be downloaded
+    :param filename: local file name
+    :param appkey: optional, if download key is necessary
+    :return s: status of the request
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com) 2020-05-28
+    """
+    chunk_size = 1024*1024
+    s = 0
+    print 'downloading %s as %s' % (url,filename)
+    if appkey:
+        r = requests.get(url, stream=True, headers={"Authorization": "Bearer %s" % appkey})
+    else:
+        r = requests.get(url, stream=True)
+    if r.status_code == 200:
+        content_size = int(r.headers['Content-Length'])
+        print 'downloading %s as %s size %sB' % (url, filename, content_size)
+        with open(filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size):
+                f.write(chunk)
+                s =  s + len(chunk)
+                print('downloaded %sB  of %sB' % (s, content_size))
+    else:
+        if max_retries != 0:
+            get_url(url,max_retries-1,appkey)
+    return r.status_code
+        
 
 def download(granules, appkey=None):
     """
@@ -638,32 +670,14 @@ def download(granules, appkey=None):
         filename=os.path.basename(urlparse.urlsplit(url).path)
         file_metadata[filename]=granule
 
-        # to store as object in memory (maybe not completely downloaded until accessed?)
-        # with requests.Session() as s:
-        #    data.append(s.get(url))
-
         # download -  a minimal code without various error checking and corrective actions
         # see wrfxpy/src/ingest/downloader.py
         if os.path.isfile(filename):
             print 'file %s already downloaded' % filename
             continue
         try:
-            chunk_size = 1024*1024
-            s = 0
-            print 'downloading %s as %s' % (url,filename)
-            if appkey:
-                r = requests.get(url, stream=True, headers={"Authorization": "Bearer %s" % appkey})
-            else:
-                r = requests.get(url, stream=True)
-            if r.status_code == 200:
-                content_size = int(r.headers['Content-Length'])
-                print 'downloading %s as %s size %sB' % (url, filename, content_size)
-                with open(filename, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size):
-                        f.write(chunk)
-                        s =  s + len(chunk)
-                        print('downloaded %sB  of %sB' % (s, content_size))
-            else:
+            s = get_url(url,filename,appkey) 
+            if s != 200:
                 if gn == 0:
                     print 'cannot connect to %s' % url
                     print 'web request status code %s' % r.status_code
@@ -671,7 +685,7 @@ def download(granules, appkey=None):
                     print 'machine urs.earthdata.nasa.gov\nlogin yourusername\npassword yourpassword'
                     sys.exit(1)
                 else:
-                    print 'something happened when trying to download %s with status code %s' % (url,r.status_code)
+                    print 'something happened when trying to download %s with status code %s' % (url,r.status_code)           
 
         except Exception as e:
             print 'download failed with error %s' % e

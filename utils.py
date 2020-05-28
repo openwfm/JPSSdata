@@ -1,6 +1,7 @@
 # Copyright (C) 2013-2016 Martin Vejmelka, UC Denver
 
-import json,sys
+import json,sys,shutil,os
+import os.path as osp
 
 class Dict(dict):
     """
@@ -177,3 +178,13 @@ def load_cfg():
     cfg.appkey = f_cfg.get('appkey',None)
 
     return cfg
+
+def clean_dir(path):
+    # Create clean directory in a path
+    print 'Deleting existing directory %s to make a clean one' % path
+    if osp.exists(path):
+        try:
+            shutil.rmtree(path)
+        except Exception as e:
+            print 'Warning: %s' % str(e)
+    os.makedirs(path)
