@@ -316,13 +316,21 @@ if not cloud:
 print ''
 print '>> Running Support Vector Machine <<'
 sys.stdout.flush()
+C = svm_settings['C']
+svm_settings.pop('C',None)
+kgam = svm_settings['kgam']
+svm_settings.pop('kgam',None)
+sC = svm_settings['sC']
+skgam = svm_settings['skgam']
 if dyn_pen:
-	C = np.power(c,3)/100.
-	kgam = np.sqrt(len(y))/12.
+	C = np.power(c,3)/sC
+	kgam = np.sqrt(len(y))/skgam
 	search = False
 else:
-	kgam = np.sqrt(len(y))/2.
-	C = kgam*1000.
+	if not kgam:
+		kgam = np.sqrt(len(y))/skgam
+	if not C:
+		C = kgam*sC
 
 tscale = 24*3600 # scale from seconds to days
 it = (np.array(time_num_interval)-scale[0])/tscale # time interval in days

@@ -308,7 +308,7 @@ def make_meshgrid(x, y, z, s=(50,50,50), exp=.1):
                              np.linspace(z_min, z_max, sz))
     return xx, yy, zz
 
-def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, using_weights=False):
+def frontier(clf, xx, yy, zz, bal=.5, plot_decision=False, plot_poly=False, using_weights=False, save_decision=False):
     """
     Compute the surface decision frontier for a classifier.
 
@@ -350,7 +350,8 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision = False, plot_poly=False, us
     # Reshaping decision function volume
     Z = ZZ.reshape(xx.shape)
     print 'decision function shape: ', Z.shape
-    sl.save((xx,yy,zz,Z),'decision')
+    if save_decision:
+        sl.save((xx,yy,zz,Z),'decision')
 
     if plot_decision:
         try:

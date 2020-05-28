@@ -144,6 +144,17 @@ def load_cfg():
         else:
             cfg.svm_settings.dmaxz = 0
             cfg.svm_settings.confau = 0
+        # overwrite C and kgam hyperparameter values
+        cfg.svm_settings.C = f_cfg['method_settings']['svm_settings'].get('C',None)
+        cfg.svm_settings.kgam = f_cfg['method_settings']['svm_settings'].get('kgam',None)
+        if cfg.dyn_pen:
+            cfg.svm_settings.sC = f_cfg['method_settings']['svm_settings'].get('sC',100)
+        else:
+            cfg.svm_settings.sC = f_cfg['method_settings']['svm_settings'].get('sC',1000)
+        if cfg.dyn_pen:
+            cfg.svm_settings.skgam = f_cfg['method_settings']['svm_settings'].get('skgam',12)
+        else:
+            cfg.svm_settings.skgam = f_cfg['method_settings']['svm_settings'].get('skgam',12)
     except:
         cfg.svm_settings.notnan = True
         cfg.svm_settings.artil = False
@@ -156,12 +167,13 @@ def load_cfg():
         cfg.svm_settings.toparti = False
         cfg.svm_settings.dmaxz = 0
         cfg.svm_settings.confau = 0
+        cfg.svm_settings.C = None
+        cfg.svm_settings.kgam = None
+        cfg.svm_settings.sC = None
+        cfg.svm_settings.skgam = None
     cfg.svm_settings.search = cfg.search
 
     # Set AppKey for NRT downloads from https://nrt3.modaps.eosdis.nasa.gov/profile/app-keys
-    try:
-        cfg.appkey = f_cfg.get('appkey',None)
-    except:
-        cfg.appkey = None
+    cfg.appkey = f_cfg.get('appkey',None)
 
     return cfg

@@ -17,7 +17,11 @@
         "confal": 100,
         "toparti": false,
         "dmaxz": 0.1,
-        "confau": 100
+        "confau": 100,
+        "sC": 100,
+        "skgam": 12,
+        "C": null,
+        "kgam": null
     }
   },
   "plot_settings": {
