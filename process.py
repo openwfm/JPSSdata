@@ -324,7 +324,8 @@ sC = svm_settings['sC']
 skgam = svm_settings['skgam']
 if dyn_pen:
 	C = np.power(c,3)/sC
-	kgam = np.sqrt(len(y))/skgam
+	if not kgam:
+		kgam = np.sqrt(len(y))/skgam
 	search = False
 else:
 	if not kgam:

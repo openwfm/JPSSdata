@@ -53,9 +53,12 @@ def preprocess_data_svm(data, scale, minconf=80.):
 
     # confidence of ground detections
     gconf = 95.
+    maxg = 1e5
 
     # scale from seconds to days
     tscale = 24.*3600.
+    # number of granules
+    ngran = maxg//len(data.keys())
 
     detlon = np.concatenate([d['lon_fire'] for d in data.itervalues()])
     detlat = np.concatenate([d['lat_fire'] for d in data.itervalues()])
@@ -81,7 +84,7 @@ def preprocess_data_svm(data, scale, minconf=80.):
                                  gran[1]['lat_nofire'] <= bf[3])))
         xg = np.c_[(gran[1]['lon_nofire'][mask],gran[1]['lat_nofire'][mask],np.repeat(tt,mask.sum()))]
         print 'no fire detections: %g' % len(xg)
-        coarsening = 1 + max((len(xg)-len(xf))//50,0)
+        coarsening = 1 + max((len(xg)-len(xf))//ngran,0)
         print 'no fire coarsening: %d' % coarsening
         print 'no fire detections reduction: %g' % len(xg[::coarsening])
         XX[1].append(xg[::coarsening])
@@ -308,6 +311,67 @@ def make_meshgrid(x, y, z, s=(50,50,50), exp=.1):
                              np.linspace(z_min, z_max, sz))
     return xx, yy, zz
 
+def find_roots(Fx,Fy,zr,Z,plot_poly=False):
+    """
+    Find at each point where the roots of Z are.
+
+    :param Fx: meshgrid ndarray with x component
+    :param Fy: meshgrid ndarray with y component
+    :param zr: meshgrid ndarray with z levels
+    :param plot_poly: boolean of plotting polynomial approximation
+    :return Fz: 2D mesh with the hyperplane z which gives decision functon 0
+
+    Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
+    Angel Farguell (angel.farguell@gmail.com), 2019-02-20
+    Modified version of:
+    https://www.semipol.de/2015/10/29/SVM-separating-hyperplane-3d-matplotlib.html
+    """
+    if plot_poly:
+        fig = plt.figure()
+    # Computing fire arrival time from previous decision function
+    print '>> Computing fire arrival time...'
+    sys.stdout.flush()
+    t_1 = time()
+    # Initializing fire arrival time
+    Fz = np.zeros(Fx.shape)
+    # For each x and y
+    for k1 in range(Fx.shape[0]):
+        for k2 in range(Fx.shape[1]):
+            # Approximate the vertical decision function by a piecewise polynomial (cubic spline interpolation)
+            pz = interpolate.CubicSpline(zr, Z[k1,k2])
+            # Compute the real roots of the the piecewise polynomial
+            rr = pz.roots()
+            # Just take the real roots between min(zz) and max(zz)
+            realr = rr.real[np.logical_and(abs(rr.imag) < 1e-5, np.logical_and(rr.real > zr.min(), rr.real < zr.max()))]
+            if len(realr) > 0:
+                # Take the minimum root
+                Fz[k1,k2] = realr.min()
+                # Plotting the approximated polynomial with the decision function
+                if plot_poly:
+                    try:
+                        plt.ion()
+                        plt.plot(pz(zr),zr)
+                        plt.plot(Z[k1,k2],zr,'+')
+                        plt.plot(np.zeros(len(realr)),realr,'o',c='g')
+                        plt.plot(0,Fz[k1,k2],'o',markersize=3,c='r')
+                        plt.title('Polynomial approximation of decision_function(%f,%f,z)' % (Fx[k1,k2],Fy[k1,k2]))
+                        plt.xlabel('decision function value')
+                        plt.ylabel('Z')
+                        plt.legend(['polynomial','decision values','roots','fire arrival time'])
+                        plt.xlim([Z.min(),Z.max()])
+                        plt.ylim([zz.min(),zz.max()])
+                        plt.show()
+                        plt.pause(.001)
+                        plt.cla()
+                    except Exception as e:
+                        print 'Warning: something went wrong when plotting...'
+                        print e
+            else:
+                # If there is not a real root of the polynomial between zz.min() and zz.max(), just define as a Nan
+                Fz[k1,k2] = np.nan
+    t_2 = time()
+    return Fz
+
 def frontier(clf, xx, yy, zz, bal=.5, plot_decision=False, plot_poly=False, using_weights=False, save_decision=False):
     """
     Compute the surface decision frontier for a classifier.
@@ -390,56 +454,15 @@ def frontier(clf, xx, yy, zz, bal=.5, plot_decision=False, plot_poly=False, usin
             print 'Warning: something went wrong when plotting...'
             print e
 
-    if plot_poly:
-        fig = plt.figure()
-    # Computing fire arrival time from previous decision function
-    print '>> Computing fire arrival time...'
-    sys.stdout.flush()
-    t_1 = time()
     # xx 2-dimensional array
     Fx = xx[:, :, 0]
     # yy 2-dimensional array
     Fy = yy[:, :, 0]
     # zz 1-dimensional array
     zr = zz[0, 0]
-    # Initializing fire arrival time
-    Fz = np.zeros(Fx.shape)
-    # For each x and y
-    for k1 in range(Fx.shape[0]):
-        for k2 in range(Fx.shape[1]):
-            # Approximate the vertical decision function by a piecewise polynomial (cubic spline interpolation)
-            pz = interpolate.CubicSpline(zr, Z[k1,k2])
-            # Compute the real roots of the the piecewise polynomial
-            rr = pz.roots()
-            # Just take the real roots between min(zz) and max(zz)
-            realr = rr.real[np.logical_and(abs(rr.imag) < 1e-5, np.logical_and(rr.real > zr.min(), rr.real < zr.max()))]
-            if len(realr) > 0:
-                # Take the minimum root
-                Fz[k1,k2] = realr.min()
-                # Plotting the approximated polynomial with the decision function
-                if plot_poly:
-                    try:
-                        plt.ion()
-                        plt.plot(pz(zr),zr)
-                        plt.plot(Z[k1,k2],zr,'+')
-                        plt.plot(np.zeros(len(realr)),realr,'o',c='g')
-                        plt.plot(0,Fz[k1,k2],'o',markersize=3,c='r')
-                        plt.title('Polynomial approximation of decision_function(%f,%f,z)' % (Fx[k1,k2],Fy[k1,k2]))
-                        plt.xlabel('decision function value')
-                        plt.ylabel('Z')
-                        plt.legend(['polynomial','decision values','roots','fire arrival time'])
-                        plt.xlim([Z.min(),Z.max()])
-                        plt.ylim([zz.min(),zz.max()])
-                        plt.show()
-                        plt.pause(.001)
-                        plt.cla()
-                    except Exception as e:
-                        print 'Warning: something went wrong when plotting...'
-                        print e
-            else:
-                # If there is not a real root of the polynomial between zz.min() and zz.max(), just define as a Nan
-                Fz[k1,k2] = np.nan
-    t_2 = time()
+    # find roots
+    Fz = find_roots(Fx,Fy,zr,Z,plot_poly=plot_poly)
+    
     print 'elapsed time: %ss.' % str(abs(t_2-t_1))
     F = [Fx,Fy,Fz]
 

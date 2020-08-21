@@ -136,15 +136,15 @@ def get_meta(bbox,time,maxg=50,burned=False,high=False):
     #MOD14: MODIS Terra fire data
     granules.MOD14=search_api("MOD14",bbox,time,maxg,"Terra")
     #MOD03: MODIS Terra geolocation data
-    granules.MOD03=search_api("MOD03",bbox,time,maxg,"Terra","6")
+    granules.MOD03=search_api("MOD03",bbox,time,maxg,"Terra")
     #MOD09: MODIS Atmospherically corrected surface reflectance
-    #granules.MOD09=search_api("MOD09",bbox,time,maxg,"Terra","6")
+    #granules.MOD09=search_api("MOD09",bbox,time,maxg,"Terra")
     #MYD14: MODIS Aqua fire data
     granules.MYD14=search_api("MYD14",bbox,time,maxg,"Aqua")
     #MYD03: MODIS Aqua geolocation data
-    granules.MYD03=search_api("MYD03",bbox,time,maxg,"Aqua","6")
+    granules.MYD03=search_api("MYD03",bbox,time,maxg,"Aqua")
     #MOD09: MODIS Atmospherically corrected surface reflectance
-    #granules.MYD09=search_api("MYD09",bbox,time,maxg,"Terra","6")
+    #granules.MYD09=search_api("MYD09",bbox,time,maxg,"Terra")
     #VNP14: VIIRS fire data, res 750m
     granules.VNP14=search_api("VNP14",bbox,time,maxg)
     #VNP03MODLL: VIIRS geolocation data, res 750m

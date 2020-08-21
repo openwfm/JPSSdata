@@ -7,6 +7,28 @@ from utils import Dict
 import saveload as sl
 import re, glob, sys, os
 
+def process_paths(outer_coords,inner_coords,min_points=50):
+    outer_paths = []
+    inner_paths = []
+    for n,outer in enumerate(outer_coords):
+        outer = np.array(outer)
+        if len(outer[:,0]) > min_points:
+            path = Path(outer)
+            outer_paths.append(path)
+            inners = np.array(inner_coords[n])
+            if len(inners.shape) > 2:
+                in_paths = []
+                for inner in inners:
+                    if len(inner) > min_points:
+                        path = Path(inner)
+                        in_paths.append(path)    
+            else:
+                if len(inners) > min_points:
+                    in_paths = Path(inners)
+                else:
+                    in_paths = []
+            inner_paths.append(in_paths)
+    return outer_paths,inner_paths
 
 def process_ignitions(igns,bounds,time=None):
     """
@@ -78,7 +100,7 @@ def process_ignitions(igns,bounds,time=None):
     return ignitions
 
 
-def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=False):
+def process_infrared_perimeters(dst,bounds,time=None,maxp=500,ngrid=50,plot=False,gen_polys=False):
     """
     Process infrared perimeters the same way than satellite data.
 
@@ -158,10 +180,18 @@ def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=Fa
                 # Get the coordinates of all the perimeters
                 # regex of the polygons (or perimeters)
                 polygons = re.findall(r'<Polygon>(.*?)</Polygon>',f_str,re.DOTALL)
-                # for each polygon, regex of the coordinates
-                buckets = [re.split(r'\s',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in polygons]
-                # array of arrays with each polygon coordinates
-                coordinates = [[np.array(re.split(',',b)[0:2]).astype(float) for b in bucket if b is not ''] for bucket in buckets]
+                # for each polygon, outer boundary
+                outer_buckets = [re.findall(r'<outerBoundaryIs>(.*?)</outerBoundaryIs>',p,re.DOTALL)[0] for p in polygons]
+                # for each outer polygon, regex of the coordinates
+                buckets = [re.split(r'\s',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] for p in outer_buckets]
+                # array of arrays with each outer polygon coordinates
+                outer_coordinates = [[np.array(re.split(',',b)[0:2]).astype(float) for b in bucket if b is not ''] for bucket in buckets]
+                # for each polygon, inner boundary
+                inner_buckets = [re.findall(r'<innerBoundaryIs>(.*?)</innerBoundaryIs>',p,re.DOTALL)[0] if re.findall(r'<innerBoundaryIs>(.*?)</innerBoundaryIs>',p,re.DOTALL) else '' for p in polygons]
+                # for each inner polygon, regex of the coordinates
+                buckets = [re.split(r'\s',re.findall(r'<coordinates>(.*?)</coordinates>',p,re.DOTALL)[0])[1:] if p != '' else '' for p in inner_buckets]
+                # array of arrays with each inner polygon coordinates
+                inner_coordinates = [[np.array(re.split(',',b)[0:2]).astype(float) for b in bucket if b is not ''] for bucket in buckets]
             except Exception as e:
                 print 'Error: file %s has not proper structure.' % file
                 print 'Exception: %s.' % e
@@ -170,63 +200,114 @@ def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=Fa
             # Plot perimeter
             if plot:
                 plt.ion()
-                plt.plot([coord[0] for coordinate in coordinates for coord in coordinate],[coord[1] for coordinate in coordinates for coord in coordinate],'bx')
+                for outer in outer_coordinates:
+                    if len(outer):
+                        x = np.array(outer)[:,0]
+                        y = np.array(outer)[:,1]
+                        plt.plot(x,y,'gx')
+                for inner in inner_coordinates:
+                    if len(inner):
+                        x = np.array(outer)[:,0]
+                        y = np.array(outer)[:,1]
+                        plt.plot(x,y,'rx')
 
-            # Create upper and lower bound coordinates depending on in/out polygons
-            # compute path elements for each polygon
-            paths = [Path(coord) for coord in coordinates]
-            # compute mask of coordinates inside polygon for each polygon
-            masks = [path.contains_points(XX) for path in paths]
-            # logical or for all the masks
-            inmask = np.logical_or.reduce(masks)
-            # upper and lower bounds arifitial from in/out polygon
-            up_arti = XX[inmask]
-            lon_fire = np.array([up[0] for up in up_arti])
-            lat_fire = np.array([up[1] for up in up_arti])
-            low_arti = XX[~inmask]
-            lon_nofire = np.array([low[0] for low in low_arti])
-            lat_nofire = np.array([low[1] for low in low_arti])
+            # Create paths for each polygon (outer and inner)
+            outer_paths,inner_paths = process_paths(outer_coordinates,inner_coordinates)
+            if len(outer_paths):
+                # compute mask of coordinates inside outer polygons
+                outer_mask = np.logical_or.reduce([path.contains_points(XX) for path in outer_paths if path])
+                # compute mask of coordinates inside inner polygons
+                inner_mask = np.logical_or.reduce([path.contains_points(XX) for path in inner_paths if path])
+                # mask inside outer polygons and outside inner polygons
+                inmask = outer_mask * ~inner_mask
+                # upper and lower bounds arifitial from in/out polygon
+                up_arti = XX[inmask]
+                lon_fire = np.array([up[0] for up in up_arti])
+                lat_fire = np.array([up[1] for up in up_arti])
+                low_arti = XX[~inmask]
+                lon_nofire = np.array([low[0] for low in low_arti])
+                lat_nofire = np.array([low[1] for low in low_arti])
 
-            # take a coarsening of the perimeters
-            for k,coord in enumerate(coordinates):
-                if len(coord) > maxp:
-                    coarse = len(coord)/maxp
-                    if coarse > 0:
-                        coordinates[k] = [coord[ind] for ind in np.concatenate(([0],range(len(coord))[coarse:-coarse:coarse]))]
+                # take a coarsening of the outer polygons
+                coordinates = []
+                for k,coord in enumerate(outer_coordinates):
+                    if len(coord) > maxp:
+                        coarse = len(coord)/maxp
+                        if coarse > 0:
+                            coordinates += [coord[ind] for ind in np.concatenate(([0],range(len(coord))[coarse:-coarse:coarse]))]
 
-            # append perimeter nodes
-            lon_fire = np.append(lon_fire,np.array([coord[0] for coordinate in coordinates for coord in coordinate]))
-            lat_fire = np.append(lat_fire,np.array([coord[1] for coordinate in coordinates for coord in coordinate]))
+                if coordinates:
+                    # append perimeter nodes
+                    lon_fire = np.append(lon_fire,np.array(coordinates)[:,0])
+                    lat_fire = np.append(lat_fire,np.array(coordinates)[:,1])
 
-            # create general arrays
-            lon = np.concatenate((lon_nofire,lon_fire))
-            lat = np.concatenate((lat_nofire,lat_fire))
-            fire = np.concatenate((5*np.ones(lon_nofire.shape),9*np.ones(lon_fire.shape)))
+                # create general arrays
+                lon = np.concatenate((lon_nofire,lon_fire))
+                lat = np.concatenate((lat_nofire,lat_fire))
+                fire = np.concatenate((5*np.ones(lon_nofire.shape),9*np.ones(lon_fire.shape)))
 
-            # mask in bounds
-            mask = np.logical_and(np.logical_and(np.logical_and(lon >= bounds[0],lon <= bounds[1]),lat >= bounds[2]),lat <= bounds[3])
-            if not mask.sum():
-                break
-            lons = lon[mask]
-            lats = lat[mask]
-            fires = fire[mask]
+                # mask in bounds
+                mask = np.logical_and(np.logical_and(np.logical_and(lon >= bounds[0],lon <= bounds[1]),lat >= bounds[2]),lat <= bounds[3])
+                if not mask.sum():
+                    break
+                lons = lon[mask]
+                lats = lat[mask]
+                fires = fire[mask]
 
-            # plot results
-            if plot:
-                plt.plot(lons[fires==5],lats[fires==5],'g.')
-                plt.plot(lons[fires==9],lats[fires==9],'r.')
-                plt.show()
-                plt.pause(.5)
-                plt.cla()
+                # plot results
+                if plot:
+                    plt.plot(lons[fires==5],lats[fires==5],'g.')
+                    plt.plot(lons[fires==9],lats[fires==9],'r.')
+                    plt.show()
+                    plt.pause(.5)
+                    plt.cla()
+            else:
+                lons = np.array([])
+                lats = np.array([])
+                fires = np.array([])
 
+            if gen_polys:
+                from shapely.geometry import Polygon
+                from shapely.ops import transform
+                from functools import partial
+                import pyproj
+
+                proj4_wgs84 = '+proj=latlong +ellps=WGS84 +datum=WGS84 +units=degree +no_defs'
+                proj4_moll = '+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
+                proj = partial(pyproj.transform, pyproj.Proj(init='epsg:4326'),
+                                pyproj.Proj(proj4_moll))
+                polys = []
+                for n,outer in enumerate(outer_coordinates):
+                    x = np.array(outer)[:,0]
+                    y = np.array(outer)[:,1]
+                    shape = Polygon([(l[0],l[1]) for l in zip(x,y)]).buffer(0)
+                    inner = np.array(inner_coordinates[n])
+                    if len(inner):
+                        if len(inner.shape) > 2:
+                            for h in inner_coordinates[n]:
+                                xh = np.array(h)[:,0]
+                                yh = np.array(h)[:,1]
+                        else:
+                            xh = np.array(inner)[:,0]
+                            yh = np.array(inner)[:,1]
+                        shapeh = Polygon([(l[0],l[1]) for l in zip(xh,yh)]).buffer(0)
+                        shape.difference(shapeh)
+                    poly = transform(proj,shape)
+                    polys.append(poly)
+
+            idn = prefix + time_data
+            if idn in perimeters.keys():
+                idn = idn + '_2'
             # update perimeters dictionary
-            perimeters.update({prefix + time_data: Dict({'file': file, 'lon': lons, 'lat': lats,
+            perimeters.update({idn: Dict({'file': file, 'lon': lons, 'lat': lats,
                             'fire': fires, 'conf_fire': np.array(conf_fire*np.ones(lons[fires==9].shape)),
                             'lon_fire': lons[fires==9], 'lat_fire': lats[fires==9], 'lon_nofire': lons[fires==5], 'lat_nofire': lats[fires==5],
                             'scan_fire': scan*np.ones(lons[fires==9].shape), 'track_fire': track*np.ones(lons[fires==9].shape),
                             'conf_nofire': np.array(conf_nofire*np.ones(lons[fires==5].shape)),
                             'scan_nofire': scan*np.ones(lons[fires==5].shape), 'track_nofire': track*np.ones(lons[fires==9].shape),
                             'time_iso': time_iso, 'time_num': time_num, 'acq_date': acq_date, 'acq_time': acq_time})})
+            if gen_polys:
+                perimeters[idn].update({'polys': polys})
     else:
         print 'Warning: No KML files in the path specified'
         perimeters = []
@@ -235,7 +316,7 @@ def process_infrared_perimeters(dst,bounds,time=None,maxp=1000,ngrid=100,plot=Fa
 
 if __name__ == "__main__":
     # Experiment to do
-    exp = 3
+    exp = 4
     # Plot perimeters as created
     plot = True
 
@@ -258,15 +339,21 @@ if __name__ == "__main__":
         igns = None
         perims = './saddleridge/perim'
         return bounds, time_iso, igns, perims
+    def polecreek():
+        bounds = (-111.93914, -111.311035, 39.75985, 40.239746)
+        time_iso = ('2018-09-09T00:00:00Z', '2018-09-23T00:00:00Z')
+        igns = None
+        perims = './polecreek/perim'
+        return bounds, time_iso, igns, perims
 
     # Creating the options
-    options = {1: pioneer, 2: patch, 3: saddleridge}
+    options = {1: pioneer, 2: patch, 3: saddleridge, 4: polecreek}
 
     # Defining the option depending on the experiment
     bounds, time_iso, igns, perims = options[exp]()
 
     # Processing infrared perimeters
-    p = process_infrared_perimeters(perims,bounds,time=time_iso,plot=plot)
+    p = process_infrared_perimeters(perims,bounds,time=time_iso,plot=plot,gen_polys=True)
     # Processing ignitions if defined
     if igns:
         p.update(process_ignitions(igns,bounds,time=time_iso))
