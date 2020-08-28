@@ -1305,17 +1305,17 @@ def json2kml(d,kml_path,bounds,prods,opt='granule',minconf=80.):
                                     if conf < 80:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>7000ffff</color>\n'
-                                                +'<outline>1</outline>\n'+'</PolyStyle>\n'
+                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
                                     elif conf < 90:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>7000a5ff</color>\n'
-                                                +'<outline>1</outline>\n'+'</PolyStyle>\n'
+                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
                                     else:
                                         kml.write('<Style>\n'+'<PolyStyle>\n'
                                                 +'<color>700000ff</color>\n'
-                                                +'<outline>1</outline>\n'+'</PolyStyle>\n'
+                                                +'<outline>0</outline>\n'+'</PolyStyle>\n'
                                                 +'</Style>\n')
 
                                 kml.write('<Polygon>\n<outerBoundaryIs>\n<LinearRing>\n<coordinates>\n')
