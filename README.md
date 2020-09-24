@@ -8,7 +8,7 @@
 		./Anaconda3-2019.10-Linux-x86_64.sh
 
 	2) Create anaconda environment named jpssdata:
-		conda create -n jpssdata python=2.7 basemap netcdf4 scikit-learn scikit-image h5py pandas
+		conda create -n jpssdata python=2.7 basemap netcdf4 scikit-learn scikit-image h5py pandas requests
 
 	3) Download other necessary packages:
 		conda install -c conda-forge pyhdf
