@@ -894,4 +894,4 @@ if __name__ == "__main__":
     y = np.concatenate((-np.ones(len(Xg)), np.ones(len(Xf))))
 
     # Running SVM classification
-    SVM3(X,y,C=C,kgam=kgam,search=search,plot_result=True)
+    SVM3(X,y,C=C,kgam=kgam,search=search,plot_result=True,plot_data=True)
