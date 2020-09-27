@@ -10,7 +10,8 @@
 	2) Create anaconda environment named jpssdata:
 		conda create -n jpssdata python=2.7 basemap netcdf4 scikit-learn scikit-image h5py pandas requests
 
-	3) Download other necessary packages:
+	3) Install other necessary packages:
+                conda activate jpssdata
 		conda install -c conda-forge pyhdf
 		pip install python-cmr
 
