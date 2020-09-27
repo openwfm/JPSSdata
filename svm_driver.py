@@ -3,12 +3,19 @@ import numpy as np
 from scipy.io import loadmat,savemat
 from JPSSD import read_fire_mesh
 import sys
+import datetime as dt
 from contour2kml import contour2kml
 
 m = loadmat('fire.mat')
 search = True
 Xg = m['Xg'];
 Xf = m['Xg'];
+tscale = m['tscale']
+epoch = m['epoch'].flatten()
+# time = col 3 of Xg Xf is in tscale seconds since epoch
+epoch_dt = dt.datetime(year=epoch[0],month=epoch[1],day=epoch[2],
+                       hour=epoch[3],minute=epoch[4],second=epoch[5])
+svm_file = 'svm.mat'
 
 for exp in (1,):
 
@@ -34,33 +41,41 @@ for exp in (1,):
     # Running SVM classification
     F = SVM3(X,y,C=C,kgam=kgam,search=search,plot_result=True,plot_data=True)
 
-# fxlon,fxlat,bbox,time_esmf=read_fire_mesh(wrfout)
-bbox = m['bbox']
+    sys.stdout.flush()
+    tign_g = np.array(F[2])
+    # Creating the dictionary with the results
+    svm = { 'X': np.array(X), 'y': np.array(y), 'C': np.array(C),
+    		'fxlon': np.array(F[0]), 'fxlat': np.array(F[1]), 
+    		'Z': np.array(F[2]), 'tign_g': np.array(tign_g), 
+    		'C': C, 'kgam': kgam, 
+                'tscale': tscale, 'epoch':epoch,'bbox':bbox}
+    # time is epoch + tscale * tign_g
+
+    savemat(svm_file, mdict=svm)
+    print ('The results are saved in %s' % svm_file)
+    
+svm = loadmat(svm_file)
+print ('Loading from %s' % smf_file)
+
+# still have bbox and epoch_dt from above
+# fxlon,fxlat,bbox,time_esmf=read_fire_mesh('wrfout')
+# assuming time_esmf is the beginning of the simulation
+# esmf format is YYYY-MM-DD_hh:mm:ss
+
+# wrfout not available - making it up, testing only
+time_esmf = '2019-07-24_22:00:00'
 fxlon,fxlat=np.meshgrid(np.linspace(bbox[0],bbox[1],num=100),
                         np.linspace(bbox[2],bbox[3],num=111))
+#end making it up
 
-sys.stdout.flush()
-# Fire arrival time in seconds from the begining of the simulation
-tign_g = np.array(F[2])*float(tscale)+scale[0]-time_num_interval[0]
-# Creating the dictionary with the results
-svm = { 'X': np.array(X), 'y': np.array(y), 'c': np.array(c),
-		'fxlon': np.array(F[0]), 'fxlat': np.array(F[1]), 
-		'Z': np.array(F[2]), 'tign_g': np.array(tign_g), 
-		'C': C, 'kgam': kgam}
-
-svm_file = 'svm.mat'
-savemat(svm_file, mdict=svm)
-print 'The results are saved in ' + svm_file
-svm = loadmat(svm_file)
-print 'Loading' + smf_file
-
+time_dt = dt.datetime.strptime(time_esmf,'%Y-%m-%d_%H:%M:%S')
 # Interpolation of tign_g
 if fire_interp:
 	try:
 		print '>> Interpolating the results in the fire mesh'
 		t_interp_1 = time()
 		points = np.c_[np.ravel(F[0]),np.ravel(F[1])]
-		values = np.ravel(tign_g)
+		values = np.ravel(tign_g)*tscale + (epoch_dt - time_dt).total_seconds()
 		tign_g_interp = interpolate.griddata(points,values,(fxlon,fxlat))
 		t_interp_2 = time()
 		if notnan:
@@ -77,22 +92,6 @@ if fire_interp:
 # Save resulting file
 savemat(svm_file, mdict=svm)
 print 'The results are saved in ' + svm_file
-
-print ''
-print '>> Computing contour lines of the fire arrival time <<'
-print 'Computing the contours...'
-try:
-	# Granules numeric times
-	Z = np.array(F[2])*tscale+scale[0]
-	# Creating contour lines
-	contour_data = get_contour_verts(F[0], F[1], Z, time_num_granules, contour_dt_hours=6, contour_dt_init=6, contour_dt_final=6)
-	print 'Creating the KML file...'
-	# Creating the KML file
-	contour2kml(contour_data,contour_file)
-	print 'The resulting contour lines are saved in perimeters_svm.kml file'
-except:
-	print 'Warning: contour creation problem'
-	print 'Run: python contlinesvm.py'
 
 print ''
 print '>> DONE <<'
