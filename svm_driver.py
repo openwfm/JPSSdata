@@ -13,7 +13,7 @@ t_init = time()
 m = loadmat('fire.mat')
 search = True
 Xg = m['Xg'];
-Xf = m['Xg'];
+Xf = m['Xf'];
 tscale = m['tscale']
 epoch = m['epoch'].ravel()
 bbox = m['bbox'].ravel()
@@ -23,7 +23,7 @@ epoch_dt = dt.datetime(year=epoch[0],month=epoch[1],day=epoch[2],
 svm_file = 'svm.mat'
 svm_file2 = 'svm_out.mat'
 
-for exp in ():
+for exp in (1,):
 
     def exp1():
         C = 10.
@@ -65,20 +65,24 @@ print ('Loading from %s' % svm_file)
 svm = loadmat(svm_file)
 #print(svm)
 
-print('svm bbox %s %s %s %s %s %s' % (
+print('data bbox %s %s %s %s' % (
     np.amin(svm['fxlon']), np.amax(svm['fxlon']),
-    np.amin(svm['fxlat']), np.amax(svm['fxlat']),
-    np.amin(svm['Z']), np.amax(svm['Z'])))
+    np.amin(svm['fxlat']), np.amax(svm['fxlat'])))
 
 tscale=svm['tscale']
 epoch=svm['epoch'].ravel()
 epoch_dt = dt.datetime(year=epoch[0],month=epoch[1],day=epoch[2],
                        hour=epoch[3],minute=epoch[4],second=epoch[5])
+print('data epoch %s' % epoch_dt)
 
 # still have bbox and epoch_dt from above
 try:
     fxlon,fxlat,bbox,time_esmf=read_fire_mesh('wrfout')
     time_dt = dt.datetime.strptime(time_esmf,'%Y-%m-%d_%H:%M:%S')
+    print('wrfout time %s' % time_dt)
+    print('wrfout bbox %s %s %s %s' % (
+       np.amin(fxlon), np.amax(fxlon),
+       np.amin(fxlat), np.amax(fxlat)))
 except:
     print('cannot read wrfout, using existing values')
     bbox = svm['bbox']
