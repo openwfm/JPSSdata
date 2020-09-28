@@ -104,6 +104,10 @@ if fire_interp:
 		values = (svm['Z']*tscale + (epoch_dt - time_dt).total_seconds()).ravel()
 		tign_g_interp = interpolate.griddata(points,values,(fxlon,fxlat))
 		t_interp_2 = time()
+                nans = np.sum(np.isnan(tign_g_interp));
+                nums = np.sum(~np.isnan(tign_g_interp));
+                frac = float(nans)/(nans+nums)
+                print('interpolated array is %s%s nan' % (100*frac,'%'))
 		if notnan:
 			with np.errstate(invalid='ignore'):
 				tign_g_interp[np.isnan(tign_g_interp)] = np.nanmax(tign_g_interp)
