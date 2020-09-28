@@ -83,6 +83,8 @@ try:
     print('wrfout bbox %s %s %s %s' % (
        np.amin(fxlon), np.amax(fxlon),
        np.amin(fxlat), np.amax(fxlat)))
+    sz = fxlon.shape
+    print('fire mesh size %s %s' % sz)
 except:
     print('cannot read wrfout, using existing values')
     bbox = svm['bbox']
