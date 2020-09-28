@@ -75,26 +75,34 @@ epoch_dt = dt.datetime(year=epoch[0],month=epoch[1],day=epoch[2],
                        hour=epoch[3],minute=epoch[4],second=epoch[5])
 print('data epoch %s' % epoch_dt)
 
-# still have bbox and epoch_dt from above
 try:
     fxlon,fxlat,bbox,time_esmf=read_fire_mesh('wrfout')
+    # assuming time_esmf is the beginning of the simulation
+    # esmf format is YYYY-MM-DD_hh:mm:ss
     time_dt = dt.datetime.strptime(time_esmf,'%Y-%m-%d_%H:%M:%S')
     print('wrfout time %s' % time_dt)
     print('wrfout bbox %s %s %s %s' % (
        np.amin(fxlon), np.amax(fxlon),
        np.amin(fxlat), np.amax(fxlat)))
     sz = fxlon.shape
-    print('fire mesh size %s %s' % sz)
 except:
     print('cannot read wrfout, using existing values')
-    bbox = svm['bbox']
-    fxlon,fxlat=np.meshgrid(np.linspace(bbox[0],bbox[1],num=100),
-                        np.linspace(bbox[2],bbox[3],num=111))
+    sz=(900,900)
+    bbox = svm['bbox'].ravel()
+    fxlon,fxlat=np.meshgrid(np.linspace(bbox[0],bbox[1],num=sz[0]),
+                        np.linspace(bbox[2],bbox[3],num=sz[1]))
     time_dt = epoch_dt
 
-# assuming time_esmf is the beginning of the simulation
-# esmf format is YYYY-MM-DD_hh:mm:ss
+replace = 0 
+if replace:
+    bbox = svm['bbox'].ravel()
+    print('replacing bbox from data: %s %s %s %s' % tuple(bbox))
+    fxlon,fxlat=np.meshgrid(np.linspace(bbox[0],bbox[1],num=sz[0]),
+                    np.linspace(bbox[2],bbox[3],num=sz[1]))
+    time_dt = epoch_dt
+    print('replacing starting time from data %s' % time_dt)
 
+print('fire mesh size %s %s' % sz)
 
 # Interpolation of tign_g
 fire_interp = True
