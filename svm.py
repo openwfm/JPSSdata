@@ -1,4 +1,6 @@
-#
+import sys
+sys.path.append("/path/to/my/modules/")#
+
 # Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
 # Angel Farguell (angel.farguell@gmail.com)
 #

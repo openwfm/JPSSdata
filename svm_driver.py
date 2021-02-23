@@ -2,7 +2,7 @@ from svm import SVM3
 import numpy as np
 
  
-for exp in (1,):
+for exp in (1,2):
 
     search = True
 
