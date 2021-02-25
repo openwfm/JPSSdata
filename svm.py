@@ -53,7 +53,7 @@ def preprocess_data_svm(data, scale, minconf=80.):
 
     # confidence of ground detections
     gconf = 95.
-    maxg = 1e5
+    maxg = 5e4
 
     # scale from seconds to days
     tscale = 24.*3600.
