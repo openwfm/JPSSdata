@@ -363,16 +363,16 @@ if fire_interp:
 		values = np.ravel(tign_g)
 		tign_g_interp = interpolate.griddata(points,values,(fxlon,fxlat))
 		t_interp_2 = time()
-		if notnan:
+		if svm_settings['notnan']:
 			with np.errstate(invalid='ignore'):
 				tign_g_interp[np.isnan(tign_g_interp)] = np.nanmax(tign_g_interp)
 		print 'elapsed time: %ss.' % str(abs(t_interp_2-t_interp_1))
 		svm.update({'fxlon_interp': np.array(fxlon), 
 			'fxlat_interp': np.array(fxlat),
 			'tign_g_interp': np.array(tign_g_interp)})
-	except:
-		print 'Warning: longitudes and latitudes from the original grid are not defined...'
-		print '%s file is not compatible with fire_interp=True! Run again the experiment from the begining.' % bounds_file
+	except Exception as e:
+		print 'Warning: longitudes and latitudes from the original grid are not defined or something happened...'
+		print 'Exception: %s' % e
 
 # Save resulting file
 savemat(svm_file, mdict=svm)
