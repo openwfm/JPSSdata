@@ -146,8 +146,8 @@ else:
 		argument = sys.argv[1].split(',')
 		if len(argument) > 1:
 			print '>> Creating the fire mesh <<'
-			dlon = .005
-			dlat = .005
+			dlon = 1e-4
+			dlat = 1e-4
 			bounds = map(float,argument)
 			fxlon,fxlat = np.meshgrid(np.arange(bounds[0],bounds[1],dlon),
 							np.arange(bounds[2],bounds[3],dlat))
