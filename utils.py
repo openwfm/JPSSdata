@@ -175,7 +175,7 @@ def load_cfg():
     cfg.svm_settings.search = cfg.search
 
     # Set AppKey for NRT downloads from https://nrt3.modaps.eosdis.nasa.gov/profile/app-keys
-    cfg.appkey = f_cfg.get('appkey',None)
+    cfg.tokens = f_cfg.get('tokens',{})
 
     return cfg
 

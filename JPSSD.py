@@ -620,13 +620,13 @@ def read_data(files,file_metadata,bounds):
 
     return data
 
-def get_url(url, filename, max_retries=3, appkey=None):
+def get_url(url, filename, max_retries=3, token=None):
     """
     General get URL recursive function
 
     :param url: URL to be downloaded
     :param filename: local file name
-    :param appkey: optional, if download key is necessary
+    :param token: optional, if download key is necessary
     :return s: status of the request
 
     Developed in Python 2.7.15 :: Anaconda 4.5.10, on MACINTOSH.
@@ -635,8 +635,8 @@ def get_url(url, filename, max_retries=3, appkey=None):
     chunk_size = 1024*1024
     s = 0
     print 'downloading %s as %s' % (url,filename)
-    if appkey:
-        r = requests.get(url, stream=True, headers={"Authorization": "Bearer %s" % appkey})
+    if token:
+        r = requests.get(url, stream=True, headers={"Authorization": "Bearer %s" % token})
     else:
         r = requests.get(url, stream=True)
     if r.status_code == 200:
@@ -649,11 +649,21 @@ def get_url(url, filename, max_retries=3, appkey=None):
                 print('downloaded %sB  of %sB' % (s, content_size))
     else:
         if max_retries != 0:
-            get_url(url,max_retries-1,appkey)
+            get_url(url,max_retries-1,token)
     return r.status_code
         
+def datacenter_to_token(tokens, data_center):
+    """
+    From data center to token to use for that data center
 
-def download(granules, appkey=None):
+    :param data_center: string with the data center information
+    """
+    return {'LAADS': tokens.get('laads',None),
+            'LPDAAC_ECS': None,
+            'LANCEMODIS': tokens.get('nrt',None)
+    }.get(data_center,None)
+
+def download(granules, tokens={}):
     """
     Download files as listed in the granules metadata
 
@@ -667,6 +677,7 @@ def download(granules, appkey=None):
     for gn,granule in enumerate(granules):
         #print json.dumps(granule,indent=4, separators=(',', ': '))
         url = granule['links'][0]['href']
+        token = datacenter_to_token(tokens, granule['data_center']) 
         filename=os.path.basename(urlparse.urlsplit(url).path)
         file_metadata[filename]=granule
 
@@ -676,7 +687,7 @@ def download(granules, appkey=None):
             print 'file %s already downloaded' % filename
             continue
         try:
-            s = get_url(url,filename,appkey) 
+            s = get_url(url,filename,token) 
             if s != 200:
                 if gn == 0:
                     print 'cannot connect to %s' % url
@@ -721,7 +732,7 @@ def download_GOES16(time):
             print 'download failed with error %s' % e
     return bucket
 
-def retrieve_af_data(bbox,time,burned=False,high=False,appkey=None):
+def retrieve_af_data(bbox,time,burned=False,high=False,tokens={}):
     """
     Retrieve the data in a bounding box coordinates and time interval and save it in a Matlab structure inside the out.mat Matlab file
 
@@ -757,7 +768,7 @@ def retrieve_af_data(bbox,time,burned=False,high=False,appkey=None):
     for k,g in granules.items():
         print 'Downloading %s files' % k
         sys.stdout.flush()
-        file_metadata.update(download(g,appkey=appkey))
+        file_metadata.update(download(g,tokens=tokens))
         #print "download g:"
         #print g
 

@@ -167,7 +167,7 @@ else:
 		dtf = dti+dt.timedelta(days=float(sys.argv[3]))
 		time_final_iso = '%d-%02d-%02dT%02d:%02d:%02dZ' % (dtf.year,dtf.month,dtf.day,dtf.hour,dtf.minute,dtf.second)
 		time_iso = (time_start_iso,time_final_iso)
-		data = retrieve_af_data(bbox,time_iso,appkey=appkey)
+		data = retrieve_af_data(bbox,time_iso,tokens=tokens)
 		if igns:
 			print ''
 			print '>> Creating ignitions <<'
@@ -209,8 +209,9 @@ else:
 		dkeys = ['lat_fire','lon_fire','brig_fire','scan_fire','track_fire','acq_date','acq_time','sat_fire','instrument','conf_fire','t31_fire','frp_fire','scan_angle_fire']
 		prods = {'AF':'Active Fires','FRP':'Fire Radiative Power','TF':'Temporal Fire coloring','AFN':'Active Fires New'}
 		# filter out perimeter, ignition, and forecast information (too many pixels)
-		regex = re.compile(r'^((?!(PER_A|IGN_A|FOR_A)).)*$')
-		nsdata = [d for d in sdata if regex.match(d[0])]
+		#regex = re.compile(r'^((?!(PER_A|IGN_A|FOR_A)).)*$')
+		#nsdata = [d for d in sdata if regex.match(d[0])]
+                nsdata = sdata
 		# compute number of elements for each granule
 		N = [len(d[1]['lat_fire']) if 'lat_fire' in d[1] else 0 for d in nsdata]
 		# transform dictionary notation to json notation
